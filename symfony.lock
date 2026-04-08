@@ -5,6 +5,9 @@
     "doctrine/doctrine-migrations-bundle": {
         "version": "3.4.1"
     },
+    "knplabs/knp-paginator-bundle": {
+        "version": "v6.8.0"
+    },
     "phpunit/phpunit": {
         "version": "9.6",
         "recipe": {
