@@ -1,0 +1,23 @@
+{
+    "symfony/console": {
+        "version": "7.2",
+        "recipe": {
+            "version": "5.3"
+        }
+    },
+    "symfony/flex": {
+        "version": "2.5",
+        "recipe": {
+            "version": "1.0"
+        }
+    },
+    "symfony/framework-bundle": {
+        "version": "v7.2.5"
+    },
+    "symfony/routing": {
+        "version": "7.2",
+        "recipe": {
+            "version": "7.0"
+        }
+    }
+}
