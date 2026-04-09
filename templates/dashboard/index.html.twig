@@ -2,44 +2,259 @@
 
 {% block title %}Dashboard — AgriCloud{% endblock %}
 
+{% block stylesheets %}
+<style>
+.stat-card { border-radius: 14px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,.06); transition: transform .15s; }
+.stat-card:hover { transform: translateY(-3px); }
+.stat-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+.progress { height: 5px; border-radius: 99px; }
+.chart-card { border-radius: 14px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+.recent-avatar { width: 34px; height: 34px; border-radius: 50%; background: #d1e7dd; color: #198754; font-weight: 700; font-size: .8rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+</style>
+{% endblock %}
+
 {% block body %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold mb-0">Dashboard</h4>
+    <div>
+        <h4 class="fw-bold mb-0">Dashboard</h4>
+        <span class="text-muted small">{{ "now"|date("l, d F Y") }}</span>
+    </div>
     <span class="text-muted small">Welcome back, <strong>{{ app.user.name }}</strong></span>
 </div>
 
-<div class="row g-3">
-    {% if is_granted('ROLE_ADMIN') %}
-    <div class="col-md-3">
+{% if is_granted('ROLE_ADMIN') %}
+
+{# ── Stat cards ────────────────────────────────────────────── #}
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
         <a href="{{ path('user_index') }}" class="text-decoration-none">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-primary bg-opacity-10 p-3">
-                        <i class="bi bi-people-fill text-primary fs-4"></i>
+            <div class="card stat-card p-3">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="stat-icon" style="background:#e8f4fd">
+                        <i class="bi bi-people-fill text-primary"></i>
                     </div>
                     <div>
-                        <div class="fw-semibold">Users</div>
-                        <div class="text-muted small">Manage accounts</div>
+                        <div class="fs-3 fw-bold lh-1">{{ userCount }}</div>
+                        <div class="text-muted small">Total Users</div>
                     </div>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-primary" style="width:100%"></div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card p-3">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="stat-icon" style="background:#d1f0e0">
+                    <i class="bi bi-person-check-fill text-success"></i>
+                </div>
+                <div>
+                    <div class="fs-3 fw-bold lh-1">{{ activeCount }}</div>
+                    <div class="text-muted small">Active Users</div>
+                </div>
+            </div>
+            <div class="progress">
+                <div class="progress-bar bg-success"
+                     style="width:{{ userCount > 0 ? (activeCount / userCount * 100)|round : 0 }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card p-3">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="stat-icon" style="background:#fde8e8">
+                    <i class="bi bi-person-x-fill text-danger"></i>
+                </div>
+                <div>
+                    <div class="fs-3 fw-bold lh-1">{{ blockedCount }}</div>
+                    <div class="text-muted small">Blocked Users</div>
+                </div>
+            </div>
+            <div class="progress">
+                <div class="progress-bar bg-danger"
+                     style="width:{{ userCount > 0 ? (blockedCount / userCount * 100)|round : 0 }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <a href="{{ path('role_index') }}" class="text-decoration-none">
+            <div class="card stat-card p-3">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="stat-icon" style="background:#fff3cd">
+                        <i class="bi bi-shield-check text-warning"></i>
+                    </div>
+                    <div>
+                        <div class="fs-3 fw-bold lh-1">{{ roleCount }}</div>
+                        <div class="text-muted small">Roles</div>
+                    </div>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-warning" style="width:100%"></div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+{# ── Charts + Recent users ─────────────────────────────────── #}
+<div class="row g-3 mb-4">
+
+    {# Doughnut — status #}
+    <div class="col-md-4">
+        <div class="card chart-card p-3 h-100">
+            <h6 class="fw-semibold mb-3"><i class="bi bi-pie-chart-fill text-success me-1"></i>User Status</h6>
+            <div class="d-flex justify-content-center align-items-center" style="height:200px">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {# Bar — users per role #}
+    <div class="col-md-4">
+        <div class="card chart-card p-3 h-100">
+            <h6 class="fw-semibold mb-3"><i class="bi bi-bar-chart-fill text-primary me-1"></i>Users per Role</h6>
+            <div style="height:200px">
+                <canvas id="roleChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {# Recent registrations #}
+    <div class="col-md-4">
+        <div class="card chart-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-semibold mb-0"><i class="bi bi-clock-history text-secondary me-1"></i>Recent Users</h6>
+                <a href="{{ path('user_index') }}" class="btn btn-outline-success btn-sm" style="font-size:.75rem">View all</a>
+            </div>
+            <div class="d-flex flex-column gap-2">
+                {% for u in recentUsers %}
+                <div class="d-flex align-items-center gap-2">
+                    <div class="recent-avatar">{{ u.name|slice(0,1)|upper }}</div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="fw-semibold small text-truncate">{{ u.name }}</div>
+                        <div class="text-muted" style="font-size:.72rem">{{ u.email }}</div>
+                    </div>
+                    {% if u.status == 'active' %}
+                        <span class="badge bg-success-subtle text-success" style="font-size:.68rem">Active</span>
+                    {% elseif u.status == 'blocked' %}
+                        <span class="badge bg-danger-subtle text-danger" style="font-size:.68rem">Blocked</span>
+                    {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary" style="font-size:.68rem">Inactive</span>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="text-muted small mb-0">No users yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── Quick Actions ─────────────────────────────────────────── #}
+<h6 class="fw-semibold text-muted mb-3">Quick Actions</h6>
+<div class="row g-3">
+    <div class="col-md-3">
+        <a href="{{ path('user_new') }}" class="text-decoration-none">
+            <div class="card stat-card p-3 d-flex flex-row align-items-center gap-3">
+                <div class="stat-icon" style="background:#e8f4fd">
+                    <i class="bi bi-person-plus text-primary"></i>
+                </div>
+                <div>
+                    <div class="fw-semibold">New User</div>
+                    <div class="text-muted small">Add an account</div>
                 </div>
             </div>
         </a>
     </div>
     <div class="col-md-3">
-        <a href="{{ path('role_index') }}" class="text-decoration-none">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-success bg-opacity-10 p-3">
-                        <i class="bi bi-shield-check text-success fs-4"></i>
-                    </div>
-                    <div>
-                        <div class="fw-semibold">Roles</div>
-                        <div class="text-muted small">Manage permissions</div>
-                    </div>
+        <a href="{{ path('role_new') }}" class="text-decoration-none">
+            <div class="card stat-card p-3 d-flex flex-row align-items-center gap-3">
+                <div class="stat-icon" style="background:#d1f0e0">
+                    <i class="bi bi-shield-plus text-success"></i>
+                </div>
+                <div>
+                    <div class="fw-semibold">New Role</div>
+                    <div class="text-muted small">Define permissions</div>
                 </div>
             </div>
         </a>
     </div>
-    {% endif %}
 </div>
+
+{% else %}
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <a href="{{ path('profile_show') }}" class="text-decoration-none">
+            <div class="card stat-card p-3 d-flex flex-row align-items-center gap-3">
+                <div class="stat-icon" style="background:#e8f4fd">
+                    <i class="bi bi-person-circle text-primary"></i>
+                </div>
+                <div>
+                    <div class="fw-semibold">My Profile</div>
+                    <div class="text-muted small">View & edit your info</div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block javascripts %}
+{% if is_granted('ROLE_ADMIN') %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const green  = '#198754';
+const greenL = '#d1e7dd';
+
+// Doughnut — status
+new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: {
+        labels: {{ statusLabels|raw }},
+        datasets: [{
+            data: {{ statusValues|raw }},
+            backgroundColor: ['#198754','#dc3545','#6c757d','#0d6efd'],
+            borderWidth: 0,
+            hoverOffset: 6
+        }]
+    },
+    options: {
+        cutout: '70%',
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+        maintainAspectRatio: false
+    }
+});
+
+// Bar — users per role
+new Chart(document.getElementById('roleChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ roleLabels|raw }},
+        datasets: [{
+            label: 'Users',
+            data: {{ roleValues|raw }},
+            backgroundColor: '#198754cc',
+            borderRadius: 6,
+            borderSkipped: false
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f0f0' } },
+            x: { grid: { display: false } }
+        },
+        maintainAspectRatio: false
+    }
+});
+</script>
+{% endif %}
 {% endblock %}
