@@ -14,7 +14,11 @@ class HomeController extends AbstractController
     public function index(PostRepository $postRepo, ProductRepository $productRepo): Response
     {
         $latestPosts    = $postRepo->publicQueryBuilder()->setMaxResults(3)->getQuery()->getResult();
-        $latestProducts = $productRepo->marketplaceQueryBuilder()->setMaxResults(4)->getQuery()->getResult();
+        $latestProducts = array_slice(
+            $productRepo->findApprovedCatalog(null, null, 'newest'),
+            0,
+            4
+        );
 
         return $this->render('home/index.html.twig', [
             'latestPosts'    => $latestPosts,

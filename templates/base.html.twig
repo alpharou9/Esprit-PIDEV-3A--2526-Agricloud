@@ -252,9 +252,6 @@
                             <a href="{{ path('user_index') }}" class="{{ app.request.attributes.get('_route') starts with 'user_' ? 'active' : '' }}">
                                 <i class="bi bi-people me-1"></i> Users
                             </a>
-                            <a href="{{ path('role_index') }}" class="{{ app.request.attributes.get('_route') starts with 'role_' ? 'active' : '' }}">
-                                <i class="bi bi-shield-check me-1"></i> Roles
-                            </a>
 
                             <div class="nav-section mt-3">Account</div>
                             <a href="{{ path('profile_show') }}" class="{{ app.request.attributes.get('_route') starts with 'profile_' ? 'active' : '' }}">
