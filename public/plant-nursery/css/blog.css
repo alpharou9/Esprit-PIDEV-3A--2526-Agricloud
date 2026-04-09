@@ -1,0 +1,96 @@
+/*
+Template Name: Plant Nursery
+File: Layout CSS
+Author: TemplatesOnWeb
+Author URI: https://www.templateonweb.com/
+Licence: <a href="https://www.templateonweb.com/license">Website Template Licence</a>
+*/
+
+/*********************contact****************/
+
+.center_cont {
+    background-image: url(../image/3.jpg);
+    background-position: center center;
+    background-size: cover;
+}
+.center_blog {
+    background-image: url(../image/1.jpg);
+    background-position: center center;
+    background-size: cover;
+}
+.tags a {
+    display: block;
+    padding: 8px 15px;
+    margin: 0px 5px 8px 0px;
+    transition: 0.3s;
+    background: var(--bg_light);
+}
+.tags a:hover {
+    transition: 0.3s;
+    background: var(--green);
+	 color: var(--bs-white);
+}
+.center_blog_dt {
+    background-image: url(../image/3.jpg);
+    background-position: center center;
+    background-size: cover;
+}
+/*********************contact_end****************/
+
+
+
+
+@media screen and (max-width : 767px){
+.blog_1_right {
+	padding-left:0!important;
+	margin-top:20px;
+}
+.blog_dt1_inner_right {
+	margin-top:10px;
+	text-align:left!important;
+}
+.touch_1_left .col{
+	margin-top:10px;
+	margin-bottom:10px;
+}
+.touch_1_right{
+	margin-top:20px;
+	padding-left:0!important;
+}
+ }
+
+
+@media (min-width:576px) and (max-width:767px) {
+.blog_dt1_inner_right {
+	margin-top:0;
+	text-align:right!important;
+}
+ }
+ 
+@media (min-width:768px) and (max-width:991px) {
+.blog_1_right {
+	padding-left:0!important;
+}
+.blog_1_right1  ul li{
+	font-size:12px;
+}
+.blog_1_right1  ul li .p-3{
+	padding:5px!important;
+}
+ }
+
+@media (min-width:992px) and (max-width:1200px) {
+
+
+ 
+ }
+
+@media (min-width:1201px) and (max-width:1300px) {
+
+
+ }
+@media screen and (min-width : 1400px){
+
+ }
+
+

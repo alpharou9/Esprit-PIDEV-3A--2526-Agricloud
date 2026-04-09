@@ -1,0 +1,316 @@
+{% extends 'front_base.html.twig' %}
+
+{% block title %}Market - AgriCloud{% endblock %}
+{% block hero_title %}Fresh products from trusted farms{% endblock %}
+{% block hero_text %}Explore approved products, enjoy a softer farm-inspired storefront, and add your favorites directly to your cart through the AgriCloud market flow.{% endblock %}
+
+{% block maincontainer %}
+<style>
+    .catalog-intro {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(250px, .8fr);
+        gap: 1.5rem;
+        margin-bottom: 1.75rem;
+    }
+
+    .catalog-highlight {
+        min-height: 100%;
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .catalog-highlight img {
+        width: 120px;
+        height: 120px;
+        border-radius: 24px;
+        object-fit: cover;
+        box-shadow: 0 16px 28px rgba(70, 110, 20, 0.14);
+    }
+
+    .catalog-filter {
+        margin-bottom: 1.75rem;
+    }
+
+    .catalog-gallery {
+        display: grid;
+        grid-template-columns: 1.15fr .85fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .catalog-feature {
+        position: relative;
+        overflow: hidden;
+        min-height: 360px;
+        border-radius: 28px;
+        box-shadow: 0 18px 38px rgba(54, 67, 28, 0.12);
+    }
+
+    .catalog-feature img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .catalog-feature-copy {
+        position: absolute;
+        inset: auto 0 0 0;
+        padding: 1.4rem 1.5rem;
+        background: linear-gradient(180deg, transparent 0%, rgba(28, 42, 17, 0.85) 72%);
+        color: #fff;
+    }
+
+    .catalog-side {
+        display: grid;
+        gap: 1.1rem;
+    }
+
+    .catalog-side-card {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .catalog-side-card img {
+        width: 120px;
+        height: 120px;
+        border-radius: 22px;
+        object-fit: cover;
+    }
+
+    .catalog-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .catalog-strip-card img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 22px 22px 0 0;
+    }
+
+    .catalog-strip-card .caption {
+        padding: 1rem 1.1rem 1.1rem;
+    }
+
+    .catalog-products-title {
+        margin-bottom: 1rem;
+    }
+
+    .product-thumb {
+        height: 240px;
+        object-fit: cover;
+        border-radius: 24px 24px 0 0;
+    }
+
+    .product-empty-thumb {
+        height: 240px;
+        border-radius: 24px 24px 0 0;
+    }
+
+    @media (max-width: 991.98px) {
+        .catalog-intro,
+        .catalog-gallery {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .catalog-highlight,
+        .catalog-side-card {
+            grid-template-columns: 1fr;
+        }
+
+        .catalog-highlight img,
+        .catalog-side-card img {
+            width: 100%;
+            height: 200px;
+        }
+
+        .catalog-strip {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .catalog-strip {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<section class="catalog-intro">
+    <div class="section-card">
+        <h2 class="fw-bold mb-2">Customer Catalog</h2>
+        <p class="text-muted mb-0">Only approved products with available stock are shown to customers, so the page stays clean, useful, and ready for shopping.</p>
+    </div>
+    {% if is_granted('ROLE_CUSTOMER') %}
+        <div class="section-card catalog-highlight">
+            <img src="/images/decor/chicken.jpg" alt="Chicken on a farm">
+            <div>
+                <div class="small text-muted mb-1">Quick access</div>
+                <h4 class="mb-2">Your cart is ready</h4>
+                <a href="{{ path('cart_index') }}" class="button">
+                    Cart <span class="ms-1">({{ cartCount }})</span>
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</section>
+
+{{ form_start(filterForm, {attr: {class: 'mb-4'}}) }}
+    <div class="section-card catalog-filter">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-5">
+                {{ form_label(filterForm.q, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>{{ form_widget(filterForm.q, {attr: {class: 'form-control border-start-0'}}) }}
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                {{ form_label(filterForm.category, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                {{ form_widget(filterForm.category, {attr: {class: 'form-select'}}) }}
+            </div>
+            <div class="col-md-4 col-lg-2">
+                {{ form_label(filterForm.sort, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                {{ form_widget(filterForm.sort, {attr: {class: 'form-select'}}) }}
+            </div>
+            <div class="col-md-4 col-lg-2 d-grid">
+                <button class="button border-0 text-center" type="submit"><i class="bi bi-funnel-fill me-1"></i>Apply</button>
+            </div>
+        </div>
+    </div>
+{{ form_end(filterForm) }}
+
+<section class="catalog-gallery">
+    <article class="catalog-feature">
+        <img src="/images/decor/piglets.jpg" alt="Cute piglets on a farm">
+        <div class="catalog-feature-copy">
+            <h3 class="text-white mb-2">A friendlier farm storefront</h3>
+            <p class="mb-0 text-light">Soft local imagery helps the market feel more alive before customers even open a product page.</p>
+        </div>
+    </article>
+    <div class="catalog-side">
+        <article class="section-card catalog-side-card">
+            <img src="/images/decor/ducklings.jpg" alt="Cute ducklings on a farm">
+            <div>
+                <h5 class="mb-2">Playful farm touch</h5>
+                <p class="mb-0 text-muted">Little animal moments make the catalog feel more welcoming and memorable.</p>
+            </div>
+        </article>
+        <article class="section-card catalog-side-card">
+            <img src="/images/decor/goat.jpg" alt="Young goat on a farm">
+            <div>
+                <h5 class="mb-2">Natural farm mood</h5>
+                <p class="mb-0 text-muted">The page stays connected to countryside life instead of looking like a plain workshop screen.</p>
+            </div>
+        </article>
+    </div>
+</section>
+
+<section class="catalog-strip">
+    <article class="section-card catalog-strip-card">
+        <img src="/images/decor/farm.jpg" alt="Farm landscape">
+        <div class="caption">
+            <h5>Farm Landscape</h5>
+            <p class="mb-0 small text-muted">A greener backdrop to reinforce the farm identity of the marketplace.</p>
+        </div>
+    </article>
+    <article class="section-card catalog-strip-card">
+        <img src="/images/decor/cows.jpg" alt="Cows on a farm">
+        <div class="caption">
+            <h5>Cows</h5>
+            <p class="mb-0 small text-muted">A friendly animal touch that makes the catalog feel more authentic.</p>
+        </div>
+    </article>
+    <article class="section-card catalog-strip-card">
+        <img src="/images/decor/sheep.jpg" alt="Sheep on a farm">
+        <div class="caption">
+            <h5>Sheep</h5>
+            <p class="mb-0 small text-muted">Soft countryside visuals keep the page warm and welcoming.</p>
+        </div>
+    </article>
+    <article class="section-card catalog-strip-card">
+        <img src="/images/decor/chicken.jpg" alt="Chicken on a farm">
+        <div class="caption">
+            <h5>Chicken</h5>
+            <p class="mb-0 small text-muted">Small rustic details help the storefront feel lively and charming.</p>
+        </div>
+    </article>
+</section>
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 catalog-products-title">
+    <div>
+        <h3 class="mb-1">Available products</h3>
+        <p class="text-muted mb-0">Browse the approved items currently visible to customers.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    {% for product in products %}
+        <div class="col-md-6 col-xl-4">
+            <div class="card border-0 h-100 overflow-hidden">
+                {% if product.image %}
+                    <img src="/{{ product.image }}" alt="{{ product.name }}" class="card-img-top product-thumb">
+                {% else %}
+                    <div class="d-flex align-items-center justify-content-center bg-light product-empty-thumb">
+                        <i class="bi bi-image text-muted fs-1"></i>
+                    </div>
+                {% endif %}
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <div>
+                            <h5 class="card-title mb-1">
+                                <a href="{{ path('market_show', {id: product.id}) }}" class="text-decoration-none text-dark">
+                                    {{ product.name }}
+                                </a>
+                            </h5>
+                            <div class="text-muted small">{{ product.category ?: 'Other' }}</div>
+                        </div>
+                        <span class="badge text-bg-success">{{ product.price|number_format(2, '.', ' ') }}</span>
+                    </div>
+                    <p class="text-muted small flex-grow-1">{{ product.description ?: 'No description provided.' }}</p>
+                    <div class="small text-muted mb-1">Farmer: {{ product.user ? product.user.name : 'N/A' }}</div>
+                    <div class="small text-muted mb-3">Farm: {{ product.farm ? product.farm.name : 'No farm' }}</div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="fw-semibold">{{ product.quantity }} {{ product.unit }} available</span>
+                        <span class="badge text-bg-light">Views {{ product.views ?? 0 }}</span>
+                    </div>
+                    <div class="mt-auto d-grid gap-2">
+                        <a href="{{ path('market_show', {id: product.id}) }}" class="button bg_green text-center">
+                            <i class="bi bi-eye me-1"></i>View details
+                        </a>
+                        {% if is_granted('ROLE_CUSTOMER') %}
+                            {{ form_start(addCartForms[product.id]) }}
+                                <div class="input-group">
+                                    {{ form_widget(addCartForms[product.id].quantity, {attr: {class: 'form-control'}}) }}
+                                    <button class="button border-0" type="submit">
+                                        <i class="bi bi-cart-plus me-1"></i>Add to cart
+                                    </button>
+                                </div>
+                            {{ form_end(addCartForms[product.id]) }}
+                        {% else %}
+                            <a href="{{ path('app_login') }}" class="button text-center">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>Login to order
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="col-12">
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-basket fs-1 d-block mb-3"></i>
+                No approved products match your current filters.
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

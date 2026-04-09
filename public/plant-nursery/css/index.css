@@ -1,0 +1,341 @@
+/*
+Template Name: Plant Nursery
+File: Layout CSS
+Author: TemplatesOnWeb
+Author URI: https://www.templateonweb.com/
+Licence: <a href="https://www.templateonweb.com/license">Website Template Licence</a>
+*/
+
+/*********************center_home****************/
+.carousel-caption{
+	background-color: var(--bg_back)!important;
+	bottom:0;
+	left:0;
+	color:var(--bs-white);
+	width:100%;
+	height:100%;
+	padding: 110px 140px 0px 140px;
+	text-align:left;
+ }
+.carousel-caption h1{
+   font-size:80px;
+ }
+
+/*********************center_home_end****************/
+
+/*********************about_h****************/
+
+.about_h1_left h1{
+	line-height:0.2em;
+}
+.rotate_1{
+	border:8px solid var(--bs-white);
+	right:50px;
+	bottom:-50px;
+}
+/*********************about_h_end****************/
+
+/*********************serv****************/
+.serv_2_left span {
+    width: 80px;
+    height: 80px;
+    line-height: 80px;
+    margin-top: -40px;
+}
+/*********************serv_end****************/
+
+
+/*********************team****************/
+.share_icon{
+	border:5px solid var(--bs-white);
+	width:50px;
+	height:50px;
+	line-height:40px;
+	bottom:80px;
+}
+.team_1_left .social_icon1{
+	display:none;
+	 transition: 0.3s;
+}
+.team_1_left:hover .social_icon1{
+	 display:block;
+	 transition: 0.3s;
+}
+/*********************team_end****************/
+
+/*********************spec****************/
+
+#spec {
+    background-image: url(../image/2.jpg);
+    background-position: center center;
+    background-size: cover;
+}
+
+/*********************spec_end****************/
+
+/*********************faq****************/
+.accordion-button {
+background:var(--bs-dark);
+color:var(--bs-white);
+padding:8px 15px;
+border: 0;
+font-size: 20px;
+text-align: left;
+}
+.accordion-button:focus {
+box-shadow: none;
+border: none;
+}
+.accordion-button:not(.collapsed) {
+background:var(--green);
+color:var(--bs-white);
+padding:8px 15px;
+}
+.accordion-body {
+padding: 20px;
+}
+.accordion-button::after {
+width: auto;
+height: auto;
+content: "+";
+font-size: 40px;
+background-image: none;
+font-weight: 100;
+color: var(--bs-white);
+transform: translateY(-4px);
+}
+.accordion-button:not(.collapsed)::after {
+width: auto;
+height: auto;
+background-image: none;
+content: "-";
+font-size: 40px;
+transform: translate(-5px, -4px);
+transform: rotate(0deg);
+}
+.accordion-item{
+border:none;
+border-radius:0;
+background:none;
+border-bottom:1px solid var(--border_light);
+margin-bottom:10px;
+}
+/*********************faq_end****************/
+
+/*********************about****************/
+.center_about {
+    background-image: url(../image/3.jpg);
+    background-position: center center;
+    background-size: cover;
+}
+
+.center_team {
+    background-image: url(../image/3.jpg);
+    background-position: center center;
+    background-size: cover;
+}
+.center_serv {
+    background-image: url(../image/2.jpg);
+    background-position: center center;
+    background-size: cover;
+}
+/*********************about_end****************/
+
+@media screen and (max-width : 767px){
+.carousel-caption {
+    position:static!important;
+	padding:15px 15px 50px 15px;
+	background:var(--bs-dark)!important;
+	text-align:left!important;
+}
+.carousel-caption h1 {
+    font-size: 30px;
+}
+.carousel-caption br {
+    display:none;
+}
+.carousel-caption p {
+    width:100%!important;
+}
+
+.rotate_1 {
+	position:static!important;
+	margin-top:20px;
+	margin-bottom:30px;
+}
+.about_h1_left h1 {
+   position:static!important;
+}
+.about_h1_left  img{
+	width:100%;
+}
+.about_h1_left{
+	text-align:center;
+}
+.about_h1_right  .font_60 {
+	font-size:36px;
+}
+.about_h1_right {
+	margin-top:30px;
+	padding-left:0!important;
+	padding-right:0!important;
+}
+.about_h1_right_inner_left{
+	margin-top:20px;
+}
+.about_pg .about_h1_left{
+	margin-top:20px;
+}
+.serv_2_left {
+	margin-top:10px;
+	margin-bottom:10px;
+}
+.choose_1_right {
+	margin-top:20px;
+	padding-left:0!important;
+}
+.choose_1_right_inner_right{
+	 margin-top:20px;
+}
+.proj_1_left br{
+	display:none;
+}
+.proj_1_right {
+	text-align:left!important;
+	padding-top:20px!important;
+}
+
+.team_1_left {
+	margin-top:10px;
+	margin-bottom:10px;
+}
+.spec_1_left {
+	margin-top:10px;
+	margin-bottom:10px;
+}
+.faq_1_left {
+	padding-top:0!important;
+	padding-right:0!important;
+	margin-bottom:20px;
+}
+ .testim_1{
+	padding-left:10px;
+	padding-right:10px;
+  } 
+
+
+.choose_pg1_left_inner_left{
+	margin-top:10px;
+	margin-bottom:10px;
+}
+.choose_pg1_right{
+	margin-top:20px;
+} 
+.touch_1_right{
+	padding-left:0!important;
+	margin-top:20px;
+}
+ }
+
+
+@media (min-width:576px) and (max-width:767px) {
+.about_h1_left  img{
+	display:block;
+	margin-left:auto;
+	margin-right:auto;
+	width:auto;
+}
+.about_h1_left  h1{
+	margin-top:50px!important;
+}
+ }
+ 
+@media (min-width:768px) and (max-width:991px) {
+
+.center_home img{
+   min-height:550px;
+ }
+.carousel-caption h1 {
+    font-size: 55px;
+}
+.carousel-caption br {
+    display:none;
+}
+.carousel-caption p {
+    width:70%!important;
+}
+.carousel-caption{
+	padding: 70px 90px 0px 90px;
+ }
+
+.about_h1_right {
+	padding-left:0!important;
+	padding-right:0!important;
+}
+.rotate_1 {
+    right: 20px;
+    bottom: -100px;
+}
+.about_h1_right_inner_left h4{
+	font-size:16px;
+}
+.serv_2_left {
+	margin-top:10px;
+	margin-bottom:10px;
+}
+.choose_1_right {
+	padding-left:0!important;
+}
+.team_1_left {
+	margin-top:10px;
+	margin-bottom:10px;
+}
+.faq_1_left {
+	padding-top:0!important;
+	padding-right:0!important;
+}
+ .testim_1{
+	padding-left:10px;
+	padding-right:10px;
+  } 
+ }
+
+@media (min-width:992px) and (max-width:1200px) {
+.center_home img{
+   min-height:700px;
+ }
+.carousel-caption h1 {
+    font-size: 50px;
+}
+.carousel-caption{
+	padding: 100px 120px 0px 120px;
+ }
+.serv_2_left  h4{
+	 font-size: 18px;
+}
+ .faq_1_left {
+	padding-top:0!important;
+	padding-right:0!important;
+}
+ .testim_1{
+	padding-left:10px;
+	padding-right:10px;
+  } 
+ }
+
+@media (min-width:1201px) and (max-width:1300px) {
+.center_home img{
+   min-height:680px;
+ }
+
+ }
+@media screen and (min-width : 1400px){
+.carousel-caption{
+	padding: 150px 120px 0px 120px;
+ }
+.rotate_1 {
+     right: 120px;
+}
+ }
+
+

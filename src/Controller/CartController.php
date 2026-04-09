@@ -5,6 +5,8 @@ namespace App\Controller;
 use App\Entity\Product;
 use App\Entity\ShoppingCart;
 use App\Entity\User;
+use App\Form\AddToCartType;
+use App\Form\CartQuantityType;
 use App\Repository\ShoppingCartRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,10 +24,20 @@ class CartController extends AbstractController
     {
         $user = $this->getAuthenticatedUser();
         $items = $shoppingCartRepository->findCartForUser($user);
+        $updateForms = [];
 
-        return $this->render('cart/index.html.twig', [
+        foreach ($items as $item) {
+            $updateForms[$item->getId()] = $this->createForm(CartQuantityType::class, null, [
+                'action' => $this->generateUrl('cart_update', ['id' => $item->getId()]),
+                'max_quantity' => max(1, (int) ($item->getProduct()?->getQuantity() ?? 1)),
+                'current_quantity' => max(1, (int) $item->getQuantity()),
+            ])->createView();
+        }
+
+        return $this->render('market/customer/cart.html.twig', [
             'items' => $items,
             'cartTotal' => $shoppingCartRepository->getCartTotal($user),
+            'updateForms' => $updateForms,
         ]);
     }
 
@@ -36,7 +48,12 @@ class CartController extends AbstractController
         ShoppingCartRepository $shoppingCartRepository,
         EntityManagerInterface $entityManager
     ): Response {
-        if (!$this->isCsrfTokenValid('cart_add_' . $product->getId(), $request->request->get('_token'))) {
+        $form = $this->createForm(AddToCartType::class, null, [
+            'max_quantity' => max(1, (int) $product->getQuantity()),
+        ]);
+        $form->handleRequest($request);
+
+        if (!$form->isSubmitted() || !$form->isValid()) {
             $this->addFlash('error', 'Invalid request.');
             return $this->redirectToRoute('market_index');
         }
@@ -46,7 +63,8 @@ class CartController extends AbstractController
             return $this->redirectToRoute('market_index');
         }
 
-        $quantity = max(1, (int) $request->request->get('quantity', 1));
+        $formData = $form->getData();
+        $quantity = max(1, (int) ($formData['quantity'] ?? 1));
         $quantity = min($quantity, (int) $product->getQuantity());
 
         $user = $this->getAuthenticatedUser();
@@ -75,13 +93,20 @@ class CartController extends AbstractController
     {
         $this->denyAccessUnlessCartOwner($shoppingCart);
 
-        if (!$this->isCsrfTokenValid('cart_update_' . $shoppingCart->getId(), $request->request->get('_token'))) {
+        $maxQuantity = max(1, (int) ($shoppingCart->getProduct()?->getQuantity() ?? 1));
+        $form = $this->createForm(CartQuantityType::class, null, [
+            'max_quantity' => $maxQuantity,
+            'current_quantity' => max(1, (int) $shoppingCart->getQuantity()),
+        ]);
+        $form->handleRequest($request);
+
+        if (!$form->isSubmitted() || !$form->isValid()) {
             $this->addFlash('error', 'Invalid request.');
             return $this->redirectToRoute('cart_index');
         }
 
-        $maxQuantity = (int) ($shoppingCart->getProduct()?->getQuantity() ?? 1);
-        $quantity = max(1, min((int) $request->request->get('quantity', 1), max(1, $maxQuantity)));
+        $formData = $form->getData();
+        $quantity = max(1, min((int) ($formData['quantity'] ?? 1), $maxQuantity));
 
         $shoppingCart->setQuantity($quantity);
         $shoppingCart->setUpdatedAt(new \DateTimeImmutable());

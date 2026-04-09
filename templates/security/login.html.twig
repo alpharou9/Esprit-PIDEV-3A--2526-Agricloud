@@ -28,22 +28,25 @@
                     </div>
                 {% endif %}
 
-                <form method="post" action="{{ path('app_login') }}">
+                {{ form_start(loginForm, {
+                    action: path('app_login'),
+                    method: 'POST'
+                }) }}
                     <div class="mb-3">
-                        <label for="email" class="form-label fw-semibold">Email</label>
-                        <input type="email" id="email" name="_username" class="form-control"
-                               value="{{ last_username }}" autofocus autocomplete="email" required>
+                        {{ form_label(loginForm._username, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(loginForm._username) }}
+                        {{ form_errors(loginForm._username) }}
                     </div>
                     <div class="mb-4">
-                        <label for="password" class="form-label fw-semibold">Password</label>
-                        <input type="password" id="password" name="_password" class="form-control"
-                               autocomplete="current-password" required>
+                        {{ form_label(loginForm._password, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(loginForm._password) }}
+                        {{ form_errors(loginForm._password) }}
                     </div>
-                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                    {{ form_widget(loginForm._csrf_token) }}
                     <button type="submit" class="btn btn-success w-100 fw-semibold">
                         <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
                     </button>
-                </form>
+                {{ form_end(loginForm) }}
             </div>
         </div>
     </div>

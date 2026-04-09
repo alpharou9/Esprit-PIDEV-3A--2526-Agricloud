@@ -1,0 +1,116 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Products - AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">My Products</h3>
+        <p class="text-muted mb-0">Farmers can create, edit, delete, and monitor only their own products.</p>
+    </div>
+    <a href="{{ path('product_new') }}" class="btn btn-success">
+        <i class="bi bi-plus-circle me-1"></i>Add product
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form method="get" class="mb-4">
+            <div class="p-3 p-lg-4 rounded-4" style="background: linear-gradient(135deg, rgba(47,125,50,.08), rgba(91,160,95,.12)); border: 1px solid rgba(47,125,50,.12);">
+                <div class="row g-3 align-items-end">
+                    <div class="col-lg-4">
+                        <label for="q" class="form-label fw-semibold">Search</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                            <input id="q" type="text" name="q" value="{{ q }}" class="form-control border-start-0" placeholder="Name or category">
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <label for="category" class="form-label fw-semibold">Category</label>
+                        <select id="category" name="category" class="form-select">
+                            <option value="">All categories</option>
+                            {% for category in categories %}
+                                <option value="{{ category }}" {{ selectedCategory == category ? 'selected' : '' }}>{{ category }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <label for="farm" class="form-label fw-semibold">Farm</label>
+                        <select id="farm" name="farm" class="form-select">
+                            <option value="">All farms</option>
+                            {% for farm in farms %}
+                                <option value="{{ farm.id }}" {{ selectedFarm == farm.id ? 'selected' : '' }}>{{ farm.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <label for="status" class="form-label fw-semibold">Status</label>
+                        <select id="status" name="status" class="form-select">
+                            <option value="">All statuses</option>
+                            {% for value, label in statuses %}
+                                <option value="{{ value }}" {{ selectedStatus == value ? 'selected' : '' }}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 col-lg-2">
+                        <label for="sort" class="form-label fw-semibold">Sort by</label>
+                        <select id="sort" name="sort" class="form-select">
+                            {% for value, label in sortOptions %}
+                                <option value="{{ value }}" {{ selectedSort == value ? 'selected' : '' }}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 d-flex flex-wrap gap-2">
+                        <button class="btn btn-success"><i class="bi bi-funnel-fill me-1"></i>Apply filters</button>
+                        <a href="{{ path('product_index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Farm</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for product in products %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">{{ product.name }}</div>
+                            <div class="text-muted small">{{ product.category ?: 'No category' }}</div>
+                        </td>
+                        <td>{{ product.farm ? product.farm.name : 'No farm' }}</td>
+                        <td>{{ product.price|number_format(2, '.', ' ') }}</td>
+                        <td>{{ product.quantity }} {{ product.unit }}</td>
+                        <td>
+                            <span class="badge text-bg-{{ product.status == 'approved' ? 'success' : (product.status == 'pending' ? 'warning' : (product.status == 'sold_out' ? 'secondary' : 'danger')) }}">
+                                {{ product.status|capitalize }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ path('product_edit', {id: product.id}) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <form method="post" action="{{ path('product_delete', {id: product.id}) }}" class="d-inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete_product_' ~ product.id) }}">
+                                <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this product?')">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No products found.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -4,41 +4,105 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}AgriCloud{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=Raleway:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         :root {
-            --agri-green: #2f7d32;
-            --agri-green-dark: #1f5c24;
-            --agri-cream: #f7f3e8;
+            --agri-green: #5cb874;
+            --agri-green-dark: #449d5f;
+            --agri-green-deep: #214c28;
+            --agri-cream: #f7fbf8;
             --agri-ink: #233127;
+            --agri-muted: #617368;
+            --agri-border: rgba(92, 184, 116, 0.16);
         }
         body {
+            font-family: "Open Sans", sans-serif;
             background:
-                radial-gradient(circle at top right, rgba(168, 213, 186, 0.28), transparent 28%),
-                linear-gradient(180deg, #f9fbf7 0%, var(--agri-cream) 100%);
+                radial-gradient(circle at top right, rgba(92, 184, 116, 0.18), transparent 24%),
+                radial-gradient(circle at bottom left, rgba(68, 157, 95, 0.12), transparent 18%),
+                linear-gradient(180deg, #fbfefc 0%, var(--agri-cream) 100%);
             color: var(--agri-ink);
         }
-        .sidebar {
-            min-height: calc(100vh - 72px);
-            background: rgba(255, 255, 255, 0.86);
-            border-right: 1px solid rgba(47, 125, 50, 0.14);
-            backdrop-filter: blur(14px);
+        h1, h2, h3, h4, h5, h6, .fw-bold, .navbar-brand {
+            font-family: "Raleway", sans-serif;
         }
-        .sidebar a {
+        .workspace-shell {
+            max-width: 1340px;
+            margin: 0 auto;
+            padding: 1.35rem 1rem 2.5rem;
+        }
+        .panel-box {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(92, 184, 116, 0.32);
+            border-radius: 26px;
+            box-shadow: 0 20px 42px rgba(35, 49, 39, 0.08);
+        }
+        .tophead-box {
+            padding: 1.2rem 1.35rem;
+            margin-bottom: 1rem;
+        }
+        .main-box {
+            padding: 1rem;
+        }
+        .footer-box {
+            padding: 1rem 1.25rem;
+            margin-top: 1rem;
+            color: var(--agri-muted);
+        }
+        .role-navbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .65rem;
+            margin-top: 1rem;
+        }
+        .role-navbar a {
+            text-decoration: none;
+        }
+        .nav-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .65rem 1rem;
+            border-radius: 999px;
+            color: var(--agri-green-deep);
+            background: rgba(92, 184, 116, 0.08);
+            border: 1px solid rgba(92, 184, 116, 0.12);
+            font-weight: 600;
+            transition: all .2s ease;
+        }
+        .nav-pill:hover,
+        .nav-pill.active {
+            color: #fff;
+            background: linear-gradient(135deg, var(--agri-green) 0%, var(--agri-green-dark) 100%);
+            border-color: var(--agri-green);
+        }
+        .admin-sidebar {
+            min-height: 100%;
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid var(--agri-border);
+            backdrop-filter: blur(14px);
+            box-shadow: 0 18px 40px rgba(35, 49, 39, 0.06);
+            border-radius: 22px;
+            padding: 1rem;
+        }
+        .admin-sidebar a {
             color: #47604d;
             text-decoration: none;
-            padding: 10px 12px;
-            border-radius: 12px;
+            padding: 11px 13px;
+            border-radius: 14px;
             display: block;
             transition: all .2s ease;
         }
-        .sidebar a:hover, .sidebar a.active {
-            background: linear-gradient(135deg, var(--agri-green) 0%, #5ba05f 100%);
+        .admin-sidebar a:hover, .admin-sidebar a.active {
+            background: linear-gradient(135deg, var(--agri-green) 0%, var(--agri-green-dark) 100%);
             color: #fff;
-            box-shadow: 0 10px 24px rgba(47, 125, 50, 0.18);
+            box-shadow: 0 14px 28px rgba(92, 184, 116, 0.24);
         }
-        .sidebar .nav-section {
+        .admin-sidebar .nav-section {
             font-size: .72rem;
             font-weight: 700;
             letter-spacing: .08em;
@@ -48,21 +112,43 @@
         }
         .topbar {
             height: 72px;
-            background: linear-gradient(135deg, var(--agri-green-dark) 0%, var(--agri-green) 55%, #77b255 100%);
-            box-shadow: 0 18px 40px rgba(31, 92, 36, 0.2);
+            background: linear-gradient(135deg, var(--agri-green-deep) 0%, var(--agri-green-dark) 45%, var(--agri-green) 100%);
+            box-shadow: 0 18px 40px rgba(31, 92, 36, 0.18);
         }
         .brand-pill {
-            padding: .55rem .9rem;
+            padding: .65rem 1rem;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.18);
         }
         .content-shell {
-            background: rgba(255, 255, 255, 0.72);
-            border: 1px solid rgba(47, 125, 50, 0.08);
-            border-radius: 24px;
-            box-shadow: 0 16px 36px rgba(35, 49, 39, 0.08);
-            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid var(--agri-border);
+            border-radius: 22px;
+            padding: 1.65rem;
+        }
+        .content-shell .card {
+            border-radius: 22px;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, var(--agri-green) 0%, var(--agri-green-dark) 100%);
+            border-color: var(--agri-green);
+            box-shadow: 0 12px 24px rgba(92, 184, 116, 0.22);
+        }
+        .btn-success:hover,
+        .btn-success:focus {
+            background: linear-gradient(135deg, var(--agri-green-dark) 0%, #3f9559 100%);
+            border-color: var(--agri-green-dark);
+        }
+        .btn-outline-light:hover {
+            color: var(--agri-green-deep);
+        }
+        .btn-outline-secondary {
+            border-color: rgba(97, 115, 104, 0.28);
+            color: var(--agri-muted);
+        }
+        .badge.text-bg-success {
+            background-color: var(--agri-green) !important;
         }
     </style>
     {% block stylesheets %}{% endblock %}
@@ -91,65 +177,139 @@
     </div>
 </nav>
 
-<div class="container-fluid py-4">
-    <div class="row">
-        <nav class="col-lg-2 sidebar py-3 rounded-4">
-            {% if is_granted('ROLE_FARMER') %}
-                <a href="{{ path('dashboard') }}" class="{{ app.request.attributes.get('_route') == 'dashboard' ? 'active' : '' }}">
-                    <i class="bi bi-speedometer2 me-1"></i> Dashboard
-                </a>
-
-                <div class="nav-section mt-3">Commerce</div>
-                <a href="{{ path('product_index') }}" class="{{ app.request.attributes.get('_route') starts with 'product_' ? 'active' : '' }}">
-                    <i class="bi bi-basket me-1"></i> Products
-                </a>
-                <a href="{{ path('app_farm_index') }}" class="{{ app.request.attributes.get('_route') starts with 'app_farm_' ? 'active' : '' }}">
-                    <i class="bi bi-house-door me-1"></i> Farms
-                </a>
-                <a href="{{ path('order_index') }}" class="{{ app.request.attributes.get('_route') starts with 'order_' ? 'active' : '' }}">
-                    <i class="bi bi-receipt me-1"></i> Orders
-                </a>
-            {% endif %}
-            {% if app.user %}
-                <div class="nav-section mt-3">Account</div>
-                <a href="{{ path('profile_show') }}" class="{{ app.request.attributes.get('_route') starts with 'profile_' ? 'active' : '' }}">
-                    <i class="bi bi-person-circle me-1"></i> Profile
-                </a>
-            {% endif %}
-            <a href="{{ path('market_index') }}" class="{{ app.request.attributes.get('_route') starts with 'market_' or app.request.attributes.get('_route') starts with 'cart_' or app.request.attributes.get('_route') starts with 'customer_order_' ? 'active' : '' }}">
-                <i class="bi bi-shop me-1"></i> Front Office
-            </a>
-
-            {% if is_granted('ROLE_ADMIN') %}
-                <div class="nav-section mt-3">Administration</div>
-                <a href="{{ path('user_index') }}" class="{{ app.request.attributes.get('_route') starts with 'user_' ? 'active' : '' }}">
-                    <i class="bi bi-people me-1"></i> Users
-                </a>
-                <a href="{{ path('role_index') }}" class="{{ app.request.attributes.get('_route') starts with 'role_' ? 'active' : '' }}">
-                    <i class="bi bi-shield-check me-1"></i> Roles
-                </a>
-            {% endif %}
-        </nav>
-
-        <main class="col-lg-10 py-0 ps-lg-4">
-            <div class="content-shell">
-                {% for message in app.flashes('success') %}
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="bi bi-check-circle me-1"></i> {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-                {% for message in app.flashes('error') %}
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="bi bi-exclamation-triangle me-1"></i> {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-
-                {% block body %}{% endblock %}
+<div class="workspace-shell">
+    <section class="panel-box tophead-box">
+        {% block tophead %}
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div>
+                    <h2 class="fw-bold mb-1">{% block page_heading %}AgriCloud Workspace{% endblock %}</h2>
+                    <p class="text-muted mb-0">{% block page_intro %}Workshop-style tophead, maincontainer, and footer integration.{% endblock %}</p>
+                </div>
+                <div class="text-muted small pt-1">
+                    {% if app.user %}
+                        Connected as <strong>{{ app.user.name }}</strong>
+                    {% endif %}
+                </div>
             </div>
-        </main>
-    </div>
+
+            {% if not is_granted('ROLE_ADMIN') %}
+                <div class="role-navbar">
+                    {% if is_granted('ROLE_FARMER') %}
+                        <a href="{{ path('dashboard') }}" class="nav-pill {{ app.request.attributes.get('_route') == 'dashboard' ? 'active' : '' }}">
+                            <i class="bi bi-speedometer2"></i>Dashboard
+                        </a>
+                        <a href="{{ path('product_index') }}" class="nav-pill {{ app.request.attributes.get('_route') starts with 'product_' ? 'active' : '' }}">
+                            <i class="bi bi-basket"></i>Products
+                        </a>
+                        <a href="{{ path('app_farm_index') }}" class="nav-pill {{ app.request.attributes.get('_route') starts with 'app_farm_' ? 'active' : '' }}">
+                            <i class="bi bi-house-door"></i>Farms
+                        </a>
+                        <a href="{{ path('order_index') }}" class="nav-pill {{ app.request.attributes.get('_route') starts with 'order_' ? 'active' : '' }}">
+                            <i class="bi bi-receipt"></i>Orders
+                        </a>
+                    {% endif %}
+                    {% if app.user %}
+                        <a href="{{ path('profile_show') }}" class="nav-pill {{ app.request.attributes.get('_route') starts with 'profile_' ? 'active' : '' }}">
+                            <i class="bi bi-person-circle"></i>Profile
+                        </a>
+                    {% endif %}
+                    <a href="{{ path('market_index') }}" class="nav-pill {{ app.request.attributes.get('_route') starts with 'market_' or app.request.attributes.get('_route') starts with 'cart_' or app.request.attributes.get('_route') starts with 'customer_order_' ? 'active' : '' }}">
+                        <i class="bi bi-shop"></i>Front Office
+                    </a>
+                </div>
+            {% endif %}
+        {% endblock %}
+    </section>
+
+    <section class="panel-box main-box">
+        {% block maincontainer %}
+            <div class="row g-3">
+                {% if is_granted('ROLE_ADMIN') %}
+                    <aside class="col-lg-3">
+                        <nav class="admin-sidebar">
+                            <a href="{{ path('dashboard') }}" class="{{ app.request.attributes.get('_route') == 'dashboard' ? 'active' : '' }}">
+                                <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                            </a>
+
+                            <div class="nav-section mt-3">Commerce</div>
+                            <a href="{{ path('product_index') }}" class="{{ app.request.attributes.get('_route') starts with 'product_' ? 'active' : '' }}">
+                                <i class="bi bi-basket me-1"></i> Products
+                            </a>
+                            <a href="{{ path('app_farm_index') }}" class="{{ app.request.attributes.get('_route') starts with 'app_farm_' ? 'active' : '' }}">
+                                <i class="bi bi-house-door me-1"></i> Farms
+                            </a>
+                            <a href="{{ path('order_index') }}" class="{{ app.request.attributes.get('_route') starts with 'order_' ? 'active' : '' }}">
+                                <i class="bi bi-receipt me-1"></i> Orders
+                            </a>
+                            <a href="{{ path('market_index') }}" class="{{ app.request.attributes.get('_route') starts with 'market_' or app.request.attributes.get('_route') starts with 'cart_' or app.request.attributes.get('_route') starts with 'customer_order_' ? 'active' : '' }}">
+                                <i class="bi bi-shop me-1"></i> Front Office
+                            </a>
+
+                            <div class="nav-section mt-3">Administration</div>
+                            <a href="{{ path('admin_product_pending') }}" class="{{ app.request.attributes.get('_route') starts with 'admin_product_' ? 'active' : '' }}">
+                                <i class="bi bi-patch-check me-1"></i> Product Review
+                            </a>
+                            <a href="{{ path('user_index') }}" class="{{ app.request.attributes.get('_route') starts with 'user_' ? 'active' : '' }}">
+                                <i class="bi bi-people me-1"></i> Users
+                            </a>
+                            <a href="{{ path('role_index') }}" class="{{ app.request.attributes.get('_route') starts with 'role_' ? 'active' : '' }}">
+                                <i class="bi bi-shield-check me-1"></i> Roles
+                            </a>
+
+                            <div class="nav-section mt-3">Account</div>
+                            <a href="{{ path('profile_show') }}" class="{{ app.request.attributes.get('_route') starts with 'profile_' ? 'active' : '' }}">
+                                <i class="bi bi-person-circle me-1"></i> Profile
+                            </a>
+                        </nav>
+                    </aside>
+                    <div class="col-lg-9">
+                        <div class="content-shell">
+                            {% for message in app.flashes('success') %}
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-check-circle me-1"></i> {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                            {% for message in app.flashes('error') %}
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-exclamation-triangle me-1"></i> {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+
+                            {{ block('body') }}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="col-12">
+                        <div class="content-shell">
+                            {% for message in app.flashes('success') %}
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-check-circle me-1"></i> {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                            {% for message in app.flashes('error') %}
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-exclamation-triangle me-1"></i> {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+
+                            {{ block('body') }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endblock %}
+    </section>
+
+    <section class="panel-box footer-box">
+        {% block footer %}
+            <div></div>
+        {% endblock %}
+    </section>
+                {# legacy block position kept inside maincontainer wrapper #}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

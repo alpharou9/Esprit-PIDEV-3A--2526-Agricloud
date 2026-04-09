@@ -4,85 +4,515 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}AgriCloud Market{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Philosopher:wght@400;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="/agriculture-farm/css/font-awesome.min.css" rel="stylesheet">
     <style>
         :root {
-            --market-green: #2f7d32;
-            --market-sand: #f6f1e5;
-            --market-ink: #223228;
+            --market-green: #6ea61f;
+            --market-green-dark: #466e14;
+            --market-cream: #f8f6ed;
+            --market-soft: #eef5e1;
+            --market-soil: #5a402d;
+            --market-text: #23301c;
         }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            color: var(--market-ink);
+            margin: 0;
+            font-family: 'Manrope', sans-serif;
+            color: var(--market-text);
             background:
-                radial-gradient(circle at top left, rgba(129, 199, 132, 0.18), transparent 22%),
-                linear-gradient(180deg, #fffef9 0%, var(--market-sand) 100%);
+                radial-gradient(circle at top left, rgba(163, 204, 56, 0.18), transparent 26%),
+                linear-gradient(180deg, #fdfcf7 0%, #f5f8ec 100%);
         }
-        .market-tophead {
-            background: linear-gradient(135deg, #214c28 0%, var(--market-green) 52%, #86b85d 100%);
-            color: #fff;
-            padding: 1rem 0;
-            box-shadow: 0 16px 40px rgba(33, 76, 40, 0.18);
+
+        h1, h2, h3, h4, h5, h6, .brand-word, .market-pill {
+            font-family: 'Philosopher', serif;
         }
-        .market-tophead a { color: inherit; text-decoration: none; }
+
+        a {
+            text-decoration: none;
+        }
+
+        img {
+            display: block;
+            max-width: 100%;
+        }
+
         .front-shell {
-            max-width: 1240px;
+            width: min(1240px, calc(100% - 32px));
             margin: 0 auto;
-            padding: 2rem 1rem 3rem;
         }
-        .maincontainer {
-            background: rgba(255, 255, 255, 0.82);
-            border: 1px solid rgba(47, 125, 50, 0.12);
+
+        .market-info {
+            background: #fff;
+            border-bottom: 1px solid rgba(110, 166, 31, 0.14);
+            color: #5b6449;
+            font-size: .95rem;
+        }
+
+        .market-info-inner {
+            min-height: 48px;
+        }
+
+        .info-item {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+        }
+
+        .info-item i,
+        .social-link {
+            color: var(--market-green);
+        }
+
+        .social-link {
+            font-size: 1.1rem;
+        }
+
+        .market-header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(110, 166, 31, 0.14);
+        }
+
+        .market-header-inner {
+            min-height: 86px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .brand-mark {
+            display: inline-flex;
+            align-items: center;
+            gap: .8rem;
+            color: var(--market-text);
+        }
+
+        .brand-mark i {
+            font-size: 2rem;
+            color: #f1b514;
+        }
+
+        .brand-word {
+            font-size: 2.6rem;
+            line-height: 1;
+            font-weight: 700;
+            letter-spacing: -.03em;
+        }
+
+        .top-links {
+            display: flex;
+            align-items: center;
+            gap: .45rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-chip,
+        .market-cta,
+        .button,
+        .button_1 {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            min-height: 48px;
+            padding: 0 1.15rem;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            font-weight: 700;
+            transition: all .2s ease;
+        }
+
+        .nav-chip {
+            color: #4a5a33;
+        }
+
+        .nav-chip:hover,
+        .nav-chip.active {
+            color: var(--market-green-dark);
+            background: rgba(110, 166, 31, 0.12);
+        }
+
+        .market-cta,
+        .button,
+        .bg_green {
+            color: #fff !important;
+            background: linear-gradient(135deg, var(--market-green) 0%, #86bf29 100%);
+            border-color: var(--market-green);
+            box-shadow: 0 12px 24px rgba(110, 166, 31, 0.18);
+        }
+
+        .market-cta:hover,
+        .button:hover,
+        .bg_green:hover {
+            color: #fff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 16px 28px rgba(110, 166, 31, 0.24);
+        }
+
+        .button_1 {
+            background: #fff;
+            border-color: rgba(110, 166, 31, 0.28);
+            color: var(--market-green-dark);
+        }
+
+        .tophead-box {
+            padding: 36px 0 28px;
+        }
+
+        .hero-shell {
+            border-radius: 34px;
+            overflow: hidden;
+            background:
+                linear-gradient(125deg, rgba(31, 49, 20, 0.86) 0%, rgba(80, 56, 37, 0.78) 46%, rgba(110, 166, 31, 0.44) 100%),
+                url('/agriculture-farm/img/1.jpg') center/cover no-repeat;
+            box-shadow: 0 28px 60px rgba(58, 72, 30, 0.18);
+        }
+
+        .market-hero-content {
+            min-height: 560px;
+            padding: 64px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.08fr) minmax(280px, .82fr);
+            gap: 2.5rem;
+            align-items: center;
+            color: #fff;
+        }
+
+        .market-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: .55rem;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #fff;
+            border-radius: 999px;
+            padding: 12px 22px;
+            margin-bottom: 1.5rem;
+            font-size: 1.35rem;
+        }
+
+        .market-hero-content h1 {
+            margin-bottom: 1.25rem;
+            font-size: clamp(3rem, 5vw, 5.4rem);
+            line-height: .96;
+            color: #fff;
+        }
+
+        .market-hero-content p {
+            max-width: 640px;
+            margin: 0;
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 1.12rem;
+            line-height: 1.85;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .9rem;
+            margin-top: 2rem;
+        }
+
+        .hero-visual {
+            position: relative;
+            min-height: 430px;
+        }
+
+        .hero-visual-card {
+            position: absolute;
+            overflow: hidden;
             border-radius: 28px;
-            box-shadow: 0 20px 48px rgba(34, 50, 40, 0.08);
-            padding: 1.5rem;
+            background: #fff;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.22);
         }
+
+        .hero-visual-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hero-visual-card.main {
+            inset: 0 42px 44px 0;
+        }
+
+        .hero-visual-card.side {
+            width: 190px;
+            height: 230px;
+            right: 0;
+            top: 28px;
+            border: 6px solid rgba(255, 255, 255, 0.9);
+        }
+
+        .hero-visual-badge {
+            position: absolute;
+            left: 26px;
+            bottom: 20px;
+            padding: .95rem 1.1rem;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--market-green-dark);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .hero-visual-badge strong {
+            display: block;
+            font-size: 1.05rem;
+        }
+
+        .hero-visual-badge span {
+            font-size: .9rem;
+            color: #667455;
+        }
+
+        .main-wrap {
+            padding-bottom: 3.5rem;
+        }
+
+        .maincontainer {
+            padding: 0;
+            background: transparent;
+        }
+
+        .section-card,
+        .card {
+            border: 1px solid rgba(90, 64, 45, 0.08) !important;
+            border-radius: 28px !important;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 14px 40px rgba(54, 67, 28, 0.08);
+        }
+
+        .section-card {
+            padding: 1.75rem;
+        }
+
+        .form-control,
+        .form-select,
+        .input-group-text {
+            min-height: 52px;
+            border-radius: 18px !important;
+            border-color: rgba(87, 112, 48, 0.14);
+            box-shadow: none !important;
+        }
+
+        .input-group > .form-control,
+        .input-group > .form-select {
+            border-radius: 0 18px 18px 0 !important;
+        }
+
+        .input-group > .input-group-text {
+            border-radius: 18px 0 0 18px !important;
+        }
+
+        .form-label {
+            margin-bottom: .55rem;
+            color: #43502f;
+        }
+
+        .text-success {
+            color: var(--market-green-dark) !important;
+        }
+
+        .badge.text-bg-success {
+            background: rgba(110, 166, 31, 0.16) !important;
+            color: var(--market-green-dark) !important;
+        }
+
+        .badge.text-bg-light {
+            background: #f3f0e7 !important;
+            color: #6b624e !important;
+        }
+
         .market-footer {
-            padding: 2rem 0 3rem;
-            color: #627568;
+            padding: 0 0 2.5rem;
+        }
+
+        .footer-card {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: center;
+            padding: 1.4rem 1.7rem;
+            border-radius: 24px;
+            background: #24311a;
+            color: #eef6dc;
+            box-shadow: 0 20px 36px rgba(28, 37, 20, 0.18);
+        }
+
+        .footer-card p,
+        .footer-card span {
+            color: #dbe7c5;
+        }
+
+        @media (max-width: 991.98px) {
+            .market-header-inner {
+                min-height: auto;
+                padding: 1rem 0;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .market-hero-content {
+                min-height: auto;
+                padding: 44px 24px;
+                grid-template-columns: 1fr;
+            }
+
+            .hero-visual {
+                min-height: 360px;
+                max-width: 420px;
+                width: 100%;
+                margin: 0 auto;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .front-shell {
+                width: min(100% - 24px, 1240px);
+            }
+
+            .market-info-inner {
+                padding: .85rem 0;
+            }
+
+            .brand-word {
+                font-size: 2rem;
+            }
+
+            .top-links {
+                width: 100%;
+            }
+
+            .nav-chip,
+            .market-cta,
+            .button,
+            .button_1 {
+                width: 100%;
+            }
+
+            .hero-visual {
+                min-height: 300px;
+            }
+
+            .hero-visual-card.main {
+                inset: 0 20px 34px 0;
+            }
+
+            .hero-visual-card.side {
+                width: 140px;
+                height: 170px;
+            }
+
+            .footer-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
     </style>
     {% block stylesheets %}{% endblock %}
 </head>
 <body>
-    <header class="market-tophead">
-        <div class="front-shell py-0">
-            {% block tophead %}
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                    <a href="{{ path('market_index') }}" class="fs-4 fw-bold">
-                        <i class="bi bi-tree-fill me-2"></i>AgriCloud Market
-                    </a>
-                    <div class="d-flex align-items-center gap-3">
-                        <a href="{{ path('market_index') }}" class="small fw-semibold">Catalog</a>
-                        {% if is_granted('ROLE_CUSTOMER') %}
-                            <a href="{{ path('cart_index') }}" class="small fw-semibold">Cart</a>
-                            <a href="{{ path('customer_order_index') }}" class="small fw-semibold">My Orders</a>
-                        {% endif %}
-                        {% if is_granted('ROLE_FARMER') %}
-                            <a href="{{ path('dashboard') }}" class="small fw-semibold">Backoffice</a>
-                        {% endif %}
-                        {% if app.user %}
-                            <span class="badge text-bg-light">{{ app.user.name }}</span>
-                            <a href="{{ path('app_logout') }}" class="small fw-semibold">Logout</a>
-                        {% else %}
-                            <a href="{{ path('app_login') }}" class="small fw-semibold">Login</a>
-                        {% endif %}
-                    </div>
+    <section class="market-info">
+        <div class="front-shell">
+            <div class="market-info-inner d-flex flex-wrap justify-content-between gap-3 align-items-center">
+                <div class="d-flex flex-wrap gap-3">
+                    <span class="info-item"><i class="fa fa-map-marker"></i>Tunis, Tunisia</span>
+                    <span class="info-item"><i class="fa fa-mobile"></i>+216 Market Support</span>
+                    <span class="info-item"><i class="fa fa-clock-o"></i>6:00 - 21:00</span>
                 </div>
+                <div class="d-flex gap-3">
+                    <a href="#" class="social-link"><i class="fa fa-facebook"></i></a>
+                    <a href="#" class="social-link"><i class="fa fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fa fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <header class="market-header">
+        <div class="front-shell market-header-inner">
+            {% block tophead %}
+                <a href="{{ path('market_index') }}" class="brand-mark">
+                    <i class="fa fa-sun-o"></i>
+                    <span class="brand-word">AgriCloud</span>
+                </a>
+                <nav class="top-links">
+                    <a href="{{ path('market_index') }}" class="nav-chip">Catalog</a>
+                    {% if is_granted('ROLE_CUSTOMER') %}
+                        <a href="{{ path('cart_index') }}" class="nav-chip">Cart</a>
+                        <a href="{{ path('customer_order_index') }}" class="nav-chip">My Orders</a>
+                    {% endif %}
+                    {% if is_granted('ROLE_FARMER') or is_granted('ROLE_ADMIN') %}
+                        <a href="{{ path('dashboard') }}" class="nav-chip">Backoffice</a>
+                    {% endif %}
+                    {% if app.user %}
+                        <a href="{{ path('app_logout') }}" class="market-cta">Logout</a>
+                    {% else %}
+                        <a href="{{ path('app_login') }}" class="market-cta">Login</a>
+                    {% endif %}
+                </nav>
             {% endblock %}
         </div>
     </header>
 
-    <div class="front-shell">
+    <section class="tophead-box">
+        <div class="front-shell">
+            <div class="hero-shell">
+                <div class="market-hero-content">
+                    <div>
+                        <span class="market-pill"><i class="bi bi-flower1"></i>Welcome to AgriCloud</span>
+                        <h1>{% block hero_title %}Fresh Farms, Greener Choices{% endblock %}</h1>
+                        <p>{% block hero_text %}Browse approved products, manage your cart, and explore a brighter marketplace designed around local farms, healthy food, and a more welcoming shopping flow.{% endblock %}</p>
+                        <div class="hero-actions">
+                            <a href="{{ path('market_index') }}" class="button">Browse catalog</a>
+                            {% if is_granted('ROLE_CUSTOMER') %}
+                                <a href="{{ path('cart_index') }}" class="button_1">Open my cart</a>
+                            {% else %}
+                                <a href="{{ path('app_login') }}" class="button_1">Login to order</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="hero-visual">
+                        <div class="hero-visual-card main">
+                            <img src="/images/decor/farm.jpg" alt="Farm landscape">
+                        </div>
+                        <div class="hero-visual-card side">
+                            <img src="/images/decor/goat.jpg" alt="Goat on a farm">
+                        </div>
+                        <div class="hero-visual-badge">
+                            <strong>Local farms, real products</strong>
+                            <span>Curated visuals from your own project assets.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="front-shell main-wrap">
         <div class="maincontainer">
             {% for message in app.flashes('success') %}
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <div class="alert alert-success alert-dismissible fade show section-card mb-4" role="alert">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             {% endfor %}
             {% for message in app.flashes('error') %}
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <div class="alert alert-danger alert-dismissible fade show section-card mb-4" role="alert">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
@@ -90,14 +520,19 @@
 
             {% block maincontainer %}{% endblock %}
         </div>
-    </div>
+    </main>
 
     <footer class="market-footer">
-        <div class="front-shell py-0">
+        <div class="front-shell">
             {% block footer %}
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <span>AgriCloud workshop template integration: front office + back office.</span>
-                    <span class="small">Products, cart, search, sort, filter.</span>
+                <div class="footer-card">
+                    <div>
+                        <h4 class="text-white mb-2">AgriCloud</h4>
+                        <p class="mb-0">A greener market experience for customers, farmers, and admins inside the same Symfony workshop project.</p>
+                    </div>
+                    <div class="text-md-end">
+                        <span>Customer catalog, cart, and role-based market flow.</span>
+                    </div>
                 </div>
             {% endblock %}
         </div>

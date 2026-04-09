@@ -1,0 +1,75 @@
+{% extends 'front_base.html.twig' %}
+
+{% block title %}My Cart - AgriCloud{% endblock %}
+{% block hero_title %}Your Shopping Cart{% endblock %}
+{% block hero_text %}Review selected products, update quantities, and keep your customer cart synchronized with the approved market catalog.{% endblock %}
+
+{% block maincontainer %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">My Cart</h2>
+        <p class="text-muted mb-0">Customers can only manage their own shopping cart.</p>
+    </div>
+    <a href="{{ path('market_index') }}" class="button">
+        <i class="bi bi-arrow-left me-1"></i>Continue shopping
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        {% if items is empty %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-cart-x fs-1 d-block mb-3"></i>
+                Your cart is empty.
+            </div>
+        {% else %}
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Seller</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Subtotal</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ item.product ? item.product.name : 'N/A' }}</div>
+                                <div class="text-muted small">{{ item.product and item.product.farm ? item.product.farm.name : 'No farm' }}</div>
+                            </td>
+                            <td>{{ item.product and item.product.user ? item.product.user.name : 'N/A' }}</td>
+                            <td>{{ item.product ? item.product.price|number_format(2, '.', ' ') : '0.00' }}</td>
+                            <td style="max-width: 170px;">
+                                {{ form_start(updateForms[item.id], {attr: {class: 'd-flex gap-2'}}) }}
+                                    {{ form_widget(updateForms[item.id].quantity, {attr: {class: 'form-control form-control-sm'}}) }}
+                                    <button class="button border-0 px-3 py-2" type="submit">Update</button>
+                                {{ form_end(updateForms[item.id]) }}
+                            </td>
+                            <td>{{ ((item.product ? item.product.price : 0) * item.quantity)|number_format(2, '.', ' ') }}</td>
+                            <td class="text-end">
+                                <form method="post" action="{{ path('cart_remove', {id: item.id}) }}" class="d-inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('cart_remove_' ~ item.id) }}">
+                                    <button class="btn btn-sm btn-outline-danger">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <div class="p-3 bg-white border_light" style="min-width: 260px;">
+                    <div class="small text-uppercase text-muted fw-semibold">Cart total</div>
+                    <div class="display-6 fw-bold">{{ cartTotal|number_format(2, '.', ' ') }}</div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

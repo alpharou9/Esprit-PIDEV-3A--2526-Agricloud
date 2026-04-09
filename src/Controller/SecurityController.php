@@ -2,24 +2,34 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
+use App\Form\LoginType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
-use App\Entity\User;
 
 class SecurityController extends AbstractController
 {
     #[Route('/login', name: 'app_login')]
-    public function login(AuthenticationUtils $authenticationUtils): Response
+    public function login(
+        AuthenticationUtils $authenticationUtils,
+        CsrfTokenManagerInterface $csrfTokenManager
+    ): Response
     {
         $user = $this->getUser();
         if ($user instanceof User) {
             return $this->redirectToRoute('post_login_redirect');
         }
 
-        return $this->render('security/login.html.twig', [
+        $form = $this->createForm(LoginType::class, null, [
             'last_username' => $authenticationUtils->getLastUsername(),
+            'csrf_token' => $csrfTokenManager->getToken('authenticate')->getValue(),
+        ]);
+
+        return $this->render('security/login.html.twig', [
+            'loginForm' => $form->createView(),
             'error'         => $authenticationUtils->getLastAuthenticationError(),
         ]);
     }

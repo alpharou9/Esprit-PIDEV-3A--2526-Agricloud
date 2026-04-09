@@ -1,0 +1,107 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Pending Products - AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Admin Product Moderation</h3>
+        <p class="text-muted mb-0">Approve or reject farmer products, then monitor the full product catalog.</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 pt-4 px-4">
+        <h5 class="fw-bold mb-1">Pending products</h5>
+        <p class="text-muted mb-0">Only admins can validate products for customer visibility.</p>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Farmer</th>
+                        <th>Farm</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th class="text-end">Moderation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for product in pendingProducts %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">{{ product.name }}</div>
+                            <div class="text-muted small">{{ product.category ?: 'No category' }}</div>
+                        </td>
+                        <td>{{ product.user ? product.user.name : 'N/A' }}</td>
+                        <td>{{ product.farm ? product.farm.name : 'No farm' }}</td>
+                        <td>{{ product.price|number_format(2, '.', ' ') }}</td>
+                        <td>{{ product.quantity }} {{ product.unit }}</td>
+                        <td class="text-end">
+                            <form method="post" action="{{ path('admin_product_approve', {id: product.id}) }}" class="d-inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('approve_product_' ~ product.id) }}">
+                                <button class="btn btn-sm btn-success">Approve</button>
+                            </form>
+                            <form method="post" action="{{ path('admin_product_reject', {id: product.id}) }}" class="d-inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('reject_product_' ~ product.id) }}">
+                                <button class="btn btn-sm btn-outline-danger">Reject</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No pending products.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 pt-4 px-4">
+        <h5 class="fw-bold mb-1">All products</h5>
+        <p class="text-muted mb-0">Full visibility for the shared product catalog.</p>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Owner</th>
+                        <th>Status</th>
+                        <th>Approved at</th>
+                        <th>Approved by</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for product in allProducts %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">{{ product.name }}</div>
+                            <div class="text-muted small">{{ product.category ?: 'No category' }}</div>
+                        </td>
+                        <td>{{ product.user ? product.user.name : 'N/A' }}</td>
+                        <td>
+                            <span class="badge text-bg-{{ product.status == 'approved' ? 'success' : (product.status == 'pending' ? 'warning' : (product.status == 'sold_out' ? 'secondary' : 'danger')) }}">
+                                {{ product.status|capitalize }}
+                            </span>
+                        </td>
+                        <td>{{ product.approvedAt ? product.approvedAt|date('Y-m-d H:i') : '-' }}</td>
+                        <td>{{ product.approvedBy ?: '-' }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">No products found.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
