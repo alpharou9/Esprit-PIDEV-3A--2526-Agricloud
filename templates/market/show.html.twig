@@ -1,0 +1,79 @@
+{% extends 'front_base.html.twig' %}
+
+{% block title %}{{ product.name }} - AgriCloud{% endblock %}
+
+{% block maincontainer %}
+<div class="row g-4 align-items-start">
+    <div class="col-lg-6">
+        <div class="rounded-4 overflow-hidden border bg-white shadow-sm">
+            {% if product.image %}
+                <img src="/{{ product.image }}" alt="{{ product.name }}" class="img-fluid w-100" style="max-height: 460px; object-fit: cover;">
+            {% else %}
+                <div class="d-flex align-items-center justify-content-center bg-light" style="height: 460px;">
+                    <i class="bi bi-image text-muted fs-1"></i>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <a href="{{ path('market_index') }}" class="btn btn-outline-success mb-3">
+            <i class="bi bi-arrow-left me-1"></i>Back to catalog
+        </a>
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="badge text-bg-success">{{ product.category ?: 'Other' }}</span>
+            <span class="badge text-bg-light">Views {{ product.views ?? 0 }}</span>
+        </div>
+        <h1 class="fw-bold mb-2">{{ product.name }}</h1>
+        <div class="display-6 fw-bold text-success mb-3">{{ product.price|number_format(2, '.', ' ') }}</div>
+        <p class="text-muted mb-4">{{ product.description ?: 'No description provided for this product yet.' }}</p>
+
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+                <div class="p-3 rounded-4 bg-light h-100">
+                    <div class="small text-uppercase text-muted fw-semibold">Seller</div>
+                    <div class="fw-semibold">{{ product.user ? product.user.name : 'N/A' }}</div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded-4 bg-light h-100">
+                    <div class="small text-uppercase text-muted fw-semibold">Farm</div>
+                    <div class="fw-semibold">{{ product.farm ? product.farm.name : 'No farm linked' }}</div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded-4 bg-light h-100">
+                    <div class="small text-uppercase text-muted fw-semibold">Stock</div>
+                    <div class="fw-semibold">{{ product.quantity }} {{ product.unit }}</div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="p-3 rounded-4 bg-light h-100">
+                    <div class="small text-uppercase text-muted fw-semibold">Status</div>
+                    <div class="fw-semibold text-success">{{ product.status|capitalize }}</div>
+                </div>
+            </div>
+        </div>
+
+        {% if is_granted('ROLE_CUSTOMER') %}
+            <form method="post" action="{{ path('cart_add', {id: product.id}) }}" class="rounded-4 border p-3 bg-white shadow-sm">
+                <input type="hidden" name="_token" value="{{ csrf_token('cart_add_' ~ product.id) }}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-sm-4">
+                        <label for="quantity" class="form-label fw-semibold">Quantity</label>
+                        <input id="quantity" type="number" min="1" max="{{ product.quantity }}" name="quantity" value="1" class="form-control">
+                    </div>
+                    <div class="col-sm-8 d-grid">
+                        <button class="btn btn-success btn-lg">
+                            <i class="bi bi-cart-plus me-1"></i>Add to cart
+                        </button>
+                    </div>
+                </div>
+            </form>
+        {% else %}
+            <a href="{{ path('app_login') }}" class="btn btn-success btn-lg">
+                <i class="bi bi-box-arrow-in-right me-1"></i>Login as customer to order
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
