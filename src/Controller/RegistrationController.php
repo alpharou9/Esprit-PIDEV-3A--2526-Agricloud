@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Role;
 use App\Entity\User;
 use App\Form\RegistrationType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -32,6 +33,17 @@ class RegistrationController extends AbstractController
             $user->setPassword($hasher->hashPassword($user, $plain));
             $user->setStatus('active');
             $user->setCreatedAt(new \DateTime());
+
+            // Assign role based on user choice
+            $accountType = $request->request->get('account_type', 'customer');
+            $roleName    = ($accountType === 'farmer') ? 'Farmer' : 'Customer';
+            $role        = $em->getRepository(Role::class)->findOneBy(['name' => $roleName]);
+            if (!$role) {
+                $role = $em->getRepository(Role::class)->findOneBy(['name' => 'Customer']);
+            }
+            if ($role) {
+                $user->setRole($role);
+            }
 
             $em->persist($user);
             $em->flush();

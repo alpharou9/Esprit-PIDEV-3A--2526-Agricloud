@@ -136,9 +136,11 @@
         <a href="{{ path('market_index') }}" class="sidebar-link {{ app.request.attributes.get('_route') in ['market_index','product_show'] ? 'active' : '' }}">
             <i class="bi bi-shop"></i> Marketplace
         </a>
+        {% if is_granted('ROLE_FARMER') or is_granted('ROLE_ADMIN') %}
         <a href="{{ path('my_products') }}" class="sidebar-link {{ app.request.attributes.get('_route') in ['my_products','product_new','product_edit'] ? 'active' : '' }}">
             <i class="bi bi-box-seam"></i> My Products
         </a>
+        {% endif %}
         <a href="{{ path('cart_index') }}" class="sidebar-link {{ app.request.attributes.get('_route') starts with 'cart_' ? 'active' : '' }}">
             <i class="bi bi-cart"></i> Cart
         </a>

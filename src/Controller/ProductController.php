@@ -42,6 +42,10 @@ class ProductController extends AbstractController
     #[Route('/product/new', name: 'product_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): Response
     {
+        if (!$this->isGranted('ROLE_FARMER') && !$this->isGranted('ROLE_ADMIN')) {
+            $this->addFlash('error', 'Only farmers can list products for sale.');
+            return $this->redirectToRoute('market_index');
+        }
         $product = new Product();
         $form    = $this->createForm(ProductType::class, $product);
         $form->handleRequest($request);
@@ -103,6 +107,10 @@ class ProductController extends AbstractController
     #[Route('/product/{id}/edit', name: 'product_edit', methods: ['GET', 'POST'])]
     public function edit(Product $product, Request $request, EntityManagerInterface $em, SluggerInterface $slugger): Response
     {
+        if (!$this->isGranted('ROLE_FARMER') && !$this->isGranted('ROLE_ADMIN')) {
+            $this->addFlash('error', 'Only farmers can edit products.');
+            return $this->redirectToRoute('market_index');
+        }
         if (!$this->isGranted('ROLE_ADMIN') && $product->getUser() !== $this->getUser()) {
             throw $this->createAccessDeniedException();
         }

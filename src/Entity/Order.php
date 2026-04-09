@@ -50,7 +50,7 @@ class Order
 
     #[ORM\Column(name: 'shipping_postal', length: 20, nullable: true)]
     #[Assert\Length(max: 20, maxMessage: 'Postal code cannot exceed 20 characters.')]
-    #[Assert\Regex(pattern: '/^[A-Za-z0-9\s\-]{3,20}$/', message: 'Enter a valid postal code.')]
+    #[Assert\Regex(pattern: '/^\d{4,10}$/', message: 'Postal code must contain only digits (4–10 numbers).')]
     private ?string $shippingPostal = null;
 
     #[ORM\Column(name: 'shipping_email', length: 150, nullable: true)]

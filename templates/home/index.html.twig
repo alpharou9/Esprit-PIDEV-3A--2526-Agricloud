@@ -34,10 +34,28 @@
         /* ── Hero ── */
         .hero {
             min-height: 100vh;
-            background: linear-gradient(135deg, rgba(20,40,5,.72) 0%, rgba(40,80,5,.45) 100%),
-                        url('{{ asset('theme/agriculture-farm/img/1.jpg') }}') center/cover no-repeat fixed;
+            background:
+                radial-gradient(ellipse at 70% 50%, rgba(119,184,30,.18) 0%, transparent 60%),
+                radial-gradient(ellipse at 10% 80%, rgba(50,100,10,.3) 0%, transparent 50%),
+                linear-gradient(145deg, #0d1f05 0%, #1a3a08 35%, #2d5c10 65%, #1a3a08 100%);
             display: flex; align-items: center;
             padding: 100px 40px 60px;
+            position: relative; overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute; inset: 0;
+            background-image:
+                radial-gradient(circle at 1px 1px, rgba(119,184,30,.07) 1px, transparent 0);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+        .hero::after {
+            content: '';
+            position: absolute; right: -100px; top: 50%; transform: translateY(-50%);
+            width: 600px; height: 600px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(119,184,30,.12) 0%, transparent 70%);
+            pointer-events: none;
         }
         .hero h1 { font-size: clamp(2.2rem, 5vw, 4rem); font-weight: 700; color: #fff; line-height: 1.15; margin-bottom: 1.2rem; }
         .hero h1 span { color: #a3d43a; }
@@ -86,9 +104,15 @@
 
         /* ── CTA strip ── */
         .cta-strip {
-            background: linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,.6)),
-                        url('{{ asset('theme/agriculture-farm/img/19.jpg') }}') center/cover no-repeat fixed;
+            background: linear-gradient(135deg, #0d1f05 0%, #2d5c10 50%, #1a3a08 100%);
             padding: 100px 0; text-align: center;
+            position: relative; overflow: hidden;
+        }
+        .cta-strip::before {
+            content: '';
+            position: absolute; inset: 0;
+            background-image: radial-gradient(circle at 1px 1px, rgba(119,184,30,.08) 1px, transparent 0);
+            background-size: 36px 36px;
         }
         .cta-strip h2 { color: #fff; font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; }
         .cta-strip p { color: rgba(255,255,255,.8); font-size: 1.1rem; max-width: 580px; margin: 0 auto 2rem; }
@@ -130,8 +154,8 @@
 {# ── Hero ── #}
 <section class="hero">
     <div class="container-fluid px-4 px-lg-5">
-        <div class="row align-items-center g-5">
-            <div class="col-lg-6">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
                 <p class="section-label mb-2">Smart Farming Platform</p>
                 <h1>Grow Smarter.<br>Sell Better.<br><span>Farm Greener.</span></h1>
                 <p>AgriCloud connects farmers, manages crops, and powers a thriving agricultural marketplace — all in one platform.</p>
@@ -143,9 +167,6 @@
                         <a href="{{ path('app_login') }}" class="btn-hero-outline">Login</a>
                     {% endif %}
                 </div>
-            </div>
-            <div class="col-lg-6 d-none d-lg-block">
-                <img src="{{ asset('theme/agriculture-farm/img/3.jpg') }}" class="hero-img" alt="Farm">
             </div>
         </div>
     </div>
@@ -306,11 +327,6 @@
                 <a href="#features">Features</a>
                 <a href="#market">Marketplace</a>
                 <a href="#blog">Blog</a>
-            </div>
-            <div class="col-lg-2 col-md-3 col-6">
-                <h5>Account</h5>
-                <a href="{{ path('app_login') }}">Login</a>
-                <a href="{{ path('app_register') }}">Register</a>
             </div>
             <div class="col-lg-4 col-md-6">
                 <h5>Contact</h5>
