@@ -13,6 +13,10 @@ class Field
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\ManyToOne(inversedBy: 'fields')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Farm $farm_id = null;
+
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
@@ -20,18 +24,32 @@ class Field
     private ?float $area = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $soilType = null;
+    private ?string $soil_type = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $crop_type = null;
+
+    #[ORM\Column]
+    private ?float $coordinates = null;
 
     #[ORM\Column(length: 255)]
     private ?string $status = null;
 
-    #[ORM\ManyToOne(inversedBy: 'fields')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Farm $Farmid = null;
-
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getFarmId(): ?Farm
+    {
+        return $this->farm_id;
+    }
+
+    public function setFarmId(?Farm $farm_id): static
+    {
+        $this->farm_id = $farm_id;
+
+        return $this;
     }
 
     public function getName(): ?string
@@ -60,12 +78,36 @@ class Field
 
     public function getSoilType(): ?string
     {
-        return $this->soilType;
+        return $this->soil_type;
     }
 
-    public function setSoilType(string $soilType): static
+    public function setSoilType(string $soil_type): static
     {
-        $this->soilType = $soilType;
+        $this->soil_type = $soil_type;
+
+        return $this;
+    }
+
+    public function getCropType(): ?string
+    {
+        return $this->crop_type;
+    }
+
+    public function setCropType(string $crop_type): static
+    {
+        $this->crop_type = $crop_type;
+
+        return $this;
+    }
+
+    public function getCoordinates(): ?float
+    {
+        return $this->coordinates;
+    }
+
+    public function setCoordinates(float $coordinates): static
+    {
+        $this->coordinates = $coordinates;
 
         return $this;
     }
@@ -78,18 +120,6 @@ class Field
     public function setStatus(string $status): static
     {
         $this->status = $status;
-
-        return $this;
-    }
-
-    public function getFarmid(): ?Farm
-    {
-        return $this->Farmid;
-    }
-
-    public function setFarmid(?Farm $Farmid): static
-    {
-        $this->Farmid = $Farmid;
 
         return $this;
     }

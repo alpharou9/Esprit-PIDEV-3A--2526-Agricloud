@@ -3,22 +3,35 @@
 namespace App\Controller;
 
 use App\Entity\Farm;
-use App\Form\FarmType; // Ensure this matches your form class name
+use App\Form\FarmType;
 use App\Repository\FarmRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/farm')]
 final class FarmController extends AbstractController
 {
     /**
-     * ADMIN: Dashboard view to manage and approve farms
+     * 1. PUBLIC MARKETPLACE
+     * Only shows 'approved' farms for public viewing.
      */
-    #[Route('/admin/list', name: 'app_admin_farm_index', methods: ['GET'])]
-    public function adminIndex(FarmRepository $farmRepository): Response
+    #[Route('/', name: 'app_farm_index', methods: ['GET'])]
+    public function index(FarmRepository $farmRepository): Response
+    {
+        return $this->render('farm/index.html.twig', [
+            'farms' => $farmRepository->findBy(['status' => 'approved']),
+        ]);
+    }
+
+    /**
+     * 2. ADMIN DASHBOARD
+     * Shows ALL farms regardless of status, so the admin can track history.
+     */
+    #[Route('/admin/dashboard', name: 'admin_dashboard', methods: ['GET'])]
+    public function adminDashboard(FarmRepository $farmRepository): Response
     {
         return $this->render('farm/admin_index.html.twig', [
             'farms' => $farmRepository->findAll(),
@@ -26,20 +39,10 @@ final class FarmController extends AbstractController
     }
 
     /**
-     * FARMER: Main portal view showing approved farms
+     * 3. MY FARMS (Farmer's Personal View)
+     * Shows all farms belonging to the current session/user.
      */
-    #[Route('/portal', name: 'app_farmer_farm_index', methods: ['GET'])]
-    public function farmerIndex(FarmRepository $farmRepository): Response
-    {
-        return $this->render('farm/farmer_index.html.twig', [
-            'farms' => $farmRepository->findAll(),
-        ]);
-    }
-
-    /**
-     * FARMER: "My Farms" management table
-     */
-    #[Route('/my-farms', name: 'app_farmer_my_farms', methods: ['GET'])]
+    #[Route('/my-farms', name: 'app_my_farms', methods: ['GET'])]
     public function myFarms(FarmRepository $farmRepository): Response
     {
         return $this->render('farm/my_farms.html.twig', [
@@ -48,7 +51,7 @@ final class FarmController extends AbstractController
     }
 
     /**
-     * ADMIN: Action to approve a pending farm
+     * ADMIN ACTION: APPROVE
      */
     #[Route('/{id}/approve', name: 'app_farm_approve', methods: ['POST'])]
     public function approve(Farm $farm, EntityManagerInterface $entityManager): Response
@@ -56,16 +59,20 @@ final class FarmController extends AbstractController
         $farm->setStatus('approved');
         $entityManager->flush();
 
-        $this->addFlash('success', 'Farm approved successfully!');
-
-        return $this->redirectToRoute('app_admin_farm_index');
+        $this->addFlash('success', 'Farm "' . $farm->getName() . '" has been approved.');
+        return $this->redirectToRoute('admin_dashboard');
     }
 
+    /**
+     * CREATE NEW FARM
+     */
     #[Route('/new', name: 'app_farm_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $farm = new Farm();
-        // Updated to FarmType (check if your form is named Farm1Type or FarmType)
+        // Status is set to 'pending' by default in the Entity, but we'll be safe:
+        $farm->setStatus('pending');
+
         $form = $this->createForm(FarmType::class, $farm);
         $form->handleRequest($request);
 
@@ -73,7 +80,8 @@ final class FarmController extends AbstractController
             $entityManager->persist($farm);
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_farmer_my_farms', [], Response::HTTP_SEE_OTHER);
+            $this->addFlash('success', 'Farm submitted for approval!');
+            return $this->redirectToRoute('app_my_farms', [], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('farm/new.html.twig', [
@@ -82,14 +90,21 @@ final class FarmController extends AbstractController
         ]);
     }
 
+    /**
+     * DETAILS VIEW (Public/Farmer)
+     */
     #[Route('/{id}', name: 'app_farm_show', methods: ['GET'])]
     public function show(Farm $farm): Response
     {
         return $this->render('farm/show.html.twig', [
             'farm' => $farm,
+            'fields' => $farm->getFields(),
         ]);
     }
 
+    /**
+     * EDIT FARM
+     */
     #[Route('/{id}/edit', name: 'app_farm_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Farm $farm, EntityManagerInterface $entityManager): Response
     {
@@ -99,7 +114,8 @@ final class FarmController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_farmer_my_farms', [], Response::HTTP_SEE_OTHER);
+            $this->addFlash('success', 'Farm updated successfully.');
+            return $this->redirectToRoute('app_my_farms', [], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('farm/edit.html.twig', [
@@ -108,17 +124,23 @@ final class FarmController extends AbstractController
         ]);
     }
 
+    /**
+     * DELETE FARM (Used by both Farmer and Admin)
+     */
     #[Route('/{id}', name: 'app_farm_delete', methods: ['POST'])]
     public function delete(Request $request, Farm $farm, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$farm->getId(), $request->getPayload()->getString('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$farm->getId(), $request->request->get('_token'))) {
             $entityManager->remove($farm);
             $entityManager->flush();
-            $this->addFlash('success', 'Farm deleted successfully.');
+            $this->addFlash('success', 'Farm removed.');
         }
 
-        // Redirect back to the page they came from (Admin or Farmer list)
-        $referer = $request->headers->get('referer');
-        return $this->redirect($referer ?: $this->generateUrl('app_choice'));
+        // Redirect back to the page the user came from
+        if ($request->query->get('from') === 'admin') {
+            return $this->redirectToRoute('admin_dashboard');
+        }
+
+        return $this->redirectToRoute('app_my_farms', [], Response::HTTP_SEE_OTHER);
     }
 }

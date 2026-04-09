@@ -11,7 +11,9 @@
                 <th>Id</th>
                 <th>Name</th>
                 <th>Area</th>
-                <th>SoilType</th>
+                <th>Soil_type</th>
+                <th>Crop_type</th>
+                <th>Coordinates</th>
                 <th>Status</th>
                 <th>actions</th>
             </tr>
@@ -23,6 +25,8 @@
                 <td>{{ field.name }}</td>
                 <td>{{ field.area }}</td>
                 <td>{{ field.soilType }}</td>
+                <td>{{ field.cropType }}</td>
+                <td>{{ field.coordinates }}</td>
                 <td>{{ field.status }}</td>
                 <td>
                     <a href="{{ path('app_field_show', {'id': field.id}) }}">show</a>
@@ -31,7 +35,7 @@
             </tr>
         {% else %}
             <tr>
-                <td colspan="6">no records found</td>
+                <td colspan="8">no records found</td>
             </tr>
         {% endfor %}
         </tbody>
