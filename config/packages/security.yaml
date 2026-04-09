@@ -26,11 +26,15 @@ security:
 
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/register, roles: PUBLIC_ACCESS }
         - { path: ^/market, roles: PUBLIC_ACCESS }
         - { path: ^/cart, roles: ROLE_CUSTOMER }
         - { path: ^/my-orders, roles: ROLE_CUSTOMER }
+        - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/farm, roles: ROLE_FARMER }
         - { path: ^/products, roles: ROLE_FARMER }
         - { path: ^/orders, roles: ROLE_FARMER }
+        - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/post-login, roles: ROLE_USER }
         - { path: ^/$, roles: ROLE_FARMER }
 

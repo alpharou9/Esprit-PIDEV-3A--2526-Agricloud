@@ -1,11 +1,19 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}New Farm{% endblock %}
+{% block title %}New Farm - AgriCloud{% endblock %}
 
 {% block body %}
-    <h1>Create new Farm</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Create Farm</h3>
+        <p class="text-muted mb-0">Add a new farm to the integrated AgriCloud platform.</p>
+    </div>
+    <a href="{{ path('app_farm_index') }}" class="btn btn-outline-secondary">Back</a>
+</div>
 
-    {{ include('farm/_form.html.twig') }}
-
-    <a href="{{ path('app_farm_index') }}">back to list</a>
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        {{ include('farm/_form.html.twig', {button_label: 'Create farm'}) }}
+    </div>
+</div>
 {% endblock %}

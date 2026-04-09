@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\OrderRepository;
+use App\Repository\FarmRepository;
 use App\Repository\ProductRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,13 +14,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class DashboardController extends AbstractController
 {
     #[Route('/', name: 'dashboard')]
-    public function index(ProductRepository $productRepository, OrderRepository $orderRepository): Response
+    public function index(ProductRepository $productRepository, OrderRepository $orderRepository, FarmRepository $farmRepository): Response
     {
         return $this->render('dashboard/index.html.twig', [
             'stats' => [
                 'products' => $productRepository->count([]),
                 'approved_products' => $productRepository->countByStatus('approved'),
                 'low_stock_products' => $productRepository->countLowStock(5),
+                'farms' => $farmRepository->count([]),
                 'orders' => $orderRepository->count([]),
                 'pending_orders' => $orderRepository->countByStatus('pending'),
                 'delivered_revenue' => $orderRepository->getDeliveredRevenue(),

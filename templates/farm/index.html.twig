@@ -1,45 +1,64 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Farm index{% endblock %}
+{% block title %}Farms - AgriCloud{% endblock %}
 
 {% block body %}
-    <h1>Farm index</h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">{{ isAdmin ? 'All Farms' : 'My Farms' }}</h3>
+        <p class="text-muted mb-0">{{ isAdmin ? 'Manage every farm stored in the shared AgriCloud database.' : 'Manage the farms attached to your farmer account.' }}</p>
+    </div>
+    <a href="{{ path('app_farm_new') }}" class="btn btn-success">
+        <i class="bi bi-plus-circle me-1"></i>Add farm
+    </a>
+</div>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Location</th>
-                <th>Area</th>
-                <th>Farmtype</th>
-                <th>Description</th>
-                <th>Status</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for farm in farms %}
-            <tr>
-                <td>{{ farm.id }}</td>
-                <td>{{ farm.name }}</td>
-                <td>{{ farm.location }}</td>
-                <td>{{ farm.area }}</td>
-                <td>{{ farm.farmtype }}</td>
-                <td>{{ farm.description }}</td>
-                <td>{{ farm.status }}</td>
-                <td>
-                    <a href="{{ path('app_farm_show', {'id': farm.id}) }}">show</a>
-                    <a href="{{ path('app_farm_edit', {'id': farm.id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="8">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-    <a href="{{ path('app_farm_new') }}">Create new</a>
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        {% if isAdmin %}<th>Owner</th>{% endif %}
+                        <th>Location</th>
+                        <th>Area</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for farm in farms %}
+                    <tr>
+                        <td>#{{ farm.id }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ farm.name }}</div>
+                            <div class="text-muted small">{{ farm.description ?: 'No description' }}</div>
+                        </td>
+                        {% if isAdmin %}<td>{{ farm.user ? farm.user.name : 'N/A' }}</td>{% endif %}
+                        <td>{{ farm.location }}</td>
+                        <td>{{ farm.area ?: '-' }}</td>
+                        <td>{{ farm.farmType ?: '-' }}</td>
+                        <td>
+                            <span class="badge text-bg-{{ farm.status == 'approved' ? 'success' : (farm.status == 'pending' ? 'warning' : 'secondary') }}">
+                                {{ farm.status ?: 'draft' }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ path('app_farm_show', {'id': farm.id}) }}" class="btn btn-sm btn-outline-secondary">View</a>
+                            <a href="{{ path('app_farm_edit', {'id': farm.id}) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="{{ isAdmin ? 8 : 7 }}" class="text-center text-muted py-4">No farms found.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}

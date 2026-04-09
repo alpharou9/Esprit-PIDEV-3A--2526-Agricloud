@@ -1,46 +1,68 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Farm{% endblock %}
+{% block title %}Farm Details - AgriCloud{% endblock %}
 
 {% block body %}
-    <h1>Farm</h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">{{ farm.name }}</h3>
+        <p class="text-muted mb-0">Detailed farm view inside the integrated AgriCloud backoffice.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_farm_index') }}" class="btn btn-outline-secondary">Back</a>
+        <a href="{{ path('app_farm_edit', {'id': farm.id}) }}" class="btn btn-success">Edit</a>
+    </div>
+</div>
 
-    <table class="table">
-        <tbody>
-            <tr>
-                <th>Id</th>
-                <td>{{ farm.id }}</td>
-            </tr>
-            <tr>
-                <th>Name</th>
-                <td>{{ farm.name }}</td>
-            </tr>
-            <tr>
-                <th>Location</th>
-                <td>{{ farm.location }}</td>
-            </tr>
-            <tr>
-                <th>Area</th>
-                <td>{{ farm.area }}</td>
-            </tr>
-            <tr>
-                <th>Farmtype</th>
-                <td>{{ farm.farmtype }}</td>
-            </tr>
-            <tr>
-                <th>Description</th>
-                <td>{{ farm.description }}</td>
-            </tr>
-            <tr>
-                <th>Status</th>
-                <td>{{ farm.status }}</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <a href="{{ path('app_farm_index') }}">back to list</a>
-
-    <a href="{{ path('app_farm_edit', {'id': farm.id}) }}">edit</a>
-
-    {{ include('farm/_delete_form.html.twig') }}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="small text-uppercase text-muted fw-semibold">Location</div>
+                        <div class="fw-semibold">{{ farm.location }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small text-uppercase text-muted fw-semibold">Type</div>
+                        <div class="fw-semibold">{{ farm.farmType ?: '-' }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small text-uppercase text-muted fw-semibold">Area</div>
+                        <div class="fw-semibold">{{ farm.area ?: '-' }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small text-uppercase text-muted fw-semibold">Status</div>
+                        <div class="fw-semibold">{{ farm.status ?: '-' }}</div>
+                    </div>
+                    {% if isAdmin %}
+                        <div class="col-md-6">
+                            <div class="small text-uppercase text-muted fw-semibold">Owner</div>
+                            <div class="fw-semibold">{{ farm.user ? farm.user.name : 'N/A' }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+                <hr class="my-4">
+                <div class="small text-uppercase text-muted fw-semibold mb-2">Description</div>
+                <p class="mb-0 text-muted">{{ farm.description ?: 'No description provided.' }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="small text-uppercase text-muted fw-semibold mb-2">Lifecycle</div>
+                <div class="mb-3">
+                    <div class="text-muted small">Created at</div>
+                    <div class="fw-semibold">{{ farm.createdAt ? farm.createdAt|date('Y-m-d H:i') : '-' }}</div>
+                </div>
+                <div class="mb-3">
+                    <div class="text-muted small">Updated at</div>
+                    <div class="fw-semibold">{{ farm.updatedAt ? farm.updatedAt|date('Y-m-d H:i') : '-' }}</div>
+                </div>
+                {{ include('farm/_delete_form.html.twig') }}
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

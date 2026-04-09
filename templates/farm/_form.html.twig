@@ -1,4 +1,45 @@
 {{ form_start(form) }}
-    {{ form_widget(form) }}
-    <button class="btn">{{ button_label|default('Save') }}</button>
+<div class="row g-3">
+    {% if form.user is defined %}
+        <div class="col-md-6">
+            {{ form_label(form.user, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.user) }}
+            {{ form_errors(form.user) }}
+        </div>
+    {% endif %}
+    <div class="col-md-6">
+        {{ form_label(form.name, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.name) }}
+        {{ form_errors(form.name) }}
+    </div>
+    <div class="col-md-6">
+        {{ form_label(form.location, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.location) }}
+        {{ form_errors(form.location) }}
+    </div>
+    <div class="col-md-6">
+        {{ form_label(form.area, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.area) }}
+        {{ form_errors(form.area) }}
+    </div>
+    <div class="col-md-6">
+        {{ form_label(form.farmType, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.farmType) }}
+        {{ form_errors(form.farmType) }}
+    </div>
+    <div class="col-md-6">
+        {{ form_label(form.status, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.status) }}
+        {{ form_errors(form.status) }}
+    </div>
+    <div class="col-12">
+        {{ form_label(form.description, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.description) }}
+        {{ form_errors(form.description) }}
+    </div>
+    <div class="col-12 d-flex gap-2 pt-2">
+        <button class="btn btn-success">{{ button_label|default('Save') }}</button>
+        <a href="{{ path('app_farm_index') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+</div>
 {{ form_end(form) }}

@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\RegistrationType;
+use App\Repository\RoleRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,7 +18,8 @@ class RegistrationController extends AbstractController
     public function register(
         Request $request,
         EntityManagerInterface $em,
-        UserPasswordHasherInterface $hasher
+        UserPasswordHasherInterface $hasher,
+        RoleRepository $roleRepository
     ): Response {
         if ($this->getUser()) {
             return $this->redirectToRoute('dashboard');
@@ -32,6 +34,8 @@ class RegistrationController extends AbstractController
             $user->setPassword($hasher->hashPassword($user, $plain));
             $user->setStatus('active');
             $user->setCreatedAt(new \DateTime());
+            $user->setUpdatedAt(new \DateTime());
+            $user->setRole($roleRepository->findOneBy(['name' => 'Customer']));
 
             $em->persist($user);
             $em->flush();
