@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\FieldRepository;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: FieldRepository::class)]
@@ -14,24 +13,21 @@ class Field
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 100)]
+    #[ORM\Column(length: 255)]
     private ?string $name = null;
+
+    #[ORM\Column]
+    private ?float $area = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $soilType = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $status = null;
 
     #[ORM\ManyToOne(inversedBy: 'fields')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?farm $farmid = null;
-
-    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    private ?string $area = null;
-
-    #[ORM\Column(length: 100)]
-    private ?string $soiltype = null;
-
-    #[ORM\Column(length: 100)]
-    private ?string $coiltype = null;
-
-    #[ORM\Column(length: 20)]
-    private ?string $status = null;
+    private ?Farm $Farmid = null;
 
     public function getId(): ?int
     {
@@ -50,50 +46,26 @@ class Field
         return $this;
     }
 
-    public function getFarmid(): ?farm
-    {
-        return $this->farmid;
-    }
-
-    public function setFarmid(?farm $farmid): static
-    {
-        $this->farmid = $farmid;
-
-        return $this;
-    }
-
-    public function getArea(): ?string
+    public function getArea(): ?float
     {
         return $this->area;
     }
 
-    public function setArea(string $area): static
+    public function setArea(float $area): static
     {
         $this->area = $area;
 
         return $this;
     }
 
-    public function getSoiltype(): ?string
+    public function getSoilType(): ?string
     {
-        return $this->soiltype;
+        return $this->soilType;
     }
 
-    public function setSoiltype(string $soiltype): static
+    public function setSoilType(string $soilType): static
     {
-        $this->soiltype = $soiltype;
-
-        return $this;
-    }
-
-    public function getCoiltype(): ?string
-    {
-        return $this->coiltype;
-    }
-
-    public function setCoiltype(string $coiltype): static
-    {
-        $this->coiltype = $coiltype;
+        $this->soilType = $soilType;
 
         return $this;
     }
@@ -106,6 +78,18 @@ class Field
     public function setStatus(string $status): static
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getFarmid(): ?Farm
+    {
+        return $this->Farmid;
+    }
+
+    public function setFarmid(?Farm $Farmid): static
+    {
+        $this->Farmid = $Farmid;
 
         return $this;
     }

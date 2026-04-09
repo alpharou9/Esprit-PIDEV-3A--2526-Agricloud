@@ -1,0 +1,72 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Farms - AgriCloud{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Managed Farms</h1>
+        <a href="{{ path('app_farm_new') }}" class="btn btn-success">+ Add New Farm</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Location</th>
+                        <th>Area</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Fields</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for farm in farms %}
+                    <tr>
+                        <td>{{ farm.id }}</td>
+                        <td><strong>{{ farm.name }}</strong></td>
+                        <td>{{ farm.location }}</td>
+                        <td>{{ farm.area }} ha</td>
+                        <td>{{ farm.farmType }}</td>
+                        <td>
+                            {% if farm.status == 'approved' %}
+                                <span class="badge bg-success">Approved</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge bg-info text-dark">{{ farm.nbfields }}</span></td>
+                        <td>
+                            <div class="d-flex justify-content-center gap-2">
+                                {# 1. Fields Management Button #}
+                                <a href="{{ path('app_field_index', {'farm_id': farm.id}) }}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-grid-3x3"></i> Fields
+                                </a>
+
+                                {# 2. Update Button #}
+                                <a href="{{ path('app_farm_edit', {'id': farm.id}) }}" class="btn btn-sm btn-warning">Edit</a>
+
+                                {# 3. Delete Button #}
+                                {{ include('farm/_delete_form.html.twig') }}
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4">You haven't added any farms yet.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="mt-3">
+        <a href="{{ path('app_farmer_farm_index') }}" class="btn btn-outline-secondary">Back to Main Page</a>
+    </div>
+</div>
+{% endblock %}
