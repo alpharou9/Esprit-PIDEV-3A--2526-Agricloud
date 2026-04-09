@@ -12,7 +12,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_USER')]
 class DashboardController extends AbstractController
 {
-    #[Route('/', name: 'dashboard')]
+    #[Route('/dashboard', name: 'dashboard')]
     public function index(UserRepository $userRepo, RoleRepository $roleRepo): Response
     {
         $statusData = $userRepo->countByStatus();

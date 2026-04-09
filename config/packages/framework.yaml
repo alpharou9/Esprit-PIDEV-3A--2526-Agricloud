@@ -15,3 +15,4 @@ framework:
 parameters:
     farms_upload_dir: '%kernel.project_dir%/public/uploads/farms'
     products_upload_dir: '%kernel.project_dir%/public/uploads/products'
+    posts_upload_dir: '%kernel.project_dir%/public/uploads/posts'

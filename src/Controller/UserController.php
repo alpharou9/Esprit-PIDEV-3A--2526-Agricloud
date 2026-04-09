@@ -124,7 +124,12 @@ class UserController extends AbstractController
         $user->setStatus($user->getStatus() === 'blocked' ? 'active' : 'blocked');
         $em->flush();
 
-        $this->addFlash('success', 'User status updated.');
+        $this->addFlash('success', 'User ' . ($user->getStatus() === 'blocked' ? 'blocked' : 'unblocked') . '.');
+
+        $redirect = $request->request->get('_redirect');
+        if ($redirect && str_starts_with($redirect, '/')) {
+            return $this->redirect($redirect);
+        }
         return $this->redirectToRoute('user_index');
     }
 }

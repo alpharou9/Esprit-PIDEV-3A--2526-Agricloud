@@ -33,6 +33,9 @@
 <div class="container-fluid">
     <div class="row">
         <nav class="col-md-2 sidebar py-3">
+            <a href="{{ path('home') }}" class="{{ app.request.attributes.get('_route') == 'home' ? 'active' : '' }}">
+                <i class="bi bi-house-door me-1"></i> Home
+            </a>
             <a href="{{ path('dashboard') }}" class="{{ app.request.attributes.get('_route') == 'dashboard' ? 'active' : '' }}">
                 <i class="bi bi-speedometer2 me-1"></i> Dashboard
             </a>
@@ -40,6 +43,11 @@
             <div class="nav-section mt-3">Farming</div>
             <a href="{{ path('farm_index') }}" class="{{ app.request.attributes.get('_route') starts with 'farm_' or app.request.attributes.get('_route') starts with 'field_' ? 'active' : '' }}">
                 <i class="bi bi-house-heart me-1"></i> Farms
+            </a>
+
+            <div class="nav-section mt-3">Blog</div>
+            <a href="{{ path('blog_index') }}" class="{{ app.request.attributes.get('_route') starts with 'blog_' ? 'active' : '' }}">
+                <i class="bi bi-journal-richtext me-1"></i> Blog
             </a>
 
             <div class="nav-section mt-3">Market</div>
@@ -63,6 +71,9 @@
                 </a>
                 <a href="{{ path('role_index') }}" class="{{ app.request.attributes.get('_route') starts with 'role_' ? 'active' : '' }}">
                     <i class="bi bi-shield-check me-1"></i> Roles
+                </a>
+                <a href="{{ path('blog_admin_comments') }}" class="{{ app.request.attributes.get('_route') == 'blog_admin_comments' ? 'active' : '' }}">
+                    <i class="bi bi-chat-dots me-1"></i> Comments
                 </a>
             {% endif %}
         </nav>
