@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ product ? 'Edit ' ~ product.name : 'New Product' }} — AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ path('my_products') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h5 class="fw-bold mb-0">{{ product ? 'Edit Product — ' ~ product.name : 'List a New Product' }}</h5>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4" style="max-width:680px">
+    <div class="card-body p-4">
+        {{ form_start(form, {attr: {enctype: 'multipart/form-data'}}) }}
+
+        <div class="row g-3">
+            <div class="col-md-8">
+                <div class="mb-3">
+                    {{ form_label(form.name) }}
+                    {{ form_widget(form.name) }}
+                    {{ form_errors(form.name) }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form_label(form.category) }}
+                    {{ form_widget(form.category) }}
+                    {{ form_errors(form.category) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form_label(form.price) }}
+                    <div class="input-group">
+                        {{ form_widget(form.price) }}
+                        <span class="input-group-text">TND</span>
+                    </div>
+                    {{ form_errors(form.price) }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form_label(form.quantity) }}
+                    {{ form_widget(form.quantity) }}
+                    {{ form_errors(form.quantity) }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form_label(form.unit) }}
+                    {{ form_widget(form.unit) }}
+                    {{ form_errors(form.unit) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            {{ form_label(form.farm) }}
+            {{ form_widget(form.farm) }}
+            {{ form_errors(form.farm) }}
+        </div>
+
+        <div class="mb-3">
+            {{ form_label(form.description) }}
+            {{ form_widget(form.description) }}
+            {{ form_errors(form.description) }}
+        </div>
+
+        <div class="mb-4">
+            {{ form_label(form.imageFile) }}
+            {% if product and product.image %}
+                <div class="mb-2">
+                    <img src="{{ asset('uploads/products/' ~ product.image) }}" class="rounded-3" style="height:80px;object-fit:cover" alt="">
+                    <div class="form-text">Upload a new image to replace the current one.</div>
+                </div>
+            {% endif %}
+            {{ form_widget(form.imageFile) }}
+            {{ form_errors(form.imageFile) }}
+            <div class="form-text">Max 2MB — JPG, PNG or WEBP.</div>
+        </div>
+
+        {% if not product %}
+        <div class="alert alert-info small mb-4">
+            <i class="bi bi-info-circle me-1"></i>Your product will be reviewed by an administrator before going live.
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-1"></i>{{ product ? 'Save Changes' : 'Submit Product' }}
+        </button>
+        <a href="{{ path('my_products') }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
