@@ -21,8 +21,8 @@ class ProductRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('p')
             ->leftJoin('p.user', 'u')->addSelect('u')
             ->where('p.status = :status')->setParameter('status', 'approved')
-            ->andWhere('p.quantity > 0')
-            ->orderBy('p.createdAt', 'DESC');
+            ->orderBy('p.quantity', 'DESC')
+            ->addOrderBy('p.createdAt', 'DESC');
 
         if ($q) {
             $qb->andWhere('p.name LIKE :q OR p.description LIKE :q')

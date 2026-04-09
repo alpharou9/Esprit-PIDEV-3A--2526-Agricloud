@@ -38,35 +38,6 @@ class ProductController extends AbstractController
         ]);
     }
 
-    // ── Product detail ────────────────────────────────────────────
-    #[Route('/product/{id}', name: 'product_show', methods: ['GET'])]
-    public function show(Product $product, EntityManagerInterface $em): Response
-    {
-        $product->setViews(($product->getViews() ?? 0) + 1);
-        $em->flush();
-
-        return $this->render('market/show.html.twig', ['product' => $product]);
-    }
-
-    // ── My listings ───────────────────────────────────────────────
-    #[Route('/my-products', name: 'my_products', methods: ['GET'])]
-    public function myProducts(Request $request, ProductRepository $repo, PaginatorInterface $paginator): Response
-    {
-        $q = $request->query->get('q', '');
-
-        $qb = $this->isGranted('ROLE_ADMIN')
-            ? $repo->adminQueryBuilder($q ?: null, $request->query->get('status') ?: null)
-            : $repo->sellerQueryBuilder($this->getUser(), $q ?: null);
-
-        $pagination = $paginator->paginate($qb, $request->query->getInt('page', 1), 10);
-
-        return $this->render('market/my_products.html.twig', [
-            'pagination' => $pagination,
-            'q'          => $q,
-            'status'     => $request->query->get('status', ''),
-        ]);
-    }
-
     // ── New product ───────────────────────────────────────────────
     #[Route('/product/new', name: 'product_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): Response
@@ -97,6 +68,35 @@ class ProductController extends AbstractController
         }
 
         return $this->render('market/product_form.html.twig', ['form' => $form, 'product' => null]);
+    }
+
+    // ── Product detail ────────────────────────────────────────────
+    #[Route('/product/{id}', name: 'product_show', methods: ['GET'])]
+    public function show(Product $product, EntityManagerInterface $em): Response
+    {
+        $product->setViews(($product->getViews() ?? 0) + 1);
+        $em->flush();
+
+        return $this->render('market/show.html.twig', ['product' => $product]);
+    }
+
+    // ── My listings ───────────────────────────────────────────────
+    #[Route('/my-products', name: 'my_products', methods: ['GET'])]
+    public function myProducts(Request $request, ProductRepository $repo, PaginatorInterface $paginator): Response
+    {
+        $q = $request->query->get('q', '');
+
+        $qb = $this->isGranted('ROLE_ADMIN')
+            ? $repo->adminQueryBuilder($q ?: null, $request->query->get('status') ?: null)
+            : $repo->sellerQueryBuilder($this->getUser(), $q ?: null);
+
+        $pagination = $paginator->paginate($qb, $request->query->getInt('page', 1), 10);
+
+        return $this->render('market/my_products.html.twig', [
+            'pagination' => $pagination,
+            'q'          => $q,
+            'status'     => $request->query->get('status', ''),
+        ]);
     }
 
     // ── Edit product ──────────────────────────────────────────────

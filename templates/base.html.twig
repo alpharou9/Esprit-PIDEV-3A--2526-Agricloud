@@ -42,6 +42,20 @@
                 <i class="bi bi-house-heart me-1"></i> Farms
             </a>
 
+            <div class="nav-section mt-3">Market</div>
+            <a href="{{ path('market_index') }}" class="{{ app.request.attributes.get('_route') == 'market_index' or app.request.attributes.get('_route') == 'product_show' ? 'active' : '' }}">
+                <i class="bi bi-shop me-1"></i> Marketplace
+            </a>
+            <a href="{{ path('my_products') }}" class="{{ app.request.attributes.get('_route') in ['my_products','product_new','product_edit'] ? 'active' : '' }}">
+                <i class="bi bi-box-seam me-1"></i> My Products
+            </a>
+            <a href="{{ path('cart_index') }}" class="{{ app.request.attributes.get('_route') starts with 'cart_' ? 'active' : '' }}">
+                <i class="bi bi-cart me-1"></i> Cart
+            </a>
+            <a href="{{ path('order_index') }}" class="{{ app.request.attributes.get('_route') starts with 'order_' ? 'active' : '' }}">
+                <i class="bi bi-receipt me-1"></i> Orders
+            </a>
+
             {% if is_granted('ROLE_ADMIN') %}
                 <div class="nav-section mt-3">Administration</div>
                 <a href="{{ path('user_index') }}" class="{{ app.request.attributes.get('_route') starts with 'user_' ? 'active' : '' }}">

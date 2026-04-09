@@ -45,9 +45,22 @@ class CartController extends AbstractController
 
         $qty = max(1, (int) $request->request->get('qty', 1));
 
-        $existing = $cartRepo->findOneBy(['user' => $this->getUser(), 'product' => $product]);
+        $existing    = $cartRepo->findOneBy(['user' => $this->getUser(), 'product' => $product]);
+        $alreadyInCart = $existing ? $existing->getQuantity() : 0;
+        $newTotal      = $alreadyInCart + $qty;
+
+        if ($newTotal > $product->getQuantity()) {
+            $available = $product->getQuantity() - $alreadyInCart;
+            if ($available <= 0) {
+                $this->addFlash('error', 'You already have the maximum available quantity in your cart.');
+            } else {
+                $this->addFlash('error', "Only {$available} more unit(s) can be added (stock limit).");
+            }
+            return $this->redirectToRoute('product_show', ['id' => $product->getId()]);
+        }
+
         if ($existing) {
-            $existing->setQuantity($existing->getQuantity() + $qty);
+            $existing->setQuantity($newTotal);
             $existing->setUpdatedAt(new \DateTime());
         } else {
             $item = new CartItem();
