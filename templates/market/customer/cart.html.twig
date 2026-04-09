@@ -63,11 +63,14 @@
                 </table>
             </div>
 
-            <div class="d-flex justify-content-end mt-4">
+            <div class="d-flex flex-wrap justify-content-end align-items-center gap-3 mt-4">
                 <div class="p-3 bg-white border_light" style="min-width: 260px;">
                     <div class="small text-uppercase text-muted fw-semibold">Cart total</div>
                     <div class="display-6 fw-bold">{{ cartTotal|number_format(2, '.', ' ') }}</div>
                 </div>
+                <a href="{{ path('cart_checkout') }}" class="button">
+                    <i class="bi bi-bag-check me-1"></i>Proceed to checkout
+                </a>
             </div>
         {% endif %}
     </div>

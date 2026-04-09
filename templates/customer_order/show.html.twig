@@ -8,9 +8,22 @@
         <h2 class="fw-bold mb-1">Order #{{ order.id }}</h2>
         <p class="text-muted mb-0">Review your order details and current status.</p>
     </div>
-    <a href="{{ path('customer_order_index') }}" class="btn btn-outline-success">
-        <i class="bi bi-arrow-left me-1"></i>Back to my orders
-    </a>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ path('customer_order_index') }}" class="btn btn-outline-success">
+            <i class="bi bi-arrow-left me-1"></i>Back to my orders
+        </a>
+        {% if canManage %}
+            <a href="{{ path('customer_order_edit', {id: order.id}) }}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil-square me-1"></i>Edit
+            </a>
+            <form method="post" action="{{ path('customer_order_delete', {id: order.id}) }}" class="d-inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete_order_' ~ order.id) }}">
+                <button class="btn btn-outline-danger" onclick="return confirm('Delete this order?')">
+                    <i class="bi bi-trash me-1"></i>Delete
+                </button>
+            </form>
+        {% endif %}
+    </div>
 </div>
 
 <div class="row g-4">
@@ -63,7 +76,7 @@
                     <div class="small text-muted mb-2">Delivery date</div>
                     <div class="fw-semibold mb-3">{{ order.deliveryDate|date('Y-m-d') }}</div>
                 {% endif %}
-                {% if order.status == 'pending' %}
+                {% if canManage %}
                     <form method="post" action="{{ path('customer_order_cancel', {id: order.id}) }}">
                         <input type="hidden" name="_token" value="{{ csrf_token('cancel_order_' ~ order.id) }}">
                         <button class="btn btn-outline-danger w-100" onclick="return confirm('Cancel this order?')">

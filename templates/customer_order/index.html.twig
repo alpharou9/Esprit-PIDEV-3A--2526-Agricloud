@@ -51,7 +51,16 @@
                             </td>
                             <td>{{ order.createdAt ? order.createdAt|date('Y-m-d H:i') : '-' }}</td>
                             <td class="text-end">
-                                <a href="{{ path('customer_order_show', {id: order.id}) }}" class="btn btn-sm btn-outline-success">Details</a>
+                                <div class="d-inline-flex gap-2 flex-wrap justify-content-end">
+                                    <a href="{{ path('customer_order_show', {id: order.id}) }}" class="btn btn-sm btn-outline-success">Details</a>
+                                    {% if order.status == 'pending' %}
+                                        <a href="{{ path('customer_order_edit', {id: order.id}) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                        <form method="post" action="{{ path('customer_order_delete', {id: order.id}) }}" class="d-inline">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete_order_' ~ order.id) }}">
+                                            <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this order?')">Delete</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                     {% endfor %}

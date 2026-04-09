@@ -55,6 +55,11 @@ class Order
     private ?string $shippingCity = null;
 
     #[ORM\Column(name: 'shipping_postal', length: 20, nullable: true)]
+    #[Assert\NotBlank(message: 'Postal code is required.')]
+    #[Assert\Regex(
+        pattern: '/^\d{4}$/',
+        message: 'Postal code must contain exactly 4 digits.'
+    )]
     private ?string $shippingPostal = null;
 
     #[ORM\Column(name: 'shipping_email', length: 150, nullable: true)]
@@ -62,6 +67,11 @@ class Order
     private ?string $shippingEmail = null;
 
     #[ORM\Column(name: 'shipping_phone', length: 20, nullable: true)]
+    #[Assert\NotBlank(message: 'Phone number is required.')]
+    #[Assert\Regex(
+        pattern: '/^\d{8}$/',
+        message: 'Phone number must contain exactly 8 digits.'
+    )]
     private ?string $shippingPhone = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -71,6 +81,11 @@ class Order
     private ?\DateTimeInterface $orderDate = null;
 
     #[ORM\Column(name: 'delivery_date', type: Types::DATE_MUTABLE, nullable: true)]
+    #[Assert\NotNull(message: 'Delivery date is required.')]
+    #[Assert\GreaterThan(
+        value: 'today',
+        message: 'Delivery date must be in the future.'
+    )]
     private ?\DateTimeInterface $deliveryDate = null;
 
     #[ORM\Column(name: 'cancelled_at', type: Types::DATETIME_MUTABLE, nullable: true)]

@@ -1,0 +1,99 @@
+{% extends 'front_base.html.twig' %}
+
+{% block title %}Edit Order #{{ order.id }} - AgriCloud{% endblock %}
+{% block hero_title %}Edit your order{% endblock %}
+{% block hero_text %}Update the quantity and delivery details of your pending order before it moves to processing.{% endblock %}
+
+{% block maincontainer %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Edit Order #{{ order.id }}</h2>
+        <p class="text-muted mb-0">Only pending orders can still be changed by the customer.</p>
+    </div>
+    <a href="{{ path('customer_order_show', {id: order.id}) }}" class="button_1">
+        <i class="bi bi-arrow-left me-1"></i>Back to order
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <h4 class="mb-3">Order details</h4>
+                {{ form_start(form) }}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            {{ form_label(form.quantity, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(form.quantity, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.quantity) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(form.deliveryDate, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(form.deliveryDate, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.deliveryDate) }}
+                        </div>
+                        <div class="col-12">
+                            {{ form_label(form.shippingAddress, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(form.shippingAddress, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.shippingAddress) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(form.shippingCity, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(form.shippingCity, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.shippingCity) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(form.shippingPostal, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(form.shippingPostal, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.shippingPostal) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(form.shippingEmail, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(form.shippingEmail, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.shippingEmail) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(form.shippingPhone, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(form.shippingPhone, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.shippingPhone) }}
+                        </div>
+                        <div class="col-12">
+                            {{ form_label(form.notes, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(form.notes, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.notes) }}
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-3 mt-4">
+                        <button class="button border-0" type="submit">
+                            <i class="bi bi-save me-1"></i>Save changes
+                        </button>
+                        <a href="{{ path('customer_order_show', {id: order.id}) }}" class="button_1">Cancel</a>
+                    </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <h4 class="mb-3">Current order</h4>
+                <div class="d-grid gap-3">
+                    <div class="border rounded-4 p-3 bg-light">
+                        <div class="small text-uppercase text-muted fw-semibold mb-1">Product</div>
+                        <div class="fw-semibold">{{ order.product ? order.product.name : 'N/A' }}</div>
+                    </div>
+                    <div class="border rounded-4 p-3 bg-light">
+                        <div class="small text-uppercase text-muted fw-semibold mb-1">Seller</div>
+                        <div class="fw-semibold">{{ order.seller ? order.seller.name : 'N/A' }}</div>
+                    </div>
+                    <div class="border rounded-4 p-3 bg-light">
+                        <div class="small text-uppercase text-muted fw-semibold mb-1">Current total</div>
+                        <div class="fw-semibold">{{ order.totalPrice|number_format(2, '.', ' ') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

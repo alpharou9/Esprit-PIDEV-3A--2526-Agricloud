@@ -95,6 +95,7 @@ class OrderController extends AbstractController
             $order->setOrderDate($now);
             $order->setCreatedAt($now);
             $order->setUpdatedAt($now);
+            $this->synchronizeOrderProductData($order);
             $this->synchronizeOrderTotals($order);
 
             $entityManager->persist($order);
@@ -119,6 +120,7 @@ class OrderController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $order->setUpdatedAt(new \DateTimeImmutable());
+            $this->synchronizeOrderProductData($order);
             $this->synchronizeOrderTotals($order);
             $entityManager->flush();
 
@@ -167,6 +169,22 @@ class OrderController extends AbstractController
             $order->setCancelledAt(null);
             $order->setCancelledReason(null);
         }
+    }
+
+    private function synchronizeOrderProductData(Order $order): void
+    {
+        $product = $order->getProduct();
+        if ($product === null) {
+            return;
+        }
+
+        $seller = $product->getUser();
+        if ($seller === null) {
+            throw new \LogicException('Selected product has no seller assigned.');
+        }
+
+        $order->setSeller($seller);
+        $order->setUnitPrice((string) $product->getPrice());
     }
 
     private function getAuthenticatedUser(): User

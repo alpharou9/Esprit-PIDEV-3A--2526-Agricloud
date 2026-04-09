@@ -2,11 +2,13 @@
 
 namespace App\Controller;
 
+use App\Entity\Order;
 use App\Entity\Product;
 use App\Entity\ShoppingCart;
 use App\Entity\User;
 use App\Form\AddToCartType;
 use App\Form\CartQuantityType;
+use App\Form\CheckoutType;
 use App\Repository\ShoppingCartRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -38,6 +40,97 @@ class CartController extends AbstractController
             'items' => $items,
             'cartTotal' => $shoppingCartRepository->getCartTotal($user),
             'updateForms' => $updateForms,
+        ]);
+    }
+
+    #[Route('/checkout', name: 'cart_checkout', methods: ['GET', 'POST'])]
+    public function checkout(
+        Request $request,
+        ShoppingCartRepository $shoppingCartRepository,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $user = $this->getAuthenticatedUser();
+        $items = $shoppingCartRepository->findCartForUser($user);
+
+        if ($items === []) {
+            $this->addFlash('error', 'Your cart is empty.');
+
+            return $this->redirectToRoute('cart_index');
+        }
+
+        $form = $this->createForm(CheckoutType::class, [
+            'shippingEmail' => $user->getEmail(),
+            'shippingPhone' => $user->getPhone(),
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $checkoutData = $form->getData();
+            $now = new \DateTimeImmutable();
+
+            foreach ($items as $item) {
+                $product = $item->getProduct();
+
+                if ($product === null || $product->getStatus() !== 'approved' || (int) $product->getQuantity() <= 0) {
+                    $this->addFlash('error', 'One of the products in your cart is no longer available.');
+
+                    return $this->redirectToRoute('cart_index');
+                }
+
+                if ($product->getUser() === null) {
+                    $this->addFlash('error', 'One of the products in your cart has no seller assigned.');
+
+                    return $this->redirectToRoute('cart_index');
+                }
+
+                if ((int) $item->getQuantity() > (int) $product->getQuantity()) {
+                    $this->addFlash('error', sprintf('The quantity for "%s" is no longer available. Please update your cart.', $product->getName()));
+
+                    return $this->redirectToRoute('cart_index');
+                }
+
+                $order = new Order();
+                $order
+                    ->setCustomer($user)
+                    ->setProduct($product)
+                    ->setSeller($product->getUser())
+                    ->setQuantity((int) $item->getQuantity())
+                    ->setUnitPrice((string) $product->getPrice())
+                    ->setTotalPrice(number_format(((float) $product->getPrice()) * (int) $item->getQuantity(), 2, '.', ''))
+                    ->setStatus('pending')
+                    ->setShippingAddress((string) $checkoutData['shippingAddress'])
+                    ->setShippingCity($checkoutData['shippingCity'] ?: null)
+                    ->setShippingPostal($checkoutData['shippingPostal'] ?: null)
+                    ->setShippingEmail($checkoutData['shippingEmail'] ?: null)
+                    ->setShippingPhone($checkoutData['shippingPhone'] ?: null)
+                    ->setDeliveryDate($checkoutData['deliveryDate'] ?? null)
+                    ->setNotes($checkoutData['notes'] ?: null)
+                    ->setOrderDate($now)
+                    ->setCreatedAt($now)
+                    ->setUpdatedAt($now)
+                ;
+
+                $entityManager->persist($order);
+
+                $remainingQuantity = max(0, (int) $product->getQuantity() - (int) $item->getQuantity());
+                $product->setQuantity($remainingQuantity);
+                $product->setUpdatedAt($now);
+                $product->setStatus($remainingQuantity > 0 ? 'approved' : 'sold_out');
+
+                $entityManager->remove($item);
+            }
+
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Your order has been placed successfully.');
+
+            return $this->redirectToRoute('customer_order_index');
+        }
+
+        return $this->render('market/customer/checkout.html.twig', [
+            'items' => $items,
+            'cartTotal' => $shoppingCartRepository->getCartTotal($user),
+            'checkoutForm' => $form->createView(),
         ]);
     }
 

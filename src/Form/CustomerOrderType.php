@@ -3,11 +3,7 @@
 namespace App\Form;
 
 use App\Entity\Order;
-use App\Entity\Product;
-use App\Entity\User;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
@@ -15,67 +11,47 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\GreaterThan;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Positive;
 use Symfony\Component\Validator\Constraints\Regex;
 
-class OrderType extends AbstractType
+class CustomerOrderType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $tomorrow = (new \DateTimeImmutable('tomorrow'))->format('Y-m-d');
 
         $builder
-            ->add('customer', EntityType::class, [
-                'class' => User::class,
-                'choice_label' => fn (User $user) => sprintf('%s (%s)', $user->getName(), $user->getEmail()),
-                'label' => 'Customer',
-                'placeholder' => '- Select a customer -',
-                'attr' => ['class' => 'form-select'],
-            ])
-            ->add('product', EntityType::class, [
-                'class' => Product::class,
-                'choice_label' => fn (Product $product) => sprintf('%s - %s', $product->getName(), $product->getUnit()),
-                'label' => 'Product',
-                'placeholder' => '- Select a product -',
-                'attr' => ['class' => 'form-select'],
-            ])
             ->add('quantity', IntegerType::class, [
                 'label' => 'Quantity',
-                'attr' => ['class' => 'form-control'],
-            ])
-            ->add('status', ChoiceType::class, [
-                'label' => 'Status',
-                'choices' => [
-                    'Pending' => 'pending',
-                    'Confirmed' => 'confirmed',
-                    'Processing' => 'processing',
-                    'Shipped' => 'shipped',
-                    'Delivered' => 'delivered',
-                    'Cancelled' => 'cancelled',
+                'constraints' => [
+                    new NotBlank(['message' => 'Quantity is required.']),
+                    new Positive(['message' => 'Quantity must be greater than zero.']),
                 ],
-                'attr' => ['class' => 'form-select'],
+                'attr' => [
+                    'class' => 'form-control',
+                    'min' => 1,
+                ],
             ])
             ->add('shippingAddress', TextareaType::class, [
                 'label' => 'Shipping address',
-                'attr' => ['class' => 'form-control', 'rows' => 3],
+                'constraints' => [
+                    new NotBlank(['message' => 'Shipping address is required.']),
+                ],
+                'attr' => [
+                    'class' => 'form-control',
+                    'rows' => 3,
+                ],
             ])
             ->add('shippingCity', TextType::class, [
-                'label' => 'Shipping city',
+                'label' => 'City',
                 'required' => false,
                 'attr' => ['class' => 'form-control'],
             ])
             ->add('shippingPostal', TextType::class, [
                 'label' => 'Postal code',
-                'attr' => [
-                    'class' => 'form-control',
-                    'inputmode' => 'numeric',
-                    'maxlength' => 4,
-                    'minlength' => 4,
-                    'pattern' => '\d{4}',
-                    'placeholder' => '1000',
-                    'oninput' => "this.value=this.value.replace(/\\D/g,'').slice(0,4)",
-                ],
                 'constraints' => [
                     new NotBlank(['message' => 'Postal code is required.']),
                     new Regex([
@@ -83,14 +59,32 @@ class OrderType extends AbstractType
                         'message' => 'Postal code must contain exactly 4 digits.',
                     ]),
                 ],
+                'attr' => [
+                    'class' => 'form-control',
+                    'inputmode' => 'numeric',
+                    'maxlength' => 4,
+                    'minlength' => 4,
+                    'pattern' => '\d{4}',
+                    'oninput' => "this.value=this.value.replace(/\\D/g,'').slice(0,4)",
+                ],
             ])
             ->add('shippingEmail', EmailType::class, [
-                'label' => 'Shipping email',
-                'required' => false,
+                'label' => 'Contact email',
+                'constraints' => [
+                    new NotBlank(['message' => 'Contact email is required.']),
+                    new Email(['message' => 'Enter a valid shipping email address.']),
+                ],
                 'attr' => ['class' => 'form-control'],
             ])
             ->add('shippingPhone', TextType::class, [
-                'label' => 'Shipping phone',
+                'label' => 'Phone number',
+                'constraints' => [
+                    new NotBlank(['message' => 'Phone number is required.']),
+                    new Regex([
+                        'pattern' => '/^\d{8}$/',
+                        'message' => 'Phone number must contain exactly 8 digits.',
+                    ]),
+                ],
                 'attr' => [
                     'class' => 'form-control',
                     'inputmode' => 'numeric',
@@ -100,22 +94,11 @@ class OrderType extends AbstractType
                     'placeholder' => '54022877',
                     'oninput' => "this.value=this.value.replace(/\\D/g,'').slice(0,8)",
                 ],
-                'constraints' => [
-                    new NotBlank(['message' => 'Phone number is required.']),
-                    new Regex([
-                        'pattern' => '/^\d{8}$/',
-                        'message' => 'Phone number must contain exactly 8 digits.',
-                    ]),
-                ],
             ])
             ->add('deliveryDate', DateType::class, [
                 'label' => 'Delivery date',
                 'widget' => 'single_text',
                 'input' => 'datetime',
-                'attr' => [
-                    'class' => 'form-control',
-                    'min' => $tomorrow,
-                ],
                 'constraints' => [
                     new NotBlank(['message' => 'Delivery date is required.']),
                     new GreaterThan([
@@ -123,16 +106,18 @@ class OrderType extends AbstractType
                         'message' => 'Delivery date must be in the future.',
                     ]),
                 ],
+                'attr' => [
+                    'class' => 'form-control',
+                    'min' => $tomorrow,
+                ],
             ])
             ->add('notes', TextareaType::class, [
-                'label' => 'Notes',
+                'label' => 'Order notes',
                 'required' => false,
-                'attr' => ['class' => 'form-control', 'rows' => 4],
-            ])
-            ->add('cancelledReason', TextareaType::class, [
-                'label' => 'Cancelled reason',
-                'required' => false,
-                'attr' => ['class' => 'form-control', 'rows' => 3],
+                'attr' => [
+                    'class' => 'form-control',
+                    'rows' => 4,
+                ],
             ]);
     }
 

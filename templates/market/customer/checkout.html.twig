@@ -1,0 +1,104 @@
+{% extends 'front_base.html.twig' %}
+
+{% block title %}Checkout - AgriCloud{% endblock %}
+{% block hero_title %}Place your order{% endblock %}
+{% block hero_text %}Confirm your delivery details, review your cart one last time, and turn the selected items into pending orders.{% endblock %}
+
+{% block maincontainer %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Checkout</h2>
+        <p class="text-muted mb-0">Each cart item will create an order linked to the correct seller and product.</p>
+    </div>
+    <a href="{{ path('cart_index') }}" class="button_1">
+        <i class="bi bi-arrow-left me-1"></i>Back to cart
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h4 class="mb-3">Delivery information</h4>
+                {{ form_start(checkoutForm) }}
+                    <div class="row g-3">
+                        <div class="col-12">
+                            {{ form_label(checkoutForm.shippingAddress, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(checkoutForm.shippingAddress, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(checkoutForm.shippingAddress) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(checkoutForm.shippingCity, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(checkoutForm.shippingCity, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(checkoutForm.shippingCity) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(checkoutForm.shippingPostal, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(checkoutForm.shippingPostal, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(checkoutForm.shippingPostal) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(checkoutForm.shippingEmail, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(checkoutForm.shippingEmail, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(checkoutForm.shippingEmail) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(checkoutForm.shippingPhone, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(checkoutForm.shippingPhone, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(checkoutForm.shippingPhone) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(checkoutForm.deliveryDate, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(checkoutForm.deliveryDate, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(checkoutForm.deliveryDate) }}
+                        </div>
+                        <div class="col-12">
+                            {{ form_label(checkoutForm.notes, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                            {{ form_widget(checkoutForm.notes, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(checkoutForm.notes) }}
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-3 mt-4">
+                        <button class="button border-0" type="submit">
+                            <i class="bi bi-bag-check me-1"></i>Place order
+                        </button>
+                        <a href="{{ path('cart_index') }}" class="button_1">Cancel</a>
+                    </div>
+                {{ form_end(checkoutForm) }}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h4 class="mb-3">Order summary</h4>
+                <div class="d-grid gap-3">
+                    {% for item in items %}
+                        <div class="border rounded-4 p-3 bg-light">
+                            <div class="fw-semibold">{{ item.product ? item.product.name : 'N/A' }}</div>
+                            <div class="small text-muted mb-2">
+                                {{ item.product and item.product.user ? item.product.user.name : 'N/A' }}
+                                {% if item.product and item.product.farm %}
+                                    • {{ item.product.farm.name }}
+                                {% endif %}
+                            </div>
+                            <div class="d-flex justify-content-between small">
+                                <span>{{ item.quantity }} x {{ item.product ? item.product.price|number_format(2, '.', ' ') : '0.00' }}</span>
+                                <strong>{{ ((item.product ? item.product.price : 0) * item.quantity)|number_format(2, '.', ' ') }}</strong>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Total</span>
+                    <span class="display-6 fw-bold">{{ cartTotal|number_format(2, '.', ' ') }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

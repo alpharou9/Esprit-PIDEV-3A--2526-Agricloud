@@ -17,13 +17,13 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[Route('/products')]
-#[IsGranted('ROLE_FARMER')]
 class FarmerProductController extends AbstractController
 {
     #[Route('', name: 'product_index', methods: ['GET'])]
     public function index(Request $request, ProductRepository $productRepository, FarmRepository $farmRepository): Response
     {
-        $farmer = $this->getFarmerUser();
+        $user = $this->getManagerUser();
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
         $query = trim((string) $request->query->get('q', ''));
         $category = trim((string) $request->query->get('category', ''));
         $status = trim((string) $request->query->get('status', ''));
@@ -36,7 +36,7 @@ class FarmerProductController extends AbstractController
             $farmId > 0 ? $farmId : null,
             $status !== '' ? $status : null,
             $sort,
-            $farmer->getId()
+            $isAdmin ? null : $user->getId()
         );
 
         return $this->render('market/farmer/index.html.twig', [
@@ -46,8 +46,9 @@ class FarmerProductController extends AbstractController
             'selectedStatus' => $status,
             'selectedFarm' => $farmId > 0 ? $farmId : null,
             'selectedSort' => $sort,
+            'isAdmin' => $isAdmin,
             'categories' => $productRepository->findAvailableCategories(),
-            'farms' => $farmRepository->findBy(['user' => $farmer], ['name' => 'ASC']),
+            'farms' => $isAdmin ? $farmRepository->findBy([], ['name' => 'ASC']) : $farmRepository->findBy(['user' => $user], ['name' => 'ASC']),
             'statuses' => [
                 'pending' => 'Pending',
                 'approved' => 'Approved',
@@ -70,9 +71,9 @@ class FarmerProductController extends AbstractController
     #[Route('/new', name: 'product_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
-        $farmer = $this->getFarmerUser();
+        $manager = $this->getManagerUser();
         $product = new Product();
-        $product->setUser($farmer);
+        $product->setUser($manager);
         $product->setStatus('pending');
 
         $form = $this->createForm(ProductType::class, $product);
@@ -86,7 +87,7 @@ class FarmerProductController extends AbstractController
                 $product->setImage($this->uploadProductImage($imageFile, $slugger));
             }
 
-            $product->setUser($farmer);
+            $product->setUser($manager);
             $product->setStatus('pending');
             $product->setApprovedAt(null);
             $product->setApprovedBy(null);
@@ -162,8 +163,8 @@ class FarmerProductController extends AbstractController
     private function getFarmerUser(): User
     {
         $user = $this->getUser();
-        if (!$user instanceof User || !$user->hasRole('ROLE_FARMER') || $user->hasRole('ROLE_ADMIN')) {
-            throw $this->createAccessDeniedException('Only farmers can manage farmer products.');
+        if (!$user instanceof User || (!$user->hasRole('ROLE_FARMER') && !$user->hasRole('ROLE_ADMIN'))) {
+            throw $this->createAccessDeniedException('Only farmers or admins can manage products.');
         }
 
         return $user;
@@ -171,11 +172,20 @@ class FarmerProductController extends AbstractController
 
     private function denyAccessUnlessOwner(Product $product): void
     {
-        $farmer = $this->getFarmerUser();
+        $user = $this->getManagerUser();
 
-        if ($product->getUser()?->getId() !== $farmer->getId()) {
+        if ($user->hasRole('ROLE_ADMIN')) {
+            return;
+        }
+
+        if ($product->getUser()?->getId() !== $user->getId()) {
             throw $this->createAccessDeniedException('You can only edit your own products.');
         }
+    }
+
+    private function getManagerUser(): User
+    {
+        return $this->getFarmerUser();
     }
 
     private function uploadProductImage($imageFile, SluggerInterface $slugger): string
