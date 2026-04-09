@@ -1,0 +1,94 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Users — AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0"><i class="bi bi-people me-2"></i>Users</h5>
+    <a href="{{ path('user_new') }}" class="btn btn-success btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> New User
+    </a>
+</div>
+
+{# Search bar #}
+<form method="get" class="mb-3 d-flex gap-2" style="max-width:400px">
+    <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search by name or email…">
+    <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-search"></i></button>
+    {% if q %}
+        <a href="{{ path('user_index') }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-x"></i></a>
+    {% endif %}
+</form>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td class="text-muted small">{{ user.id }}</td>
+                    <td class="fw-semibold">{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.phone ?? '—' }}</td>
+                    <td>
+                        {% if user.role %}
+                            <span class="badge bg-secondary">{{ user.role.name }}</span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.status == 'active' %}
+                            <span class="badge bg-success">Active</span>
+                        {% elseif user.status == 'blocked' %}
+                            <span class="badge bg-danger">Blocked</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ path('user_edit', {id: user.id}) }}" class="btn btn-sm btn-outline-primary me-1">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+
+                        {# Block / Unblock #}
+                        <form method="post" action="{{ path('user_toggle_block', {id: user.id}) }}" class="d-inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('toggle_block_' ~ user.id) }}">
+                            <button type="submit" class="btn btn-sm {{ user.status == 'blocked' ? 'btn-outline-success' : 'btn-outline-warning' }}"
+                                    title="{{ user.status == 'blocked' ? 'Unblock' : 'Block' }}">
+                                <i class="bi {{ user.status == 'blocked' ? 'bi-unlock' : 'bi-lock' }}"></i>
+                            </button>
+                        </form>
+
+                        {# Delete #}
+                        <form method="post" action="{{ path('user_delete', {id: user.id}) }}" class="d-inline"
+                              onsubmit="return confirm('Delete {{ user.name }}?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete_user_' ~ user.id) }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        {% if q %}No users match "{{ q }}".{% else %}No users found.{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
