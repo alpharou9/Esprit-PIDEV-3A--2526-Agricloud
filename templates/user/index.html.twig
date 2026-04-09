@@ -24,17 +24,17 @@
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>Email</th>
+                    <th>{{ knp_pagination_sortable(pagination, '#', 'u.id') }}</th>
+                    <th>{{ knp_pagination_sortable(pagination, 'Name', 'u.name') }}</th>
+                    <th>{{ knp_pagination_sortable(pagination, 'Email', 'u.email') }}</th>
                     <th>Phone</th>
                     <th>Role</th>
-                    <th>Status</th>
+                    <th>{{ knp_pagination_sortable(pagination, 'Status', 'u.status') }}</th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% for user in users %}
+                {% for user in pagination %}
                 <tr>
                     <td class="text-muted small">{{ user.id }}</td>
                     <td class="fw-semibold">{{ user.name }}</td>
@@ -57,6 +57,9 @@
                         {% endif %}
                     </td>
                     <td class="text-end">
+                        <a href="{{ path('user_show', {id: user.id}) }}" class="btn btn-sm btn-outline-secondary me-1" title="View">
+                            <i class="bi bi-eye"></i>
+                        </a>
                         <a href="{{ path('user_edit', {id: user.id}) }}" class="btn btn-sm btn-outline-primary me-1">
                             <i class="bi bi-pencil"></i>
                         </a>
@@ -90,5 +93,59 @@
             </tbody>
         </table>
     </div>
+
+    {% if pagination.totalItemCount > 0 %}
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
+        <span class="text-muted small">
+            {% set from = pagination.currentPageNumber * pagination.itemNumberPerPage - pagination.itemNumberPerPage + 1 %}
+            {% set to   = pagination.currentPageNumber * pagination.itemNumberPerPage %}
+            Showing {{ from }}–{{ to > pagination.totalItemCount ? pagination.totalItemCount : to }}
+            of {{ pagination.totalItemCount }} users
+        </span>
+        <div>
+            {{ knp_pagination_render(pagination) }}
+        </div>
+    </div>
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block stylesheets %}
+<style>
+.pagination {
+    gap: 4px;
+}
+.pagination .page-item .page-link {
+    border: none;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .85rem;
+    font-weight: 500;
+    color: #495057;
+    background: #f1f3f5;
+    transition: all .15s ease;
+    padding: 0;
+}
+.pagination .page-item .page-link:hover {
+    background: #d1e7dd;
+    color: #198754;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(25,135,84,.2);
+}
+.pagination .page-item.active .page-link {
+    background: #198754;
+    color: #fff;
+    box-shadow: 0 3px 8px rgba(25,135,84,.4);
+    transform: translateY(-1px);
+}
+.pagination .page-item.disabled .page-link {
+    background: transparent;
+    color: #ced4da;
+    pointer-events: none;
+}
+</style>
 {% endblock %}
