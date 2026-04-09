@@ -5,22 +5,83 @@
 {% block body %}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
     <div>
-        <h3 class="fw-bold mb-1">Orders</h3>
-        <p class="text-muted mb-0">Track customer orders with product, customer, and seller references.</p>
+        <h3 class="fw-bold mb-1">{{ isAdmin ? 'All Orders' : 'Orders For My Products' }}</h3>
+        <p class="text-muted mb-0">{{ isAdmin ? 'Track customer orders with product, customer, and seller references.' : 'Monitor only the orders linked to products you sell.' }}</p>
     </div>
-    <a href="{{ path('order_new') }}" class="btn btn-success">
-        <i class="bi bi-plus-circle me-1"></i>Add order
-    </a>
+    {% if isAdmin %}
+        <a href="{{ path('order_new') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle me-1"></i>Add order
+        </a>
+    {% endif %}
 </div>
 
 <div class="card border-0 shadow-sm">
     <div class="card-body">
-        <form method="get" class="row g-2 mb-4">
-            <div class="col-md-10">
-                <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by product, customer, seller, or status">
-            </div>
-            <div class="col-md-2 d-grid">
-                <button class="btn btn-outline-success">Search</button>
+        <form method="get" class="mb-4">
+            <div class="p-3 p-lg-4 rounded-4" style="background: linear-gradient(135deg, rgba(47,125,50,.08), rgba(91,160,95,.12)); border: 1px solid rgba(47,125,50,.12);">
+                <div class="row g-3 align-items-end">
+                    <div class="col-lg-4">
+                        <label for="q" class="form-label fw-semibold">Search</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                            <input id="q" type="text" name="q" value="{{ q }}" class="form-control border-start-0" placeholder="Product, customer, seller, city...">
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <label for="product" class="form-label fw-semibold">Product</label>
+                        <select id="product" name="product" class="form-select">
+                            <option value="">All products</option>
+                            {% for product in products %}
+                                <option value="{{ product.id }}" {{ selectedProduct == product.id ? 'selected' : '' }}>{{ product.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <label for="customer" class="form-label fw-semibold">Customer</label>
+                        <select id="customer" name="customer" class="form-select">
+                            <option value="">All customers</option>
+                            {% for customer in customers %}
+                                <option value="{{ customer.id }}" {{ selectedCustomer == customer.id ? 'selected' : '' }}>{{ customer.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% if isAdmin %}
+                        <div class="col-md-4 col-lg-2">
+                            <label for="seller" class="form-label fw-semibold">Seller</label>
+                            <select id="seller" name="seller" class="form-select">
+                                <option value="">All sellers</option>
+                                {% for seller in sellers %}
+                                    <option value="{{ seller.id }}" {{ selectedSeller == seller.id ? 'selected' : '' }}>{{ seller.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% endif %}
+                    <div class="col-md-6 col-lg-2">
+                        <label for="status" class="form-label fw-semibold">Status</label>
+                        <select id="status" name="status" class="form-select">
+                            <option value="">All statuses</option>
+                            {% for value, label in statuses %}
+                                <option value="{{ value }}" {{ selectedStatus == value ? 'selected' : '' }}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <label for="sort" class="form-label fw-semibold">Sort by</label>
+                        <select id="sort" name="sort" class="form-select">
+                            {% for value, label in sortOptions %}
+                                <option value="{{ value }}" {{ selectedSort == value ? 'selected' : '' }}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-9 d-flex flex-wrap gap-2 pt-1">
+                        <button class="btn btn-success px-4">
+                            <i class="bi bi-funnel-fill me-1"></i>Apply filters
+                        </button>
+                        <a href="{{ path('order_index') }}" class="btn btn-outline-secondary px-4">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                        </a>
+                    </div>
+                </div>
             </div>
         </form>
 
@@ -55,10 +116,12 @@
                         </td>
                         <td class="text-end">
                             <a href="{{ path('order_edit', {id: order.id}) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-                            <form method="post" action="{{ path('order_delete', {id: order.id}) }}" class="d-inline">
-                                <input type="hidden" name="_token" value="{{ csrf_token('delete_order_' ~ order.id) }}">
-                                <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this order?')">Delete</button>
-                            </form>
+                            {% if isAdmin %}
+                                <form method="post" action="{{ path('order_delete', {id: order.id}) }}" class="d-inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_order_' ~ order.id) }}">
+                                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this order?')">Delete</button>
+                                </form>
+                            {% endif %}
                         </td>
                     </tr>
                 {% else %}

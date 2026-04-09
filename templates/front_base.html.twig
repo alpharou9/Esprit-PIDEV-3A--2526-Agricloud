@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}AgriCloud Market{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --market-green: #2f7d32;
+            --market-sand: #f6f1e5;
+            --market-ink: #223228;
+        }
+        body {
+            color: var(--market-ink);
+            background:
+                radial-gradient(circle at top left, rgba(129, 199, 132, 0.18), transparent 22%),
+                linear-gradient(180deg, #fffef9 0%, var(--market-sand) 100%);
+        }
+        .market-tophead {
+            background: linear-gradient(135deg, #214c28 0%, var(--market-green) 52%, #86b85d 100%);
+            color: #fff;
+            padding: 1rem 0;
+            box-shadow: 0 16px 40px rgba(33, 76, 40, 0.18);
+        }
+        .market-tophead a { color: inherit; text-decoration: none; }
+        .front-shell {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 2rem 1rem 3rem;
+        }
+        .maincontainer {
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(47, 125, 50, 0.12);
+            border-radius: 28px;
+            box-shadow: 0 20px 48px rgba(34, 50, 40, 0.08);
+            padding: 1.5rem;
+        }
+        .market-footer {
+            padding: 2rem 0 3rem;
+            color: #627568;
+        }
+    </style>
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+    <header class="market-tophead">
+        <div class="front-shell py-0">
+            {% block tophead %}
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <a href="{{ path('market_index') }}" class="fs-4 fw-bold">
+                        <i class="bi bi-tree-fill me-2"></i>AgriCloud Market
+                    </a>
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="{{ path('market_index') }}" class="small fw-semibold">Catalog</a>
+                        {% if is_granted('ROLE_CUSTOMER') %}
+                            <a href="{{ path('cart_index') }}" class="small fw-semibold">Cart</a>
+                            <a href="{{ path('customer_order_index') }}" class="small fw-semibold">My Orders</a>
+                        {% endif %}
+                        {% if is_granted('ROLE_FARMER') %}
+                            <a href="{{ path('dashboard') }}" class="small fw-semibold">Backoffice</a>
+                        {% endif %}
+                        {% if app.user %}
+                            <span class="badge text-bg-light">{{ app.user.name }}</span>
+                            <a href="{{ path('app_logout') }}" class="small fw-semibold">Logout</a>
+                        {% else %}
+                            <a href="{{ path('app_login') }}" class="small fw-semibold">Login</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endblock %}
+        </div>
+    </header>
+
+    <div class="front-shell">
+        <div class="maincontainer">
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            {% block maincontainer %}{% endblock %}
+        </div>
+    </div>
+
+    <footer class="market-footer">
+        <div class="front-shell py-0">
+            {% block footer %}
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <span>AgriCloud workshop template integration: front office + back office.</span>
+                    <span class="small">Products, cart, search, sort, filter.</span>
+                </div>
+            {% endblock %}
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block javascripts %}{% endblock %}
+</body>
+</html>

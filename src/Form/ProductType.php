@@ -2,34 +2,43 @@
 
 namespace App\Form;
 
+use App\Entity\Farm;
 use App\Entity\Product;
 use App\Entity\User;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\MoneyType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\File;
 
 class ProductType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder
-            ->add('user', EntityType::class, [
+        if ($options['show_owner']) {
+            $builder->add('user', EntityType::class, [
                 'class' => User::class,
                 'choice_label' => fn (User $user) => sprintf('%s (%s)', $user->getName(), $user->getEmail()),
                 'label' => 'Owner',
                 'placeholder' => '- Select an owner -',
                 'attr' => ['class' => 'form-select'],
-            ])
-            ->add('farmId', IntegerType::class, [
-                'label' => 'Farm ID',
+            ]);
+        }
+
+        $builder
+            ->add('farm', EntityType::class, [
+                'class' => Farm::class,
+                'choice_label' => fn (Farm $farm) => sprintf('%s (#%d)', $farm->getName(), $farm->getId()),
+                'label' => 'Farm',
                 'required' => false,
-                'attr' => ['class' => 'form-control', 'placeholder' => 'Optional farm reference'],
+                'placeholder' => '- No farm -',
+                'attr' => ['class' => 'form-select'],
             ])
             ->add('name', TextType::class, [
                 'label' => 'Product name',
@@ -62,17 +71,37 @@ class ProductType extends AbstractType
                 ],
                 'attr' => ['class' => 'form-select'],
             ])
-            ->add('category', TextType::class, [
+            ->add('category', ChoiceType::class, [
                 'label' => 'Category',
                 'required' => false,
-                'attr' => ['class' => 'form-control', 'placeholder' => 'Honey, Fruits, Vegetables...'],
+                'choices' => [
+                    'Vegetables' => 'Vegetables',
+                    'Fruits' => 'Fruits',
+                    'Grains' => 'Grains',
+                    'Dairy' => 'Dairy',
+                    'Livestock' => 'Livestock',
+                    'Honey' => 'Honey',
+                    'Other' => 'Other',
+                ],
+                'placeholder' => '- Select a category -',
+                'attr' => ['class' => 'form-select'],
             ])
-            ->add('image', TextType::class, [
-                'label' => 'Image path',
+            ->add('imageFile', FileType::class, [
+                'label' => 'Product image',
+                'mapped' => false,
                 'required' => false,
-                'attr' => ['class' => 'form-control', 'placeholder' => 'uploads/products/example.jpg'],
-            ])
-            ->add('status', ChoiceType::class, [
+                'attr' => ['class' => 'form-control'],
+                'constraints' => [
+                    new File([
+                        'maxSize' => '5M',
+                        'mimeTypes' => ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+                        'mimeTypesMessage' => 'Please upload a valid image file (JPG, PNG, WEBP, or GIF).',
+                    ]),
+                ],
+            ]);
+
+        if ($options['show_status']) {
+            $builder->add('status', ChoiceType::class, [
                 'label' => 'Status',
                 'choices' => [
                     'Pending' => 'pending',
@@ -82,12 +111,15 @@ class ProductType extends AbstractType
                 ],
                 'attr' => ['class' => 'form-select'],
             ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => Product::class,
+            'show_owner' => false,
+            'show_status' => false,
         ]);
     }
 }

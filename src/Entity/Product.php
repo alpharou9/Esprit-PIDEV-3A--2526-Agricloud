@@ -23,8 +23,9 @@ class Product
     #[Assert\NotNull(message: 'An owner is required.')]
     private ?User $user = null;
 
-    #[ORM\Column(name: 'farm_id', type: 'bigint', nullable: true, options: ['unsigned' => true])]
-    private ?int $farmId = null;
+    #[ORM\ManyToOne(targetEntity: Farm::class)]
+    #[ORM\JoinColumn(name: 'farm_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    private ?Farm $farm = null;
 
     #[ORM\Column(length: 150)]
     #[Assert\NotBlank(message: 'Product name is required.')]
@@ -75,8 +76,8 @@ class Product
     public function getId(): ?int { return $this->id; }
     public function getUser(): ?User { return $this->user; }
     public function setUser(?User $user): static { $this->user = $user; return $this; }
-    public function getFarmId(): ?int { return $this->farmId; }
-    public function setFarmId(?int $farmId): static { $this->farmId = $farmId; return $this; }
+    public function getFarm(): ?Farm { return $this->farm; }
+    public function setFarm(?Farm $farm): static { $this->farm = $farm; return $this; }
     public function getName(): ?string { return $this->name; }
     public function setName(string $name): static { $this->name = $name; return $this; }
     public function getDescription(): ?string { return $this->description; }

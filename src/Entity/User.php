@@ -81,7 +81,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         $roleName = $this->role?->getName() ?? 'USER';
-        return ['ROLE_' . strtoupper($roleName)];
+        $roles = ['ROLE_USER'];
+        $roles[] = 'ROLE_' . strtoupper($roleName);
+
+        return array_values(array_unique($roles));
+    }
+
+    public function hasRole(string $role): bool
+    {
+        $normalizedRole = str_starts_with($role, 'ROLE_') ? strtoupper($role) : 'ROLE_' . strtoupper($role);
+
+        return in_array($normalizedRole, $this->getRoles(), true);
     }
 
     public function getPassword(): ?string { return $this->password; }
