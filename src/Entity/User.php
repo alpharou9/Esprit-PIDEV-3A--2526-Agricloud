@@ -21,12 +21,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'Name is required.')]
-    #[Assert\Length(min: 2, minMessage: 'Name must be at least 2 characters.')]
+    #[Assert\Length(min: 2, max: 100, minMessage: 'Name must be at least 2 characters.', maxMessage: 'Name cannot exceed 100 characters.')]
+    #[Assert\Regex(pattern: '/^[\p{L}\s\-\']+$/u', message: 'Name can only contain letters, spaces, hyphens and apostrophes.')]
     private string $name;
 
     #[ORM\Column(length: 150, unique: true)]
     #[Assert\NotBlank(message: 'Email is required.')]
     #[Assert\Email(message: 'Enter a valid email address.')]
+    #[Assert\Length(max: 150, maxMessage: 'Email cannot exceed 150 characters.')]
     private string $email;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -35,7 +37,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 20, nullable: true)]
     #[Assert\Regex(
         pattern: '/^\+?[0-9\s\-]{8,20}$/',
-        message: 'Invalid phone number format.'
+        message: 'Phone must be 8-20 digits (optionally starting with +).'
     )]
     private ?string $phone = null;
 
@@ -71,7 +73,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?Role $role = null;
 
     /** Plain password — not persisted, used only in forms */
-    #[Assert\Length(min: 6, minMessage: 'Password must be at least 6 characters.')]
+    #[Assert\Length(min: 6, max: 100, minMessage: 'Password must be at least 6 characters.', maxMessage: 'Password cannot exceed 100 characters.')]
+    #[Assert\Regex(pattern: '/[A-Z]/', message: 'Password must contain at least one uppercase letter.')]
+    #[Assert\Regex(pattern: '/[0-9]/', message: 'Password must contain at least one number.')]
     private ?string $plainPassword = null;
 
     // --- UserInterface ---

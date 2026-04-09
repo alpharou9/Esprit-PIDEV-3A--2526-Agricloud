@@ -41,22 +41,29 @@ class Order
 
     #[ORM\Column(name: 'shipping_address', type: 'text')]
     #[Assert\NotBlank(message: 'Shipping address is required.')]
+    #[Assert\Length(min: 5, max: 500, minMessage: 'Address must be at least 5 characters.', maxMessage: 'Address cannot exceed 500 characters.')]
     private string $shippingAddress;
 
     #[ORM\Column(name: 'shipping_city', length: 100, nullable: true)]
+    #[Assert\Length(max: 100, maxMessage: 'City cannot exceed 100 characters.')]
     private ?string $shippingCity = null;
 
     #[ORM\Column(name: 'shipping_postal', length: 20, nullable: true)]
+    #[Assert\Length(max: 20, maxMessage: 'Postal code cannot exceed 20 characters.')]
+    #[Assert\Regex(pattern: '/^[A-Za-z0-9\s\-]{3,20}$/', message: 'Enter a valid postal code.')]
     private ?string $shippingPostal = null;
 
     #[ORM\Column(name: 'shipping_email', length: 150, nullable: true)]
     #[Assert\Email(message: 'Enter a valid email.')]
+    #[Assert\Length(max: 150, maxMessage: 'Email cannot exceed 150 characters.')]
     private ?string $shippingEmail = null;
 
     #[ORM\Column(name: 'shipping_phone', length: 20, nullable: true)]
+    #[Assert\Regex(pattern: '/^\+?[0-9\s\-]{8,20}$/', message: 'Phone must be 8-20 digits (optionally starting with +).')]
     private ?string $shippingPhone = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Assert\Length(max: 1000, maxMessage: 'Notes cannot exceed 1000 characters.')]
     private ?string $notes = null;
 
     #[ORM\Column(name: 'order_date', type: 'datetime', nullable: true)]

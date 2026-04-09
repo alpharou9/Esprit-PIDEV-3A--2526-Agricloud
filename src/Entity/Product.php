@@ -25,24 +25,28 @@ class Product
 
     #[ORM\Column(length: 150)]
     #[Assert\NotBlank(message: 'Product name is required.')]
-    #[Assert\Length(min: 2, minMessage: 'Name must be at least 2 characters.')]
+    #[Assert\Length(min: 2, max: 150, minMessage: 'Name must be at least 2 characters.', maxMessage: 'Name cannot exceed 150 characters.')]
     private string $name;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Assert\Length(max: 2000, maxMessage: 'Description cannot exceed 2000 characters.')]
     private ?string $description = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\NotBlank(message: 'Price is required.')]
     #[Assert\Positive(message: 'Price must be positive.')]
+    #[Assert\LessThan(value: 1000000, message: 'Price seems unrealistically high.')]
     private string $price;
 
     #[ORM\Column(type: 'integer')]
     #[Assert\NotBlank(message: 'Quantity is required.')]
     #[Assert\PositiveOrZero(message: 'Quantity cannot be negative.')]
+    #[Assert\LessThanOrEqual(value: 999999, message: 'Quantity cannot exceed 999 999.')]
     private int $quantity;
 
     #[ORM\Column(length: 20)]
     #[Assert\NotBlank(message: 'Unit is required.')]
+    #[Assert\Length(max: 20, maxMessage: 'Unit cannot exceed 20 characters.')]
     private string $unit;
 
     #[ORM\Column(length: 50, nullable: true)]

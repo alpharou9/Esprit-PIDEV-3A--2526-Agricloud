@@ -23,7 +23,7 @@ class Post
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Title is required.')]
-    #[Assert\Length(min: 3, minMessage: 'Title must be at least 3 characters.')]
+    #[Assert\Length(min: 3, max: 255, minMessage: 'Title must be at least 3 characters.', maxMessage: 'Title cannot exceed 255 characters.')]
     private string $title = '';
 
     #[ORM\Column(length: 255, unique: true)]
@@ -31,9 +31,11 @@ class Post
 
     #[ORM\Column(type: 'text')]
     #[Assert\NotBlank(message: 'Content is required.')]
+    #[Assert\Length(min: 20, minMessage: 'Content must be at least 20 characters.')]
     private string $content = '';
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Assert\Length(max: 500, maxMessage: 'Excerpt cannot exceed 500 characters.')]
     private ?string $excerpt = null;
 
     #[ORM\Column(length: 255, nullable: true)]

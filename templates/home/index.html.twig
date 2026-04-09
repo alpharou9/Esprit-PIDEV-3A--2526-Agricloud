@@ -227,7 +227,7 @@
                         <p class="text-muted small mb-2">{{ (post.excerpt ?? post.content)|slice(0,90) }}…</p>
                         <div class="d-flex justify-content-between align-items-center">
                             <small class="text-muted"><i class="bi bi-person me-1"></i>{{ post.user.name }}</small>
-                            <a href="{{ path('app_login') }}" class="read-more">Read more →</a>
+                            <a href="{{ app.user ? path('blog_show', {slug: post.slug}) : path('app_login') }}" class="read-more">Read more →</a>
                         </div>
                     </div>
                 </div>
@@ -235,7 +235,7 @@
             {% endfor %}
         </div>
         <div class="text-center mt-5">
-            <a href="{{ path('app_login') }}" class="btn-hero-primary">View All Posts</a>
+            <a href="{{ path('blog_index') }}" class="btn-hero-primary">View All Posts</a>
         </div>
     </div>
 </section>
@@ -269,7 +269,7 @@
             {% endfor %}
         </div>
         <div class="text-center mt-5">
-            <a href="{{ path('app_login') }}" class="btn-hero-primary">Browse Marketplace</a>
+            <a href="{{ path('market_index') }}" class="btn-hero-primary">Browse Marketplace</a>
         </div>
     </div>
 </section>

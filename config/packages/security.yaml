@@ -29,6 +29,9 @@ security:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
         - { path: ^/$, roles: PUBLIC_ACCESS }
+        - { path: ^/blog, roles: PUBLIC_ACCESS }
+        - { path: ^/market, roles: PUBLIC_ACCESS }
+        - { path: ^/events, roles: PUBLIC_ACCESS }
         - { path: ^/, roles: ROLE_USER }
 
     role_hierarchy:

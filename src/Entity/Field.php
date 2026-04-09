@@ -21,12 +21,13 @@ class Field
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'Field name is required.')]
-    #[Assert\Length(min: 2, minMessage: 'Name must be at least 2 characters.')]
+    #[Assert\Length(min: 2, max: 100, minMessage: 'Name must be at least 2 characters.', maxMessage: 'Name cannot exceed 100 characters.')]
     private string $name;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\NotBlank(message: 'Area is required.')]
     #[Assert\Positive(message: 'Area must be a positive number.')]
+    #[Assert\LessThan(value: 1000000, message: 'Area seems unrealistically large.')]
     private string $area;
 
     #[ORM\Column(name: 'soil_type', length: 50, nullable: true)]

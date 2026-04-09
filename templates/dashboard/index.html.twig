@@ -1,135 +1,192 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}Dashboard — AgriCloud{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
 
 {% block stylesheets %}
 <style>
-.stat-card { border-radius: 14px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,.06); transition: transform .15s; }
-.stat-card:hover { transform: translateY(-3px); }
-.stat-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
-.progress { height: 5px; border-radius: 99px; }
-.chart-card { border-radius: 14px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
-.recent-avatar { width: 34px; height: 34px; border-radius: 50%; background: #d1e7dd; color: #198754; font-weight: 700; font-size: .8rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    /* ── Hero banner ── */
+    .dash-hero {
+        border-radius: 20px; overflow: hidden; position: relative;
+        background: linear-gradient(135deg, rgba(20,50,5,.82) 0%, rgba(60,110,10,.65) 100%),
+                    url('{{ asset('theme/agriculture-farm/img/1.jpg') }}') center/cover no-repeat;
+        padding: 48px 48px;
+        margin-bottom: 32px;
+        color: #fff;
+    }
+    .dash-hero h2 { font-size: 2rem; font-weight: 700; margin: 0 0 6px; }
+    .dash-hero p  { font-size: 1rem; color: rgba(255,255,255,.8); margin: 0; }
+    .dash-hero .hero-date { font-size: .85rem; color: rgba(255,255,255,.6); margin-top: 6px; }
+
+    /* ── Section heading ── */
+    .section-heading {
+        font-size: .7rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 2px; color: #77b81e; margin-bottom: 14px;
+    }
+
+    /* ── Quick-action cards (regular user) ── */
+    .qa-card {
+        border: none; border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.07);
+        padding: 28px 22px;
+        background: #fff;
+        text-decoration: none; color: inherit;
+        display: block; height: 100%;
+        transition: transform .18s, box-shadow .18s;
+    }
+    .qa-card:hover { transform: translateY(-5px); box-shadow: 0 12px 32px rgba(0,0,0,.12); color: inherit; }
+    .qa-icon {
+        width: 60px; height: 60px; border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.6rem; margin-bottom: 16px;
+    }
+    .qa-card h6 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .qa-card p  { font-size: .85rem; color: #888; margin: 0; }
+
+    /* ── Stat cards (admin) ── */
+    .stat-card {
+        border: none; border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.07);
+        background: #fff; overflow: hidden;
+        transition: transform .18s;
+    }
+    .stat-card:hover { transform: translateY(-4px); }
+    .stat-card-body { padding: 22px 22px 16px; }
+    .stat-card .stat-icon {
+        width: 52px; height: 52px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.35rem; flex-shrink: 0;
+    }
+    .stat-number { font-size: 2.2rem; font-weight: 700; line-height: 1; }
+    .stat-label  { font-size: .82rem; color: #888; margin-top: 2px; }
+    .stat-bar { height: 4px; border-radius: 0; }
+
+    /* ── Chart cards ── */
+    .chart-card {
+        border: none; border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.07);
+        background: #fff; padding: 22px; height: 100%;
+    }
+    .chart-card h6 { font-weight: 700; font-size: .95rem; margin-bottom: 16px; }
+
+    /* ── Recent user rows ── */
+    .recent-avatar {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: #e8f5d0; color: #77b81e;
+        font-weight: 700; font-size: .85rem;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="fw-bold mb-0">Dashboard</h4>
-        <span class="text-muted small">{{ "now"|date("l, d F Y") }}</span>
-    </div>
-    <span class="text-muted small">Welcome back, <strong>{{ app.user.name }}</strong></span>
+
+{# ── Hero ── #}
+<div class="dash-hero">
+    <h2>Welcome back, {{ app.user.name }} 👋</h2>
+    <p>Here's what's happening on your AgriCloud platform today.</p>
+    <div class="hero-date"><i class="bi bi-calendar3 me-1"></i>{{ "now"|date("l, d F Y") }}</div>
 </div>
 
 {% if is_granted('ROLE_ADMIN') %}
 
-{# ── Stat cards ────────────────────────────────────────────── #}
+{# ── Admin stat cards ── #}
+<p class="section-heading">Overview</p>
 <div class="row g-3 mb-4">
+
     <div class="col-sm-6 col-xl-3">
         <a href="{{ path('user_index') }}" class="text-decoration-none">
-            <div class="card stat-card p-3">
-                <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-card-body d-flex align-items-center gap-3">
                     <div class="stat-icon" style="background:#e8f4fd">
                         <i class="bi bi-people-fill text-primary"></i>
                     </div>
                     <div>
-                        <div class="fs-3 fw-bold lh-1">{{ userCount }}</div>
-                        <div class="text-muted small">Total Users</div>
+                        <div class="stat-number">{{ userCount }}</div>
+                        <div class="stat-label">Total Users</div>
                     </div>
                 </div>
-                <div class="progress">
-                    <div class="progress-bar bg-primary" style="width:100%"></div>
-                </div>
+                <div class="progress stat-bar"><div class="progress-bar bg-primary" style="width:100%"></div></div>
             </div>
         </a>
     </div>
 
     <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card p-3">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <div class="stat-icon" style="background:#d1f0e0">
-                    <i class="bi bi-person-check-fill text-success"></i>
+        <div class="stat-card">
+            <div class="stat-card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#e8f8ee">
+                    <i class="bi bi-person-check-fill" style="color:#77b81e"></i>
                 </div>
                 <div>
-                    <div class="fs-3 fw-bold lh-1">{{ activeCount }}</div>
-                    <div class="text-muted small">Active Users</div>
+                    <div class="stat-number">{{ activeCount }}</div>
+                    <div class="stat-label">Active Users</div>
                 </div>
             </div>
-            <div class="progress">
-                <div class="progress-bar bg-success"
-                     style="width:{{ userCount > 0 ? (activeCount / userCount * 100)|round : 0 }}%"></div>
+            <div class="progress stat-bar">
+                <div class="progress-bar" style="background:#77b81e;width:{{ userCount > 0 ? (activeCount / userCount * 100)|round : 0 }}%"></div>
             </div>
         </div>
     </div>
 
     <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card p-3">
-            <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="stat-card">
+            <div class="stat-card-body d-flex align-items-center gap-3">
                 <div class="stat-icon" style="background:#fde8e8">
                     <i class="bi bi-person-x-fill text-danger"></i>
                 </div>
                 <div>
-                    <div class="fs-3 fw-bold lh-1">{{ blockedCount }}</div>
-                    <div class="text-muted small">Blocked Users</div>
+                    <div class="stat-number">{{ blockedCount }}</div>
+                    <div class="stat-label">Blocked Users</div>
                 </div>
             </div>
-            <div class="progress">
-                <div class="progress-bar bg-danger"
-                     style="width:{{ userCount > 0 ? (blockedCount / userCount * 100)|round : 0 }}%"></div>
+            <div class="progress stat-bar">
+                <div class="progress-bar bg-danger" style="width:{{ userCount > 0 ? (blockedCount / userCount * 100)|round : 0 }}%"></div>
             </div>
         </div>
     </div>
 
     <div class="col-sm-6 col-xl-3">
         <a href="{{ path('role_index') }}" class="text-decoration-none">
-            <div class="card stat-card p-3">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="stat-icon" style="background:#fff3cd">
+            <div class="stat-card">
+                <div class="stat-card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background:#fff8e1">
                         <i class="bi bi-shield-check text-warning"></i>
                     </div>
                     <div>
-                        <div class="fs-3 fw-bold lh-1">{{ roleCount }}</div>
-                        <div class="text-muted small">Roles</div>
+                        <div class="stat-number">{{ roleCount }}</div>
+                        <div class="stat-label">Roles</div>
                     </div>
                 </div>
-                <div class="progress">
-                    <div class="progress-bar bg-warning" style="width:100%"></div>
-                </div>
+                <div class="progress stat-bar"><div class="progress-bar bg-warning" style="width:100%"></div></div>
             </div>
         </a>
     </div>
 </div>
 
-{# ── Charts + Recent users ─────────────────────────────────── #}
+{# ── Charts + Recent users ── #}
+<p class="section-heading">Analytics</p>
 <div class="row g-3 mb-4">
-
-    {# Doughnut — status #}
     <div class="col-md-4">
-        <div class="card chart-card p-3 h-100">
-            <h6 class="fw-semibold mb-3"><i class="bi bi-pie-chart-fill text-success me-1"></i>User Status</h6>
-            <div class="d-flex justify-content-center align-items-center" style="height:200px">
+        <div class="chart-card">
+            <h6><i class="bi bi-pie-chart-fill me-2" style="color:#77b81e"></i>User Status</h6>
+            <div class="d-flex justify-content-center align-items-center" style="height:210px">
                 <canvas id="statusChart"></canvas>
             </div>
         </div>
     </div>
-
-    {# Bar — users per role #}
     <div class="col-md-4">
-        <div class="card chart-card p-3 h-100">
-            <h6 class="fw-semibold mb-3"><i class="bi bi-bar-chart-fill text-primary me-1"></i>Users per Role</h6>
-            <div style="height:200px">
+        <div class="chart-card">
+            <h6><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Users per Role</h6>
+            <div style="height:210px">
                 <canvas id="roleChart"></canvas>
             </div>
         </div>
     </div>
-
-    {# Recent registrations #}
     <div class="col-md-4">
-        <div class="card chart-card p-3 h-100">
+        <div class="chart-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-semibold mb-0"><i class="bi bi-clock-history text-secondary me-1"></i>Recent Users</h6>
-                <a href="{{ path('user_index') }}" class="btn btn-outline-success btn-sm" style="font-size:.75rem">View all</a>
+                <h6 class="mb-0"><i class="bi bi-clock-history me-2 text-secondary"></i>Recent Users</h6>
+                <a href="{{ path('user_index') }}" class="btn btn-sm" style="background:#e8f8ee;color:#77b81e;font-size:.75rem;border-radius:8px">View all</a>
             </div>
             <div class="d-flex flex-column gap-2">
                 {% for u in recentUsers %}
@@ -140,65 +197,142 @@
                         <div class="text-muted" style="font-size:.72rem">{{ u.email }}</div>
                     </div>
                     {% if u.status == 'active' %}
-                        <span class="badge bg-success-subtle text-success" style="font-size:.68rem">Active</span>
+                        <span class="badge rounded-pill" style="background:#e8f8ee;color:#77b81e;font-size:.68rem">Active</span>
                     {% elseif u.status == 'blocked' %}
-                        <span class="badge bg-danger-subtle text-danger" style="font-size:.68rem">Blocked</span>
+                        <span class="badge rounded-pill bg-danger-subtle text-danger" style="font-size:.68rem">Blocked</span>
                     {% else %}
-                        <span class="badge bg-secondary-subtle text-secondary" style="font-size:.68rem">Inactive</span>
+                        <span class="badge rounded-pill bg-secondary-subtle text-secondary" style="font-size:.68rem">Inactive</span>
                     {% endif %}
                 </div>
                 {% else %}
-                <p class="text-muted small mb-0">No users yet.</p>
+                <p class="text-muted small">No users yet.</p>
                 {% endfor %}
             </div>
         </div>
     </div>
 </div>
 
-{# ── Quick Actions ─────────────────────────────────────────── #}
-<h6 class="fw-semibold text-muted mb-3">Quick Actions</h6>
+{# ── Quick actions (admin) ── #}
+<p class="section-heading">Quick Actions</p>
 <div class="row g-3">
     <div class="col-md-3">
-        <a href="{{ path('user_new') }}" class="text-decoration-none">
-            <div class="card stat-card p-3 d-flex flex-row align-items-center gap-3">
-                <div class="stat-icon" style="background:#e8f4fd">
-                    <i class="bi bi-person-plus text-primary"></i>
-                </div>
-                <div>
-                    <div class="fw-semibold">New User</div>
-                    <div class="text-muted small">Add an account</div>
-                </div>
-            </div>
+        <a href="{{ path('user_new') }}" class="qa-card">
+            <div class="qa-icon" style="background:#e8f4fd"><i class="bi bi-person-plus text-primary"></i></div>
+            <h6>New User</h6>
+            <p>Create a user account</p>
         </a>
     </div>
     <div class="col-md-3">
-        <a href="{{ path('role_new') }}" class="text-decoration-none">
-            <div class="card stat-card p-3 d-flex flex-row align-items-center gap-3">
-                <div class="stat-icon" style="background:#d1f0e0">
-                    <i class="bi bi-shield-plus text-success"></i>
-                </div>
-                <div>
-                    <div class="fw-semibold">New Role</div>
-                    <div class="text-muted small">Define permissions</div>
-                </div>
-            </div>
+        <a href="{{ path('role_new') }}" class="qa-card">
+            <div class="qa-icon" style="background:#e8f8ee"><i class="bi bi-shield-plus" style="color:#77b81e"></i></div>
+            <h6>New Role</h6>
+            <p>Define permissions</p>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{{ path('blog_admin_comments') }}" class="qa-card">
+            <div class="qa-icon" style="background:#fff8e1"><i class="bi bi-chat-dots text-warning"></i></div>
+            <h6>Moderate Comments</h6>
+            <p>Review pending comments</p>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{{ path('market_index') }}" class="qa-card">
+            <div class="qa-icon" style="background:#fde8e8"><i class="bi bi-shop text-danger"></i></div>
+            <h6>Marketplace</h6>
+            <p>Browse all products</p>
         </a>
     </div>
 </div>
 
 {% else %}
 
+{# ── Regular user quick-access cards ── #}
+<p class="section-heading">Quick Access</p>
+<div class="row g-3 mb-4">
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="{{ path('profile_show') }}" class="qa-card">
+            <div class="qa-icon" style="background:#e8f4fd"><i class="bi bi-person-circle text-primary"></i></div>
+            <h6>My Profile</h6>
+            <p>View & edit your personal info</p>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="{{ path('farm_index') }}" class="qa-card">
+            <div class="qa-icon" style="background:#e8f8ee"><i class="bi bi-house-heart" style="color:#77b81e"></i></div>
+            <h6>My Farms</h6>
+            <p>Manage your farms and fields</p>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="{{ path('market_index') }}" class="qa-card">
+            <div class="qa-icon" style="background:#fff8e1"><i class="bi bi-shop text-warning"></i></div>
+            <h6>Marketplace</h6>
+            <p>Browse and buy farm products</p>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="{{ path('my_products') }}" class="qa-card">
+            <div class="qa-icon" style="background:#fde8e8"><i class="bi bi-box-seam text-danger"></i></div>
+            <h6>My Products</h6>
+            <p>List and manage your produce</p>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="{{ path('event_index') }}" class="qa-card">
+            <div class="qa-icon" style="background:#f0ebff"><i class="bi bi-calendar-event text-purple" style="color:#7c3aed"></i></div>
+            <h6>Events</h6>
+            <p>Discover & join farming events</p>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="{{ path('blog_index') }}" class="qa-card">
+            <div class="qa-icon" style="background:#e8f8f5"><i class="bi bi-journal-richtext" style="color:#0d9488"></i></div>
+            <h6>Blog</h6>
+            <p>Read & share farming insights</p>
+        </a>
+    </div>
+
+</div>
+
+{# ── More shortcuts ── #}
+<p class="section-heading">Your Activity</p>
 <div class="row g-3">
-    <div class="col-md-4">
-        <a href="{{ path('profile_show') }}" class="text-decoration-none">
-            <div class="card stat-card p-3 d-flex flex-row align-items-center gap-3">
-                <div class="stat-icon" style="background:#e8f4fd">
-                    <i class="bi bi-person-circle text-primary"></i>
-                </div>
-                <div>
-                    <div class="fw-semibold">My Profile</div>
-                    <div class="text-muted small">View & edit your info</div>
-                </div>
+    <div class="col-sm-6 col-lg-3">
+        <a href="{{ path('cart_index') }}" class="qa-card" style="padding:20px 18px">
+            <div class="d-flex align-items-center gap-3">
+                <div class="qa-icon mb-0" style="background:#e8f4fd;width:44px;height:44px;font-size:1.2rem"><i class="bi bi-cart text-primary"></i></div>
+                <div><h6 class="mb-0" style="font-size:.95rem">My Cart</h6><p class="mb-0" style="font-size:.8rem">View cart items</p></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <a href="{{ path('order_index') }}" class="qa-card" style="padding:20px 18px">
+            <div class="d-flex align-items-center gap-3">
+                <div class="qa-icon mb-0" style="background:#e8f8ee;width:44px;height:44px;font-size:1.2rem"><i class="bi bi-receipt" style="color:#77b81e"></i></div>
+                <div><h6 class="mb-0" style="font-size:.95rem">My Orders</h6><p class="mb-0" style="font-size:.8rem">Track your orders</p></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <a href="{{ path('event_my_registrations') }}" class="qa-card" style="padding:20px 18px">
+            <div class="d-flex align-items-center gap-3">
+                <div class="qa-icon mb-0" style="background:#f0ebff;width:44px;height:44px;font-size:1.2rem"><i class="bi bi-ticket-perforated" style="color:#7c3aed"></i></div>
+                <div><h6 class="mb-0" style="font-size:.95rem">My Registrations</h6><p class="mb-0" style="font-size:.8rem">Events you joined</p></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <a href="{{ path('blog_my_posts') }}" class="qa-card" style="padding:20px 18px">
+            <div class="d-flex align-items-center gap-3">
+                <div class="qa-icon mb-0" style="background:#e8f8f5;width:44px;height:44px;font-size:1.2rem"><i class="bi bi-pencil-square" style="color:#0d9488"></i></div>
+                <div><h6 class="mb-0" style="font-size:.95rem">My Posts</h6><p class="mb-0" style="font-size:.8rem">Manage your articles</p></div>
             </div>
         </a>
     </div>
@@ -211,29 +345,25 @@
 {% if is_granted('ROLE_ADMIN') %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-const green  = '#198754';
-const greenL = '#d1e7dd';
+const agriGreen = '#77b81e';
 
-// Doughnut — status
 new Chart(document.getElementById('statusChart'), {
     type: 'doughnut',
     data: {
         labels: {{ statusLabels|raw }},
         datasets: [{
             data: {{ statusValues|raw }},
-            backgroundColor: ['#198754','#dc3545','#6c757d','#0d6efd'],
-            borderWidth: 0,
-            hoverOffset: 6
+            backgroundColor: ['#77b81e','#dc3545','#6c757d','#0d6efd'],
+            borderWidth: 0, hoverOffset: 6
         }]
     },
     options: {
-        cutout: '70%',
+        cutout: '72%',
         plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
         maintainAspectRatio: false
     }
 });
 
-// Bar — users per role
 new Chart(document.getElementById('roleChart'), {
     type: 'bar',
     data: {
@@ -241,8 +371,8 @@ new Chart(document.getElementById('roleChart'), {
         datasets: [{
             label: 'Users',
             data: {{ roleValues|raw }},
-            backgroundColor: '#198754cc',
-            borderRadius: 6,
+            backgroundColor: agriGreen + 'cc',
+            borderRadius: 8,
             borderSkipped: false
         }]
     },

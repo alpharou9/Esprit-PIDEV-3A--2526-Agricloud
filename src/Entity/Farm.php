@@ -23,27 +23,32 @@ class Farm
 
     #[ORM\Column(length: 150)]
     #[Assert\NotBlank(message: 'Farm name is required.')]
-    #[Assert\Length(min: 2, minMessage: 'Name must be at least 2 characters.')]
+    #[Assert\Length(min: 2, max: 150, minMessage: 'Name must be at least 2 characters.', maxMessage: 'Name cannot exceed 150 characters.')]
     private string $name;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Location is required.')]
+    #[Assert\Length(min: 2, max: 255, minMessage: 'Location must be at least 2 characters.')]
     private string $location;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 8, nullable: true)]
+    #[Assert\Range(min: -90, max: 90, notInRangeMessage: 'Latitude must be between -90 and 90.')]
     private ?string $latitude = null;
 
     #[ORM\Column(type: 'decimal', precision: 11, scale: 8, nullable: true)]
+    #[Assert\Range(min: -180, max: 180, notInRangeMessage: 'Longitude must be between -180 and 180.')]
     private ?string $longitude = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
     #[Assert\Positive(message: 'Area must be a positive number.')]
+    #[Assert\LessThan(value: 1000000, message: 'Area seems unrealistically large.')]
     private ?string $area = null;
 
     #[ORM\Column(name: 'farm_type', length: 50, nullable: true)]
     private ?string $farmType = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Assert\Length(max: 2000, maxMessage: 'Description cannot exceed 2000 characters.')]
     private ?string $description = null;
 
     #[ORM\Column(length: 255, nullable: true)]
