@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+{% block title %}My Registrations — AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="fw-bold mb-0"><i class="bi bi-ticket-perforated me-2"></i>My Registrations</h5>
+    <a href="{{ path('event_index') }}" class="btn btn-outline-success btn-sm"><i class="bi bi-calendar-event me-1"></i>Browse Events</a>
+</div>
+
+{% if participations is empty %}
+<div class="text-center text-muted py-5">
+    <i class="bi bi-ticket" style="font-size:3rem;opacity:.3"></i>
+    <p class="mt-2">No registrations yet. <a href="{{ path('event_index') }}">Browse events →</a></p>
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Event</th>
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th>Registration Status</th>
+                    <th>Registered On</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in participations %}
+                <tr>
+                    <td class="fw-semibold">
+                        <a href="{{ path('event_show', {id: p.event.id}) }}" class="text-decoration-none text-dark">{{ p.event.title }}</a>
+                    </td>
+                    <td class="text-muted small">{{ p.event.eventDate ? p.event.eventDate|date('d M Y, H:i') : '—' }}</td>
+                    <td class="text-muted small">{{ p.event.location }}</td>
+                    <td>
+                        {% set sc = {pending:'warning',confirmed:'success',cancelled:'danger',attended:'primary'} %}
+                        <span class="badge bg-{{ sc[p.status] ?? 'secondary' }} {% if p.status == 'pending' %}text-dark{% endif %}">{{ p.status|capitalize }}</span>
+                        {% if p.isAttended %}<span class="badge bg-primary ms-1">Attended</span>{% endif %}
+                    </td>
+                    <td class="text-muted small">{{ p.registrationDate ? p.registrationDate|date('d M Y') : '—' }}</td>
+                    <td>
+                        {% if p.status != 'cancelled' and p.status != 'attended' %}
+                        <form method="post" action="{{ path('event_cancel_registration', {id: p.id}) }}" onsubmit="return confirm('Cancel your registration?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('cancel_participation_' ~ p.id) }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-circle me-1"></i>Cancel</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
