@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Field{% endblock %}
+
+{% block body %}
+    <h1>Create new Field</h1>
+
+    {{ include('field/_form.html.twig') }}
+
+    <a href="{{ path('app_field_index') }}">back to list</a>
+{% endblock %}

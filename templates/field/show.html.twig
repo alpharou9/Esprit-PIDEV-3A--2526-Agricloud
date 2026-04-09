@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Field{% endblock %}
+
+{% block body %}
+    <h1>Field</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ field.id }}</td>
+            </tr>
+            <tr>
+                <th>Name</th>
+                <td>{{ field.name }}</td>
+            </tr>
+            <tr>
+                <th>Area</th>
+                <td>{{ field.area }}</td>
+            </tr>
+            <tr>
+                <th>SoilType</th>
+                <td>{{ field.soilType }}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>{{ field.status }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_field_index') }}">back to list</a>
+
+    <a href="{{ path('app_field_edit', {'id': field.id}) }}">edit</a>
+
+    {{ include('field/_delete_form.html.twig') }}
+{% endblock %}

@@ -15,32 +15,36 @@ class Farm
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 100)]
+    #[ORM\Column(length: 255)]
     private ?string $name = null;
 
-    #[ORM\Column(length: 100)]
+    #[ORM\Column(length: 255)]
     private ?string $location = null;
 
     #[ORM\Column]
     private ?float $area = null;
 
-    #[ORM\Column(length: 100)]
-    private ?string $farmtype = null;
+    #[ORM\Column(length: 255)]
+    private ?string $farmType = null;
 
-    #[ORM\Column(length: 150)]
+    #[ORM\Column(length: 255)]
     private ?string $description = null;
 
-    #[ORM\Column(length: 20)]
+    #[ORM\Column(length: 255)]
     private ?string $status = null;
+
+    #[ORM\Column]
+    private ?int $nbfields = null;
 
     /**
      * @var Collection<int, Field>
      */
-    #[ORM\OneToMany(targetEntity: Field::class, mappedBy: 'farmid', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Field::class, mappedBy: 'Farmid', orphanRemoval: true)]
     private Collection $fields;
 
     public function __construct()
     {
+        $this->status = 'pending';
         $this->fields = new ArrayCollection();
     }
 
@@ -85,14 +89,14 @@ class Farm
         return $this;
     }
 
-    public function getFarmtype(): ?string
+    public function getFarmType(): ?string
     {
-        return $this->farmtype;
+        return $this->farmType;
     }
 
-    public function setFarmtype(string $farmtype): static
+    public function setFarmType(string $farmType): static
     {
-        $this->farmtype = $farmtype;
+        $this->farmType = $farmType;
 
         return $this;
     }
@@ -117,6 +121,18 @@ class Farm
     public function setStatus(string $status): static
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getNbfields(): ?int
+    {
+        return $this->nbfields;
+    }
+
+    public function setNbfields(int $nbfields): static
+    {
+        $this->nbfields = $nbfields;
 
         return $this;
     }

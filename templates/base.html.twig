@@ -2,23 +2,82 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-        {% block stylesheets %}
-        {% endblock %}
+        <title>{% block title %}Agricloud{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🌱</text></svg>">
+        
+        {# Bootstrap 5 CSS #}
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        {# Bootstrap Icons #}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        
+        <style>
+            body { overflow-x: hidden; background-color: #f8f9fa; }
+            #sidebar-wrapper { min-height: 100vh; width: 250px; transition: margin .25s ease-out; background: #2c3e50; color: white; }
+            #sidebar-wrapper .list-group-item { background: transparent; color: rgba(255,255,255,0.8); border: none; padding: 1.5rem; }
+            #sidebar-wrapper .list-group-item:hover { color: white; background: rgba(255,255,255,0.1); }
+            #sidebar-wrapper .sidebar-heading { padding: 2rem 1.5rem; font-size: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+            .navbar { background-color: #ffffff !important; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        </style>
+
+        {% block stylesheets %}{% endblock %}
 
         {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
-
-        {% set frankenphpHotReload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
-        {% if frankenphpHotReload %}
-        <meta name="frankenphp-hot-reload:url" content="{{ frankenphpHotReload }}">
-        <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
-        <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
-        {% endif %}
     </head>
     <body>
-        {% block body %}{% endblock %}
+        <div class="d-flex" id="wrapper">
+            <div id="sidebar-wrapper">
+                <div class="sidebar-heading fw-bold text-uppercase tracking-wider">
+                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{{ path('app_choice') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-house-door me-2"></i> Home / Roles
+                    </a>
+                    <a href="{{ path('app_farmer_farm_index') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-info-circle me-2"></i> Published Farms
+                    </a>
+                    <a href="{{ path('app_farmer_my_farms') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-briefcase me-2"></i> My Farms
+                    </a>
+                    <a href="{{ path('app_admin_farm_index') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-shield-check me-2"></i> Admin Panel
+                    </a>
+                </div>
+            </div>
+
+            <div id="page-content-wrapper" class="flex-grow-1">
+                <nav class="navbar navbar-expand-lg navbar-light border-bottom mb-4">
+                    <div class="container-fluid">
+                        <span class="navbar-brand fw-bold text-success" style="font-size: 1.5rem;">
+                            <i class="bi bi-cloud-sun me-2"></i>Agricloud
+                        </span>
+                        <div class="ms-auto pe-3">
+                            <span class="text-muted"><i class="bi bi-person-circle"></i> Welcome, User</span>
+                        </div>
+                    </div>
+                </nav>
+
+                <div class="container-fluid px-4">
+                    {# Display Flash Messages (Success/Error) #}
+                    {% for label, messages in app.flashes %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+
+                    {% block body %}{% endblock %}
+                </div>
+            </div>
+        </div>
+
+        {# Bootstrap JS Bundle #}
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        
+        {% block extra_js %}{% endblock %}
     </body>
 </html>
