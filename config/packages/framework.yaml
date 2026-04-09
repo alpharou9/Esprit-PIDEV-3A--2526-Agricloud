@@ -11,3 +11,6 @@ framework:
 
     php_errors:
         log: true
+
+parameters:
+    farms_upload_dir: '%kernel.project_dir%/public/uploads/farms'
