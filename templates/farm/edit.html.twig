@@ -9,7 +9,7 @@
 
 <div class="card border-0 shadow-sm rounded-4" style="max-width:680px">
     <div class="card-body p-4">
-        {{ form_start(form, {attr: {enctype: 'multipart/form-data'}}) }}
+        {{ form_start(form, {attr: {enctype: 'multipart/form-data', novalidate: 'novalidate'}}) }}
 
         <div class="row g-3">
             <div class="col-md-8">
@@ -17,6 +17,7 @@
                     {{ form_label(form.name) }}
                     {{ form_widget(form.name) }}
                     {{ form_errors(form.name) }}
+                    <div class="form-text">Required · 2–150 characters</div>
                 </div>
             </div>
             <div class="col-md-4">
@@ -24,6 +25,7 @@
                     {{ form_label(form.farmType) }}
                     {{ form_widget(form.farmType) }}
                     {{ form_errors(form.farmType) }}
+                    <div class="form-text">Optional</div>
                 </div>
             </div>
         </div>
@@ -32,6 +34,7 @@
             {{ form_label(form.location) }}
             {{ form_widget(form.location) }}
             {{ form_errors(form.location) }}
+            <div class="form-text">Required · City, region or address</div>
         </div>
 
         <div class="row g-3">
@@ -40,6 +43,7 @@
                     {{ form_label(form.area) }}
                     {{ form_widget(form.area) }}
                     {{ form_errors(form.area) }}
+                    <div class="form-text">Optional · Positive number · Max 999,999 ha</div>
                 </div>
             </div>
             <div class="col-md-4">
@@ -47,6 +51,7 @@
                     {{ form_label(form.latitude) }}
                     {{ form_widget(form.latitude) }}
                     {{ form_errors(form.latitude) }}
+                    <div class="form-text">Optional · Between -90 and 90</div>
                 </div>
             </div>
             <div class="col-md-4">
@@ -54,6 +59,7 @@
                     {{ form_label(form.longitude) }}
                     {{ form_widget(form.longitude) }}
                     {{ form_errors(form.longitude) }}
+                    <div class="form-text">Optional · Between -180 and 180</div>
                 </div>
             </div>
         </div>
@@ -62,6 +68,7 @@
             {{ form_label(form.description) }}
             {{ form_widget(form.description) }}
             {{ form_errors(form.description) }}
+            <div class="form-text">Optional · Brief description of the farm</div>
         </div>
 
         <div class="mb-4">
@@ -74,6 +81,7 @@
             {% endif %}
             {{ form_widget(form.imageFile) }}
             {{ form_errors(form.imageFile) }}
+            <div class="form-text">Optional · Max 2MB — JPG, PNG or WEBP</div>
         </div>
 
         <button type="submit" class="btn btn-success">

@@ -9,12 +9,13 @@
 
 <div class="card border-0 shadow-sm rounded-4" style="max-width:760px">
     <div class="card-body p-4">
-        {{ form_start(form, {attr: {enctype: 'multipart/form-data'}}) }}
+        {{ form_start(form, {attr: {enctype: 'multipart/form-data', novalidate: 'novalidate'}}) }}
 
         <div class="mb-3">
             {{ form_label(form.title) }}
             {{ form_widget(form.title) }}
             {{ form_errors(form.title) }}
+            <div class="form-text">Required · 5–255 characters</div>
         </div>
 
         <div class="row g-3 mb-3">
@@ -22,11 +23,13 @@
                 {{ form_label(form.category) }}
                 {{ form_widget(form.category) }}
                 {{ form_errors(form.category) }}
+                <div class="form-text">Optional</div>
             </div>
             <div class="col-md-6">
                 {{ form_label(form.status) }}
                 {{ form_widget(form.status) }}
                 {{ form_errors(form.status) }}
+                <div class="form-text">Required · Draft or Published</div>
             </div>
         </div>
 
@@ -34,19 +37,21 @@
             {{ form_label(form.excerpt) }}
             {{ form_widget(form.excerpt) }}
             {{ form_errors(form.excerpt) }}
+            <div class="form-text">Optional · Short summary shown on listing pages · Max 500 characters</div>
         </div>
 
         <div class="mb-3">
             {{ form_label(form.content) }}
             {{ form_widget(form.content) }}
             {{ form_errors(form.content) }}
+            <div class="form-text">Required · Full post body · At least 10 characters</div>
         </div>
 
         <div class="mb-3">
             {{ form_label(form.tagsInput) }}
             {{ form_widget(form.tagsInput) }}
             {{ form_errors(form.tagsInput) }}
-            <div class="form-text">Separate tags with commas.</div>
+            <div class="form-text">Optional · Separate tags with commas (e.g. organic, soil, wheat)</div>
         </div>
 
         <div class="mb-4">

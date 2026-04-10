@@ -126,7 +126,7 @@
         {% if post.status == 'published' %}
         <div class="card border-0 bg-light rounded-4 p-3 mt-4">
             <h6 class="fw-semibold mb-3"><i class="bi bi-pencil me-1"></i>Leave a Comment</h6>
-            {{ form_start(commentForm) }}
+            {{ form_start(commentForm, {attr: {novalidate: 'novalidate'}}) }}
             {{ form_widget(commentForm.content) }}
             {{ form_errors(commentForm.content) }}
             <button type="submit" class="btn btn-success btn-sm mt-2">

@@ -11,12 +11,13 @@
     <div class="col-md-7">
         <div class="card border-0 shadow-sm rounded-4 p-4">
             <h6 class="fw-bold mb-3">Shipping Information</h6>
-            {{ form_start(form) }}
+            {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
 
             <div class="mb-3">
                 {{ form_label(form.shippingAddress) }}
                 {{ form_widget(form.shippingAddress) }}
                 {{ form_errors(form.shippingAddress) }}
+                <div class="form-text">Required · 5–500 characters</div>
             </div>
             <div class="row g-3">
                 <div class="col-md-7">
@@ -24,6 +25,7 @@
                         {{ form_label(form.shippingCity) }}
                         {{ form_widget(form.shippingCity) }}
                         {{ form_errors(form.shippingCity) }}
+                        <div class="form-text">Required · Max 100 characters</div>
                     </div>
                 </div>
                 <div class="col-md-5">
@@ -31,6 +33,7 @@
                         {{ form_label(form.shippingPostal) }}
                         {{ form_widget(form.shippingPostal) }}
                         {{ form_errors(form.shippingPostal) }}
+                        <div class="form-text">Optional · Digits only · 4–10 numbers</div>
                     </div>
                 </div>
             </div>
@@ -40,6 +43,7 @@
                         {{ form_label(form.shippingEmail) }}
                         {{ form_widget(form.shippingEmail) }}
                         {{ form_errors(form.shippingEmail) }}
+                        <div class="form-text">Required · Valid email address</div>
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -47,6 +51,7 @@
                         {{ form_label(form.shippingPhone) }}
                         {{ form_widget(form.shippingPhone) }}
                         {{ form_errors(form.shippingPhone) }}
+                        <div class="form-text">Optional · 8–20 digits, may start with +</div>
                     </div>
                 </div>
             </div>
@@ -54,6 +59,7 @@
                 {{ form_label(form.notes) }}
                 {{ form_widget(form.notes) }}
                 {{ form_errors(form.notes) }}
+                <div class="form-text">Optional · Max 1,000 characters</div>
             </div>
 
             <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">

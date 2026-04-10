@@ -9,7 +9,7 @@
 
 <div class="card border-0 shadow-sm rounded-4" style="max-width:680px">
     <div class="card-body p-4">
-        {{ form_start(form, {attr: {enctype: 'multipart/form-data'}}) }}
+        {{ form_start(form, {attr: {enctype: 'multipart/form-data', novalidate: 'novalidate'}}) }}
 
         <div class="row g-3">
             <div class="col-md-8">
@@ -17,6 +17,7 @@
                     {{ form_label(form.name) }}
                     {{ form_widget(form.name) }}
                     {{ form_errors(form.name) }}
+                    <div class="form-text">Required · 2–150 characters</div>
                 </div>
             </div>
             <div class="col-md-4">
@@ -24,6 +25,7 @@
                     {{ form_label(form.category) }}
                     {{ form_widget(form.category) }}
                     {{ form_errors(form.category) }}
+                    <div class="form-text">Optional</div>
                 </div>
             </div>
         </div>
@@ -37,6 +39,7 @@
                         <span class="input-group-text">TND</span>
                     </div>
                     {{ form_errors(form.price) }}
+                    <div class="form-text">Required · Positive number · Max 999,999</div>
                 </div>
             </div>
             <div class="col-md-4">
@@ -44,6 +47,7 @@
                     {{ form_label(form.quantity) }}
                     {{ form_widget(form.quantity) }}
                     {{ form_errors(form.quantity) }}
+                    <div class="form-text">Required · 0 or more · Max 999,999</div>
                 </div>
             </div>
             <div class="col-md-4">
@@ -51,6 +55,7 @@
                     {{ form_label(form.unit) }}
                     {{ form_widget(form.unit) }}
                     {{ form_errors(form.unit) }}
+                    <div class="form-text">Required · Unit of measurement</div>
                 </div>
             </div>
         </div>
@@ -59,12 +64,14 @@
             {{ form_label(form.farm) }}
             {{ form_widget(form.farm) }}
             {{ form_errors(form.farm) }}
+            <div class="form-text">Optional · Link this product to one of your farms</div>
         </div>
 
         <div class="mb-3">
             {{ form_label(form.description) }}
             {{ form_widget(form.description) }}
             {{ form_errors(form.description) }}
+            <div class="form-text">Optional · Max 2,000 characters</div>
         </div>
 
         <div class="mb-4">
