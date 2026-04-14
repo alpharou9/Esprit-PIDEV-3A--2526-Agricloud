@@ -63,6 +63,15 @@ class UserRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /** Users who have enrolled their face. @return User[] */
+    public function findWithFaceEmbeddings(): array
+    {
+        return $this->createQueryBuilder('u')
+            ->where('u.faceEmbeddings IS NOT NULL')
+            ->getQuery()
+            ->getResult();
+    }
+
     /** Last N registered users. @return User[] */
     public function findRecent(int $limit = 5): array
     {

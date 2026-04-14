@@ -249,9 +249,183 @@
                     </div>
                     <i class="bi bi-chevron-right ms-auto text-muted"></i>
                 </a>
+
+                {# Face enroll button #}
+                <button onclick="document.getElementById('faceModal').style.display='flex'"
+                        class="d-flex align-items-center gap-3 p-3 rounded-3 border-0 w-100 text-start"
+                        style="background:#f8faf4;transition:background .2s;cursor:pointer"
+                        onmouseover="this.style.background='#e8f8ee'" onmouseout="this.style.background='#f8faf4'">
+                    <div style="width:36px;height:36px;border-radius:10px;background:{% if user.faceEnrolledAt %}#e8f8ee{% else %}#fff3cd{% endif %};color:{% if user.faceEnrolledAt %}#77b81e{% else %}#f59e0b{% endif %};display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-camera-fill"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="font-size:.9rem">
+                            {% if user.faceEnrolledAt %}Face Enrolled{% else %}Enroll Face{% endif %}
+                        </div>
+                        <div class="text-muted" style="font-size:.78rem">
+                            {% if user.faceEnrolledAt %}
+                                Enrolled on {{ user.faceEnrolledAt|date('d M Y') }} · Click to re-enroll
+                            {% else %}
+                                Enable face login
+                            {% endif %}
+                        </div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                </button>
             </div>
         </div>
     </div>
 </div>
 
+{# ── Face Enroll Modal ── #}
+<div id="faceModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:20px;padding:32px;width:480px;max-width:95vw;text-align:center;position:relative">
+        <button onclick="closeEnrollModal()" style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#999">&times;</button>
+        <h5 class="fw-bold mb-1" style="color:#1a2e0a"><i class="bi bi-camera-fill me-2" style="color:#77b81e"></i>Enroll Your Face</h5>
+        <p class="text-muted mb-3" style="font-size:.85rem">Position your face in the frame, then click Capture.</p>
+
+        <div style="position:relative;display:inline-block;border-radius:14px;overflow:hidden;border:3px solid #dde8cc">
+            <video id="enrollVideo" autoplay muted playsinline style="width:380px;max-width:100%;display:block"></video>
+            <canvas id="enrollOverlay" style="position:absolute;top:0;left:0;pointer-events:none"></canvas>
+        </div>
+
+        <div id="enrollStatus" class="mt-3" style="font-size:.88rem;min-height:24px;color:#888">Loading models…</div>
+
+        <div class="d-flex gap-3 justify-content-center mt-3">
+            <button id="enrollBtn" onclick="captureAndEnroll()" disabled
+                    style="background:#77b81e;color:#fff;border:none;border-radius:10px;padding:10px 28px;font-weight:600;cursor:pointer;opacity:.5">
+                <i class="bi bi-camera me-1"></i> Capture & Save
+            </button>
+            <button onclick="closeEnrollModal()" style="background:#f0f0f0;color:#555;border:none;border-radius:10px;padding:10px 20px;font-weight:600;cursor:pointer">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+<script>
+const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+let enrollStream = null;
+let enrollDetectionInterval = null;
+
+async function openEnrollModal() {
+    document.getElementById('faceModal').style.display = 'flex';
+    await startEnrollCamera();
+}
+
+async function startEnrollCamera() {
+    const video   = document.getElementById('enrollVideo');
+    const overlay = document.getElementById('enrollOverlay');
+    const status  = document.getElementById('enrollStatus');
+    const btn     = document.getElementById('enrollBtn');
+
+    status.textContent = 'Loading face detection models…';
+    status.style.color = '#888';
+
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+
+    enrollStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    video.srcObject = enrollStream;
+    await new Promise(r => video.onloadedmetadata = r);
+
+    overlay.width  = video.videoWidth;
+    overlay.height = video.videoHeight;
+
+    status.textContent = 'Align your face in the frame…';
+
+    enrollDetectionInterval = setInterval(async () => {
+        const detection = await faceapi
+            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks(true)
+            .withFaceDescriptor();
+
+        const ctx = overlay.getContext('2d');
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+        if (detection) {
+            const box = detection.detection.box;
+            ctx.strokeStyle = '#77b81e';
+            ctx.lineWidth   = 3;
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+            status.textContent = 'Face detected! Click Capture & Save.';
+            status.style.color = '#3a6a0a';
+            btn.disabled       = false;
+            btn.style.opacity  = '1';
+        } else {
+            status.textContent = 'No face detected — move closer or improve lighting.';
+            status.style.color = '#e67e22';
+            btn.disabled       = true;
+            btn.style.opacity  = '.5';
+        }
+    }, 300);
+}
+
+async function captureAndEnroll() {
+    const video  = document.getElementById('enrollVideo');
+    const status = document.getElementById('enrollStatus');
+    const btn    = document.getElementById('enrollBtn');
+
+    btn.disabled      = true;
+    btn.style.opacity = '.5';
+    status.textContent = 'Processing…';
+
+    const detection = await faceapi
+        .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks(true)
+        .withFaceDescriptor();
+
+    if (!detection) {
+        status.textContent = 'No face detected. Please try again.';
+        status.style.color = '#e74c3c';
+        btn.disabled       = false;
+        btn.style.opacity  = '1';
+        return;
+    }
+
+    const descriptor = Array.from(detection.descriptor);
+
+    const res  = await fetch('{{ path("face_enroll") }}', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ descriptor }),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+        status.textContent = '✓ Face enrolled successfully!';
+        status.style.color = '#3a6a0a';
+        setTimeout(() => { closeEnrollModal(); location.reload(); }, 1200);
+    } else {
+        status.textContent = data.error || 'Enrollment failed.';
+        status.style.color = '#e74c3c';
+        btn.disabled       = false;
+        btn.style.opacity  = '1';
+    }
+}
+
+function closeEnrollModal() {
+    clearInterval(enrollDetectionInterval);
+    if (enrollStream) enrollStream.getTracks().forEach(t => t.stop());
+    enrollStream = null;
+    document.getElementById('faceModal').style.display = 'none';
+    document.getElementById('enrollStatus').textContent = 'Loading models…';
+    document.getElementById('enrollStatus').style.color = '#888';
+    document.getElementById('enrollBtn').disabled       = true;
+    document.getElementById('enrollBtn').style.opacity  = '.5';
+    document.getElementById('enrollOverlay').getContext('2d').clearRect(0,0,9999,9999);
+}
+
+// Auto-start when modal opens via button
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('[onclick*="faceModal"]').addEventListener('click', () => {
+        startEnrollCamera();
+    });
+});
+</script>
 {% endblock %}
