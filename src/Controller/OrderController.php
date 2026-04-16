@@ -4,10 +4,15 @@ namespace App\Controller;
 
 use App\Entity\Order;
 use App\Repository\OrderRepository;
+use App\Service\CurrencyConverterService;
+use App\Service\EmailService;
+use App\Service\OrderStatusService;
+use App\Service\PdfService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -16,7 +21,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class OrderController extends AbstractController
 {
     #[Route('', name: 'order_index', methods: ['GET'])]
-    public function index(OrderRepository $repo): Response
+    public function index(OrderRepository $repo, CurrencyConverterService $currencyConverter): Response
     {
         $role = $this->isGranted('ROLE_ADMIN') ? 'admin' : 'customer';
 
@@ -24,28 +29,55 @@ class OrderController extends AbstractController
         $mySales   = $this->isGranted('ROLE_ADMIN')
             ? $repo->listQueryBuilder($this->getUser(), 'admin')->getQuery()->getResult()
             : $repo->listQueryBuilder($this->getUser(), 'seller')->getQuery()->getResult();
+        $orderConversions = [];
+
+        foreach (array_merge($myOrders, $mySales) as $order) {
+            $orderConversions[$order->getId()] = [
+                'unitPrice' => $currencyConverter->convertAmount($order->getUnitPrice()),
+                'totalPrice' => $currencyConverter->convertAmount($order->getTotalPrice()),
+            ];
+        }
 
         return $this->render('market/orders.html.twig', [
             'myOrders' => $myOrders,
             'mySales'  => $mySales,
+            'orderConversions' => $orderConversions,
         ]);
     }
 
     #[Route('/{id}', name: 'order_show', methods: ['GET'])]
-    public function show(Order $order): Response
+    public function show(Order $order, OrderStatusService $orderStatusService, CurrencyConverterService $currencyConverter): Response
     {
-        $user = $this->getUser();
-        if (!$this->isGranted('ROLE_ADMIN')
-            && $order->getCustomer() !== $user
-            && $order->getSeller() !== $user) {
-            throw $this->createAccessDeniedException();
-        }
+        $this->denyUnlessOrderVisible($order);
 
-        return $this->render('market/order_show.html.twig', ['order' => $order]);
+        return $this->render('market/order_show.html.twig', [
+            'order' => $order,
+            'availableStatuses' => $orderStatusService->getSelectableStatuses($order),
+            'convertedUnitPrice' => $currencyConverter->convertAmount($order->getUnitPrice()),
+            'convertedTotalPrice' => $currencyConverter->convertAmount($order->getTotalPrice()),
+        ]);
+    }
+
+    #[Route('/{id}/pdf', name: 'order_export_pdf', methods: ['GET'])]
+    public function exportPdf(Order $order, PdfService $pdfService): Response
+    {
+        $this->denyUnlessOrderVisible($order);
+
+        $response = new Response($pdfService->generateOrderPdf($order));
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set(
+            'Content-Disposition',
+            $response->headers->makeDisposition(
+                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                sprintf('order-%d.pdf', $order->getId())
+            )
+        );
+
+        return $response;
     }
 
     #[Route('/{id}/status', name: 'order_status', methods: ['POST'])]
-    public function updateStatus(Order $order, Request $request, EntityManagerInterface $em): Response
+    public function updateStatus(Order $order, Request $request, EntityManagerInterface $em, EmailService $emailService, OrderStatusService $orderStatusService): Response
     {
         $user = $this->getUser();
         if (!$this->isGranted('ROLE_ADMIN') && $order->getSeller() !== $user) {
@@ -57,25 +89,28 @@ class OrderController extends AbstractController
             return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
         }
 
-        $allowed = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
-        $status  = $request->request->get('status');
+        $status = (string) $request->request->get('status');
+        $result = $orderStatusService->applyStatusChange($order, $status, $request->request->get('reason'));
 
-        if (in_array($status, $allowed)) {
-            $order->setStatus($status);
-            $order->setUpdatedAt(new \DateTime());
-            if ($status === 'cancelled') {
-                $order->setCancelledAt(new \DateTime());
-                $order->setCancelledReason($request->request->get('reason'));
-            }
-            $em->flush();
-            $this->addFlash('success', 'Order status updated.');
+        if (!$result['success']) {
+            $this->addFlash('error', $result['message']);
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        $em->flush();
+
+        if ($result['confirmedJustNow']) {
+            $emailResult = $emailService->sendOrderConfirmedEmail($order);
+            $this->addFlash($emailResult['sent'] ? 'success' : 'warning', $emailResult['message']);
+        } else {
+            $this->addFlash('success', $result['message']);
         }
 
         return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
     }
 
     #[Route('/{id}/cancel', name: 'order_cancel', methods: ['POST'])]
-    public function cancel(Order $order, Request $request, EntityManagerInterface $em): Response
+    public function cancel(Order $order, Request $request, EntityManagerInterface $em, OrderStatusService $orderStatusService): Response
     {
         if ($order->getCustomer() !== $this->getUser()) {
             throw $this->createAccessDeniedException();
@@ -86,18 +121,27 @@ class OrderController extends AbstractController
             return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
         }
 
-        if (!in_array($order->getStatus(), ['pending', 'confirmed'])) {
-            $this->addFlash('error', 'This order cannot be cancelled at this stage.');
+        $result = $orderStatusService->applyStatusChange($order, Order::STATUS_CANCELLED, 'Cancelled by customer');
+
+        if (!$result['success']) {
+            $this->addFlash('error', $result['message']);
             return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
         }
 
-        $order->setStatus('cancelled');
-        $order->setCancelledAt(new \DateTime());
-        $order->setCancelledReason('Cancelled by customer');
-        $order->setUpdatedAt(new \DateTime());
         $em->flush();
 
         $this->addFlash('success', 'Order cancelled.');
         return $this->redirectToRoute('order_index');
+    }
+
+    private function denyUnlessOrderVisible(Order $order): void
+    {
+        $user = $this->getUser();
+
+        if (!$this->isGranted('ROLE_ADMIN')
+            && $order->getCustomer() !== $user
+            && $order->getSeller() !== $user) {
+            throw $this->createAccessDeniedException();
+        }
     }
 }

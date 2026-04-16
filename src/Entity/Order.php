@@ -10,6 +10,21 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'orders')]
 class Order
 {
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_CONFIRMED = 'confirmed';
+    public const STATUS_PREPARING = 'preparing';
+    public const STATUS_SHIPPED = 'shipped';
+    public const STATUS_DELIVERED = 'delivered';
+    public const STATUS_CANCELLED = 'cancelled';
+
+    public const FLOW_STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_CONFIRMED,
+        self::STATUS_PREPARING,
+        self::STATUS_SHIPPED,
+        self::STATUS_DELIVERED,
+    ];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'bigint', options: ['unsigned' => true])]
@@ -37,7 +52,7 @@ class Order
     private string $totalPrice;
 
     #[ORM\Column(length: 20, nullable: true)]
-    private ?string $status = 'pending';
+    private ?string $status = self::STATUS_PENDING;
 
     #[ORM\Column(name: 'shipping_address', type: 'text')]
     #[Assert\NotBlank(message: 'Shipping address is required.')]
@@ -104,8 +119,92 @@ class Order
     public function getTotalPrice(): string { return $this->totalPrice; }
     public function setTotalPrice(string $p): static { $this->totalPrice = $p; return $this; }
 
-    public function getStatus(): ?string { return $this->status; }
-    public function setStatus(?string $s): static { $this->status = $s; return $this; }
+    public function getStatus(): ?string
+    {
+        return $this->normalizeStatus($this->status);
+    }
+
+    public function setStatus(?string $s): static
+    {
+        $this->status = $this->normalizeStatus($s);
+        return $this;
+    }
+
+    public static function getAllowedStatuses(): array
+    {
+        return [
+            self::STATUS_PENDING,
+            self::STATUS_CONFIRMED,
+            self::STATUS_PREPARING,
+            self::STATUS_SHIPPED,
+            self::STATUS_DELIVERED,
+            self::STATUS_CANCELLED,
+        ];
+    }
+
+    public static function getStatusLabels(): array
+    {
+        return [
+            self::STATUS_PENDING => 'Pending',
+            self::STATUS_CONFIRMED => 'Confirmed',
+            self::STATUS_PREPARING => 'Preparing',
+            self::STATUS_SHIPPED => 'Shipped',
+            self::STATUS_DELIVERED => 'Delivered',
+            self::STATUS_CANCELLED => 'Cancelled',
+        ];
+    }
+
+    public static function getStatusColorMap(): array
+    {
+        return [
+            self::STATUS_PENDING => 'warning',
+            self::STATUS_CONFIRMED => 'primary',
+            self::STATUS_PREPARING => 'info',
+            self::STATUS_SHIPPED => 'primary',
+            self::STATUS_DELIVERED => 'success',
+            self::STATUS_CANCELLED => 'danger',
+        ];
+    }
+
+    public function getStatusLabel(): string
+    {
+        return self::getStatusLabels()[$this->getStatus()] ?? ucfirst((string) $this->getStatus());
+    }
+
+    public function getStatusColor(): string
+    {
+        return self::getStatusColorMap()[$this->getStatus()] ?? 'secondary';
+    }
+
+    public function getStatusProgressPercent(): int
+    {
+        $status = $this->getStatus();
+
+        if ($status === self::STATUS_CANCELLED) {
+            return 100;
+        }
+
+        $index = array_search($status, self::FLOW_STATUSES, true);
+
+        if ($index === false) {
+            return 0;
+        }
+
+        return (int) round((($index + 1) / count(self::FLOW_STATUSES)) * 100);
+    }
+
+    public function getStatusStepNumber(): int
+    {
+        $status = $this->getStatus();
+
+        if ($status === self::STATUS_CANCELLED) {
+            return 0;
+        }
+
+        $index = array_search($status, self::FLOW_STATUSES, true);
+
+        return $index === false ? 0 : $index + 1;
+    }
 
     public function getShippingAddress(): string { return $this->shippingAddress; }
     public function setShippingAddress(string $a): static { $this->shippingAddress = $a; return $this; }
@@ -142,4 +241,19 @@ class Order
 
     public function getUpdatedAt(): ?\DateTimeInterface { return $this->updatedAt; }
     public function setUpdatedAt(?\DateTimeInterface $v): static { $this->updatedAt = $v; return $this; }
+
+    private function normalizeStatus(?string $status): ?string
+    {
+        $status = $status !== null ? strtolower(trim($status)) : null;
+
+        if ($status === null || $status === '') {
+            return self::STATUS_PENDING;
+        }
+
+        if ($status === 'processing') {
+            return self::STATUS_PREPARING;
+        }
+
+        return $status;
+    }
 }

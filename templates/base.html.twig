@@ -98,6 +98,20 @@
         /* ── Flash messages ── */
         .flash-zone { margin-bottom: 24px; }
         .flash-zone .alert { border: none; border-radius: 12px; font-size: .9rem; }
+
+        .knp-pagination-nav { width: 100%; }
+        .knp-pagination-nav .pagination { align-items: center; }
+        .knp-pagination-nav .page-link-nav {
+            width: auto !important;
+            min-width: 112px;
+            padding-inline: 14px !important;
+            gap: 8px;
+        }
+        .knp-pagination-nav .page-link-dots {
+            width: auto !important;
+            min-width: 34px;
+            padding-inline: 10px !important;
+        }
     </style>
     {% block stylesheets %}{% endblock %}
 </head>

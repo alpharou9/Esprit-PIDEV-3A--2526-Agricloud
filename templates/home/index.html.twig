@@ -275,8 +275,8 @@
             {% for product in latestProducts %}
             <div class="col-6 col-md-3">
                 <div class="prod-card">
-                    {% if product.image %}
-                        <img src="{{ asset('uploads/products/' ~ product.image) }}" alt="{{ product.name }}">
+                    {% if product.imageUrl %}
+                        <img src="{{ product.imageExternal ? product.imageUrl : asset(product.imageUrl) }}" alt="{{ product.name }}">
                     {% else %}
                         <div class="img-ph"><i class="bi bi-bag-heart"></i></div>
                     {% endif %}

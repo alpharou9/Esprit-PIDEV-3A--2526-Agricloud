@@ -11,3 +11,26 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\Service\AiService:
+        arguments:
+            $huggingFaceApiToken: '%env(default::HUGGINGFACE_API_TOKEN)%'
+
+    App\Service\SalesInsightsService:
+        arguments:
+            $huggingFaceApiToken: '%env(default::HUGGINGFACE_API_TOKEN)%'
+
+    App\Service\CloudinaryService:
+        arguments:
+            $cloudName: '%env(CLOUDINARY_CLOUD_NAME)%'
+            $apiKey: '%env(CLOUDINARY_API_KEY)%'
+            $apiSecret: '%env(CLOUDINARY_API_SECRET)%'
+            $localUploadDir: '%products_upload_dir%'
+
+    App\Service\EmailService:
+        arguments:
+            $fromEmail: '%env(MAILER_FROM)%'
+
+    App\Service\CurrencyConverterService:
+        arguments:
+            $apiUrl: '%env(CURRENCY_API_URL)%'

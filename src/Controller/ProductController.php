@@ -4,7 +4,10 @@ namespace App\Controller;
 
 use App\Entity\Product;
 use App\Form\ProductType;
+use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
+use App\Service\CloudinaryService;
+use App\Service\CurrencyConverterService;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -12,7 +15,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[Route('/market')]
 #[IsGranted('ROLE_USER')]
@@ -40,14 +42,17 @@ class ProductController extends AbstractController
 
     // ── New product ───────────────────────────────────────────────
     #[Route('/product/new', name: 'product_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): Response
+    public function new(Request $request, EntityManagerInterface $em, CloudinaryService $cloudinaryService): Response
     {
         if (!$this->isGranted('ROLE_FARMER') && !$this->isGranted('ROLE_ADMIN')) {
             $this->addFlash('error', 'Only farmers can list products for sale.');
             return $this->redirectToRoute('market_index');
         }
         $product = new Product();
-        $form    = $this->createForm(ProductType::class, $product);
+        $form    = $this->createForm(ProductType::class, $product, [
+            'current_user' => $this->getUser(),
+            'is_admin' => $this->isGranted('ROLE_ADMIN'),
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -58,10 +63,12 @@ class ProductController extends AbstractController
 
             $imageFile = $form->get('imageFile')->getData();
             if ($imageFile) {
-                $safe    = $slugger->slug(pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME));
-                $newName = $safe . '-' . uniqid() . '.' . $imageFile->guessExtension();
-                $imageFile->move($this->getParameter('products_upload_dir'), $newName);
-                $product->setImage($newName);
+                $upload = $cloudinaryService->storeProductImage($imageFile);
+                $product->setImage($upload['image']);
+
+                if (($upload['warning'] ?? null) !== null) {
+                    $this->addFlash('warning', $upload['warning']);
+                }
             }
 
             $em->persist($product);
@@ -76,12 +83,15 @@ class ProductController extends AbstractController
 
     // ── Product detail ────────────────────────────────────────────
     #[Route('/product/{id}', name: 'product_show', methods: ['GET'])]
-    public function show(Product $product, EntityManagerInterface $em): Response
+    public function show(Product $product, EntityManagerInterface $em, CurrencyConverterService $currencyConverter): Response
     {
         $product->setViews(($product->getViews() ?? 0) + 1);
         $em->flush();
 
-        return $this->render('market/show.html.twig', ['product' => $product]);
+        return $this->render('market/show.html.twig', [
+            'product' => $product,
+            'convertedPrice' => $currencyConverter->convertAmount($product->getPrice()),
+        ]);
     }
 
     // ── My listings ───────────────────────────────────────────────
@@ -105,7 +115,7 @@ class ProductController extends AbstractController
 
     // ── Edit product ──────────────────────────────────────────────
     #[Route('/product/{id}/edit', name: 'product_edit', methods: ['GET', 'POST'])]
-    public function edit(Product $product, Request $request, EntityManagerInterface $em, SluggerInterface $slugger): Response
+    public function edit(Product $product, Request $request, EntityManagerInterface $em, CloudinaryService $cloudinaryService): Response
     {
         if (!$this->isGranted('ROLE_FARMER') && !$this->isGranted('ROLE_ADMIN')) {
             $this->addFlash('error', 'Only farmers can edit products.');
@@ -115,7 +125,10 @@ class ProductController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        $form = $this->createForm(ProductType::class, $product);
+        $form = $this->createForm(ProductType::class, $product, [
+            'current_user' => $this->getUser(),
+            'is_admin' => $this->isGranted('ROLE_ADMIN'),
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -123,10 +136,12 @@ class ProductController extends AbstractController
 
             $imageFile = $form->get('imageFile')->getData();
             if ($imageFile) {
-                $safe    = $slugger->slug(pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME));
-                $newName = $safe . '-' . uniqid() . '.' . $imageFile->guessExtension();
-                $imageFile->move($this->getParameter('products_upload_dir'), $newName);
-                $product->setImage($newName);
+                $upload = $cloudinaryService->storeProductImage($imageFile);
+                $product->setImage($upload['image']);
+
+                if (($upload['warning'] ?? null) !== null) {
+                    $this->addFlash('warning', $upload['warning']);
+                }
             }
 
             $em->flush();
@@ -139,7 +154,7 @@ class ProductController extends AbstractController
 
     // ── Delete product ────────────────────────────────────────────
     #[Route('/product/{id}/delete', name: 'product_delete', methods: ['POST'])]
-    public function delete(Product $product, Request $request, EntityManagerInterface $em): Response
+    public function delete(Product $product, Request $request, EntityManagerInterface $em, OrderRepository $orderRepository): Response
     {
         if (!$this->isGranted('ROLE_ADMIN') && $product->getUser() !== $this->getUser()) {
             throw $this->createAccessDeniedException();
@@ -147,6 +162,15 @@ class ProductController extends AbstractController
 
         if (!$this->isCsrfTokenValid('delete_product_' . $product->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Invalid CSRF token.');
+            return $this->redirectToRoute('my_products');
+        }
+
+        if ($orderRepository->countForProduct($product) > 0) {
+            $product->setStatus('sold_out');
+            $product->setUpdatedAt(new \DateTime());
+            $em->flush();
+
+            $this->addFlash('warning', 'This product already has orders, so it was hidden from sale instead of being deleted.');
             return $this->redirectToRoute('my_products');
         }
 

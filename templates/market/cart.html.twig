@@ -33,8 +33,8 @@
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    {% if item.product.image %}
-                                        <img src="{{ asset('uploads/products/' ~ item.product.image) }}" class="rounded-2" style="width:44px;height:44px;object-fit:cover">
+                                    {% if item.product.imageUrl %}
+                                        <img src="{{ item.product.imageExternal ? item.product.imageUrl : asset(item.product.imageUrl) }}" class="rounded-2" style="width:44px;height:44px;object-fit:cover">
                                     {% else %}
                                         <div class="rounded-2 bg-light d-flex align-items-center justify-content-center" style="width:44px;height:44px;color:#198754;font-size:1.2rem"><i class="bi bi-bag-heart"></i></div>
                                     {% endif %}
@@ -44,9 +44,27 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>{{ item.product.price }} TND/{{ item.product.unit }}</td>
+                            <td>
+                                <div>{{ item.product.price }} TND/{{ item.product.unit }}</div>
+                                {% set converted = itemConversions[item.id].price ?? {} %}
+                                {% if converted is not empty %}
+                                    <div class="text-muted small">
+                                        {% if converted.EUR is defined %}<span class="me-2">€ {{ converted.EUR|number_format(2) }}</span>{% endif %}
+                                        {% if converted.USD is defined %}<span>$ {{ converted.USD|number_format(2) }}</span>{% endif %}
+                                    </div>
+                                {% endif %}
+                            </td>
                             <td>{{ item.quantity }}</td>
-                            <td class="fw-bold text-success">{{ item.subtotal|number_format(2) }} TND</td>
+                            <td class="fw-bold text-success">
+                                <div>{{ item.subtotal|number_format(2) }} TND</div>
+                                {% set convertedSubtotal = itemConversions[item.id].subtotal ?? {} %}
+                                {% if convertedSubtotal is not empty %}
+                                    <div class="text-muted small fw-normal">
+                                        {% if convertedSubtotal.EUR is defined %}<span class="me-2">€ {{ convertedSubtotal.EUR|number_format(2) }}</span>{% endif %}
+                                        {% if convertedSubtotal.USD is defined %}<span>$ {{ convertedSubtotal.USD|number_format(2) }}</span>{% endif %}
+                                    </div>
+                                {% endif %}
+                            </td>
                             <td>
                                 <form method="post" action="{{ path('cart_remove', {id: item.id}) }}">
                                     <input type="hidden" name="_token" value="{{ csrf_token('cart_remove_' ~ item.id) }}">
@@ -75,7 +93,15 @@
             <hr>
             <div class="d-flex justify-content-between fw-bold fs-5 mb-4">
                 <span>Total</span>
-                <span class="text-success">{{ total|number_format(2) }} TND</span>
+                <div class="text-end">
+                    <div class="text-success">{{ total|number_format(2) }} TND</div>
+                    {% if convertedTotal is not empty %}
+                        <div class="text-muted small fw-normal">
+                            {% if convertedTotal.EUR is defined %}<span class="me-2">€ {{ convertedTotal.EUR|number_format(2) }}</span>{% endif %}
+                            {% if convertedTotal.USD is defined %}<span>$ {{ convertedTotal.USD|number_format(2) }}</span>{% endif %}
+                        </div>
+                    {% endif %}
+                </div>
             </div>
             <a href="{{ path('cart_checkout') }}" class="btn btn-success w-100">
                 <i class="bi bi-credit-card me-1"></i>Proceed to Checkout
