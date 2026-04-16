@@ -7,11 +7,13 @@ use App\Entity\Order;
 use App\Entity\Product;
 use App\Form\CheckoutType;
 use App\Repository\CartItemRepository;
+use App\Service\CurrencyConverterService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/market/cart')]
@@ -19,14 +21,24 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class CartController extends AbstractController
 {
     #[Route('', name: 'cart_index', methods: ['GET'])]
-    public function index(CartItemRepository $cartRepo): Response
+    public function index(CartItemRepository $cartRepo, CurrencyConverterService $currencyConverter): Response
     {
         $items = $cartRepo->findByUser($this->getUser());
         $total = array_sum(array_map(fn($i) => $i->getSubtotal(), $items));
+        $itemConversions = [];
+
+        foreach ($items as $item) {
+            $itemConversions[$item->getId()] = [
+                'price' => $currencyConverter->convertAmount($item->getProduct()->getPrice()),
+                'subtotal' => $currencyConverter->convertAmount($item->getSubtotal()),
+            ];
+        }
 
         return $this->render('market/cart.html.twig', [
             'items' => $items,
             'total' => $total,
+            'convertedTotal' => $currencyConverter->convertAmount($total),
+            'itemConversions' => $itemConversions,
         ]);
     }
 
@@ -113,6 +125,11 @@ class CartController extends AbstractController
             foreach ($items as $item) {
                 $product = $item->getProduct();
 
+                if (!$this->isProductSellable($product)) {
+                    $this->addFlash('error', "Product '{$product->getName()}' is no longer available for sale.");
+                    return $this->redirectToRoute('cart_index');
+                }
+
                 if ($item->getQuantity() > $product->getQuantity()) {
                     $this->addFlash('error', "Not enough stock for '{$product->getName()}'.");
                     return $this->redirectToRoute('cart_index');
@@ -150,5 +167,15 @@ class CartController extends AbstractController
             'items' => $items,
             'total' => $total,
         ]);
+    }
+
+    private function isProductSellable(Product $product): bool
+    {
+        $seller = $product->getUser();
+
+        return $product->getStatus() === 'approved'
+            && $product->getQuantity() > 0
+            && $seller instanceof UserInterface
+            && $seller->getStatus() !== 'blocked';
     }
 }

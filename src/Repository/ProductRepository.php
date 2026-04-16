@@ -60,4 +60,19 @@ class ProductRepository extends ServiceEntityRepository
         }
         return $qb;
     }
+
+    public function lowStockProducts(int $threshold = 10, int $limit = 5): array
+    {
+        return $this->createQueryBuilder('p')
+            ->select('p.id AS productId, p.name AS productName, p.category AS category, p.quantity AS quantity')
+            ->where('p.status = :status')
+            ->andWhere('p.quantity <= :threshold')
+            ->setParameter('status', 'approved')
+            ->setParameter('threshold', $threshold)
+            ->orderBy('p.quantity', 'ASC')
+            ->addOrderBy('p.updatedAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getArrayResult();
+    }
 }

@@ -103,6 +103,37 @@ class Product
     public function getImage(): ?string { return $this->image; }
     public function setImage(?string $image): static { $this->image = $image; return $this; }
 
+    public function getImageUrl(): ?string
+    {
+        if (!$this->image) {
+            return null;
+        }
+
+        $image = trim($this->image);
+
+        if (preg_match('#^https?://#i', $image) === 1) {
+            return $image;
+        }
+
+        $image = ltrim($image, '/');
+
+        if (str_starts_with($image, 'uploads/products/')) {
+            return $image;
+        }
+
+        return 'uploads/products/' . $image;
+    }
+
+    public function getImagePath(): ?string
+    {
+        return $this->getImageUrl();
+    }
+
+    public function isImageExternal(): bool
+    {
+        return $this->image !== null && preg_match('#^https?://#i', $this->image) === 1;
+    }
+
     public function getStatus(): ?string { return $this->status; }
     public function setStatus(?string $status): static { $this->status = $status; return $this; }
 
