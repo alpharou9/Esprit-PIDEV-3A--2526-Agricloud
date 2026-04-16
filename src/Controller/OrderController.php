@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Order;
 use App\Repository\OrderRepository;
+use App\Service\CurrencyConverterService;
 use App\Service\EmailService;
 use App\Service\OrderStatusService;
 use App\Service\PdfService;
@@ -20,7 +21,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class OrderController extends AbstractController
 {
     #[Route('', name: 'order_index', methods: ['GET'])]
-    public function index(OrderRepository $repo): Response
+    public function index(OrderRepository $repo, CurrencyConverterService $currencyConverter): Response
     {
         $role = $this->isGranted('ROLE_ADMIN') ? 'admin' : 'customer';
 
@@ -28,21 +29,32 @@ class OrderController extends AbstractController
         $mySales   = $this->isGranted('ROLE_ADMIN')
             ? $repo->listQueryBuilder($this->getUser(), 'admin')->getQuery()->getResult()
             : $repo->listQueryBuilder($this->getUser(), 'seller')->getQuery()->getResult();
+        $orderConversions = [];
+
+        foreach (array_merge($myOrders, $mySales) as $order) {
+            $orderConversions[$order->getId()] = [
+                'unitPrice' => $currencyConverter->convertAmount($order->getUnitPrice()),
+                'totalPrice' => $currencyConverter->convertAmount($order->getTotalPrice()),
+            ];
+        }
 
         return $this->render('market/orders.html.twig', [
             'myOrders' => $myOrders,
             'mySales'  => $mySales,
+            'orderConversions' => $orderConversions,
         ]);
     }
 
     #[Route('/{id}', name: 'order_show', methods: ['GET'])]
-    public function show(Order $order, OrderStatusService $orderStatusService): Response
+    public function show(Order $order, OrderStatusService $orderStatusService, CurrencyConverterService $currencyConverter): Response
     {
         $this->denyUnlessOrderVisible($order);
 
         return $this->render('market/order_show.html.twig', [
             'order' => $order,
             'availableStatuses' => $orderStatusService->getSelectableStatuses($order),
+            'convertedUnitPrice' => $currencyConverter->convertAmount($order->getUnitPrice()),
+            'convertedTotalPrice' => $currencyConverter->convertAmount($order->getTotalPrice()),
         ]);
     }
 

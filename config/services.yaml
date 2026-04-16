@@ -30,3 +30,7 @@ services:
     App\Service\EmailService:
         arguments:
             $fromEmail: '%env(MAILER_FROM)%'
+
+    App\Service\CurrencyConverterService:
+        arguments:
+            $apiUrl: '%env(CURRENCY_API_URL)%'

@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Order;
+use App\Entity\Product;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
@@ -78,5 +79,15 @@ class OrderRepository extends ServiceEntityRepository
         ], [
             'months' => \PDO::PARAM_INT,
         ])->fetchAllAssociative();
+    }
+
+    public function countForProduct(Product $product): int
+    {
+        return (int) $this->createQueryBuilder('o')
+            ->select('COUNT(o.id)')
+            ->where('o.product = :product')
+            ->setParameter('product', $product)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 }

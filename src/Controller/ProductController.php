@@ -4,8 +4,10 @@ namespace App\Controller;
 
 use App\Entity\Product;
 use App\Form\ProductType;
+use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
 use App\Service\CloudinaryService;
+use App\Service\CurrencyConverterService;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -81,12 +83,15 @@ class ProductController extends AbstractController
 
     // ── Product detail ────────────────────────────────────────────
     #[Route('/product/{id}', name: 'product_show', methods: ['GET'])]
-    public function show(Product $product, EntityManagerInterface $em): Response
+    public function show(Product $product, EntityManagerInterface $em, CurrencyConverterService $currencyConverter): Response
     {
         $product->setViews(($product->getViews() ?? 0) + 1);
         $em->flush();
 
-        return $this->render('market/show.html.twig', ['product' => $product]);
+        return $this->render('market/show.html.twig', [
+            'product' => $product,
+            'convertedPrice' => $currencyConverter->convertAmount($product->getPrice()),
+        ]);
     }
 
     // ── My listings ───────────────────────────────────────────────
@@ -149,7 +154,7 @@ class ProductController extends AbstractController
 
     // ── Delete product ────────────────────────────────────────────
     #[Route('/product/{id}/delete', name: 'product_delete', methods: ['POST'])]
-    public function delete(Product $product, Request $request, EntityManagerInterface $em): Response
+    public function delete(Product $product, Request $request, EntityManagerInterface $em, OrderRepository $orderRepository): Response
     {
         if (!$this->isGranted('ROLE_ADMIN') && $product->getUser() !== $this->getUser()) {
             throw $this->createAccessDeniedException();
@@ -157,6 +162,15 @@ class ProductController extends AbstractController
 
         if (!$this->isCsrfTokenValid('delete_product_' . $product->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Invalid CSRF token.');
+            return $this->redirectToRoute('my_products');
+        }
+
+        if ($orderRepository->countForProduct($product) > 0) {
+            $product->setStatus('sold_out');
+            $product->setUpdatedAt(new \DateTime());
+            $em->flush();
+
+            $this->addFlash('warning', 'This product already has orders, so it was hidden from sale instead of being deleted.');
             return $this->redirectToRoute('my_products');
         }
 

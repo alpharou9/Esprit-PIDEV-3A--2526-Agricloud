@@ -51,6 +51,9 @@
                             <div>
                                 <div class="fw-semibold">{{ product.name }}</div>
                                 {% if product.category %}<div class="text-muted small">{{ product.category|capitalize }}</div>{% endif %}
+                                {% if product.status == 'sold_out' %}
+                                    <div class="text-muted small">Archived because linked orders must stay available in history.</div>
+                                {% endif %}
                             </div>
                         </div>
                     </td>
