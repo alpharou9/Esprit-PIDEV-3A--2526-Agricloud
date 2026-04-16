@@ -1,0 +1,72 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ product.name }} — AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ path('market_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h5 class="fw-bold mb-0">{{ product.name }}</h5>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-5">
+        {% if product.imageUrl %}
+            <img src="{{ product.imageExternal ? product.imageUrl : asset(product.imageUrl) }}" class="w-100 rounded-4" style="max-height:360px;object-fit:cover" alt="{{ product.name }}">
+        {% else %}
+            <div class="rounded-4 d-flex align-items-center justify-content-center" style="height:320px;background:linear-gradient(135deg,#d1e7dd,#a3cfbb);font-size:5rem;color:#198754">
+                <i class="bi bi-bag-heart"></i>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-7">
+        <div class="d-flex gap-2 mb-3 flex-wrap">
+            {% if product.category %}<span class="badge bg-light text-dark border">{{ product.category|capitalize }}</span>{% endif %}
+            <span class="badge {% if product.status == 'approved' %}bg-success{% elseif product.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ product.status|capitalize }}</span>
+            <span class="text-muted small"><i class="bi bi-eye me-1"></i>{{ product.views }} views</span>
+        </div>
+
+        <div class="fs-2 fw-bold text-success mb-1">{{ product.price }} TND <span class="fs-6 text-muted fw-normal">/ {{ product.unit }}</span></div>
+        <div class="text-muted small mb-3"><i class="bi bi-layers me-1"></i>{{ product.quantity }} {{ product.unit }} available</div>
+
+        {% if product.description %}
+        <p class="mb-3">{{ product.description }}</p>
+        {% endif %}
+
+        <div class="d-flex gap-3 mb-4 flex-wrap text-muted small">
+            <span><i class="bi bi-person me-1"></i>Sold by <strong>{{ product.user.name }}</strong></span>
+            {% if product.farm %}<span><i class="bi bi-house-heart me-1"></i>{{ product.farm.name }}</span>{% endif %}
+            <span><i class="bi bi-calendar me-1"></i>{{ product.createdAt ? product.createdAt|date('d M Y') : '—' }}</span>
+        </div>
+
+        {% if product.status == 'approved' and product.quantity > 0 and product.user != app.user %}
+        <form method="post" action="{{ path('cart_add', {id: product.id}) }}" class="d-flex gap-2 align-items-center">
+            <input type="hidden" name="_token" value="{{ csrf_token('cart_add_' ~ product.id) }}">
+            <input type="number" name="qty" value="1" min="1" max="{{ product.quantity }}" class="form-control" style="width:80px">
+            <button type="submit" class="btn btn-success px-4">
+                <i class="bi bi-cart-plus me-1"></i>Add to Cart
+            </button>
+        </form>
+        {% elseif product.user == app.user %}
+        <div class="alert alert-info small"><i class="bi bi-info-circle me-1"></i>This is your own listing.</div>
+        {% elseif product.quantity == 0 %}
+        <div class="alert alert-warning small"><i class="bi bi-exclamation-triangle me-1"></i>Out of stock.</div>
+        {% endif %}
+
+        {% if product.user == app.user or is_granted('ROLE_ADMIN') %}
+        <div class="d-flex gap-2 mt-3">
+            <a href="{{ path('product_edit', {id: product.id}) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
+            {% if is_granted('ROLE_ADMIN') and product.status == 'pending' %}
+            <form method="post" action="{{ path('product_approve', {id: product.id}) }}" class="d-inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('approve_product_' ~ product.id) }}">
+                <button class="btn btn-success btn-sm"><i class="bi bi-check-lg me-1"></i>Approve</button>
+            </form>
+            <form method="post" action="{{ path('product_reject', {id: product.id}) }}" class="d-inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('reject_product_' ~ product.id) }}">
+                <button class="btn btn-danger btn-sm"><i class="bi bi-x-lg me-1"></i>Reject</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

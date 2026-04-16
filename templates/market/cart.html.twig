@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+{% block title %}Cart — AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ path('market_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h5 class="fw-bold mb-0"><i class="bi bi-cart3 me-2"></i>My Cart</h5>
+</div>
+
+{% if items is empty %}
+<div class="text-center text-muted py-5">
+    <i class="bi bi-cart" style="font-size:3rem;opacity:.3"></i>
+    <p class="mt-2">Your cart is empty.</p>
+    <a href="{{ path('market_index') }}" class="btn btn-success btn-sm">Browse Marketplace</a>
+</div>
+{% else %}
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Qty</th>
+                            <th>Subtotal</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if item.product.imageUrl %}
+                                        <img src="{{ item.product.imageExternal ? item.product.imageUrl : asset(item.product.imageUrl) }}" class="rounded-2" style="width:44px;height:44px;object-fit:cover">
+                                    {% else %}
+                                        <div class="rounded-2 bg-light d-flex align-items-center justify-content-center" style="width:44px;height:44px;color:#198754;font-size:1.2rem"><i class="bi bi-bag-heart"></i></div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="fw-semibold">{{ item.product.name }}</div>
+                                        <div class="text-muted small">{{ item.product.user.name }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ item.product.price }} TND/{{ item.product.unit }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td class="fw-bold text-success">{{ item.subtotal|number_format(2) }} TND</td>
+                            <td>
+                                <form method="post" action="{{ path('cart_remove', {id: item.id}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('cart_remove_' ~ item.id) }}">
+                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4">
+            <h6 class="fw-bold mb-3">Order Summary</h6>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Items ({{ items|length }})</span>
+                <span>{{ total|number_format(2) }} TND</span>
+            </div>
+            <div class="d-flex justify-content-between mb-3">
+                <span class="text-muted">Shipping</span>
+                <span class="text-success">Free</span>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between fw-bold fs-5 mb-4">
+                <span>Total</span>
+                <span class="text-success">{{ total|number_format(2) }} TND</span>
+            </div>
+            <a href="{{ path('cart_checkout') }}" class="btn btn-success w-100">
+                <i class="bi bi-credit-card me-1"></i>Proceed to Checkout
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

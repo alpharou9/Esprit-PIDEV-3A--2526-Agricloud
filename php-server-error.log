@@ -1,0 +1,23 @@
+[Wed Apr 15 19:54:46 2026] PHP 8.1.25 Development Server (http://127.0.0.1:8000) started
+[Wed Apr 15 19:54:49 2026] 127.0.0.1:54614 Accepted
+[Wed Apr 15 19:54:49 2026] PHP Warning:  require_once(C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master/vendor/autoload_runtime.php): Failed to open stream: No such file or directory in C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master\public\index.php on line 5
+[Wed Apr 15 19:54:49 2026] PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master/vendor/autoload_runtime.php' (include_path='C:\xampp\php\PEAR') in C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master\public\index.php:5
+Stack trace:
+#0 {main}
+  thrown in C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master\public\index.php on line 5
+[Wed Apr 15 19:54:49 2026] 127.0.0.1:54614 [200]: GET / - Uncaught Error: Failed opening required 'C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master/vendor/autoload_runtime.php' (include_path='C:\xampp\php\PEAR') in C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master\public\index.php:5
+Stack trace:
+#0 {main}
+  thrown in C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master\public\index.php on line 5
+[Wed Apr 15 19:54:49 2026] 127.0.0.1:54614 Closing
+[Wed Apr 15 19:55:01 2026] 127.0.0.1:54615 Accepted
+[Wed Apr 15 19:55:01 2026] PHP Warning:  require_once(C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master/vendor/autoload_runtime.php): Failed to open stream: No such file or directory in C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master\public\index.php on line 5
+[Wed Apr 15 19:55:01 2026] PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master/vendor/autoload_runtime.php' (include_path='C:\xampp\php\PEAR') in C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master\public\index.php:5
+Stack trace:
+#0 {main}
+  thrown in C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master\public\index.php on line 5
+[Wed Apr 15 19:55:01 2026] 127.0.0.1:54615 [200]: GET / - Uncaught Error: Failed opening required 'C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master/vendor/autoload_runtime.php' (include_path='C:\xampp\php\PEAR') in C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master\public\index.php:5
+Stack trace:
+#0 {main}
+  thrown in C:\Users\ghada\OneDrive\Bureau\Esprit-PIDEV-3A--2526-Agricloud-master\public\index.php on line 5
+[Wed Apr 15 19:55:01 2026] 127.0.0.1:54615 Closing

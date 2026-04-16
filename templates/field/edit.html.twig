@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+{% block title %}Edit {{ field.name }} — AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ path('farm_show', {id: farm.id}) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h5 class="fw-bold mb-0">Edit Field — {{ field.name }}</h5>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4" style="max-width:520px">
+    <div class="card-body p-4">
+        {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+
+        <div class="mb-3">
+            {{ form_label(form.name) }}
+            {{ form_widget(form.name) }}
+            {{ form_errors(form.name) }}
+            <div class="form-text">Required · 2–100 characters</div>
+        </div>
+
+        <div class="mb-3">
+            {{ form_label(form.area) }}
+            {{ form_widget(form.area) }}
+            {{ form_errors(form.area) }}
+            <div class="form-text">Required · Positive number · Max 999,999 ha</div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_label(form.soilType) }}
+                    {{ form_widget(form.soilType) }}
+                    {{ form_errors(form.soilType) }}
+                    <div class="form-text">Optional</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_label(form.cropType) }}
+                    {{ form_widget(form.cropType) }}
+                    {{ form_errors(form.cropType) }}
+                    <div class="form-text">Optional · e.g. Wheat, Tomato</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            {{ form_label(form.status) }}
+            {{ form_widget(form.status) }}
+            {{ form_errors(form.status) }}
+            <div class="form-text">Required · Current state of the field</div>
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-1"></i> Save Changes
+        </button>
+        <a href="{{ path('farm_show', {id: farm.id}) }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
