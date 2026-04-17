@@ -133,56 +133,6 @@
         border-radius: 14px;
     }
 
-    .integration-banner {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-        padding: 1.1rem;
-        border-radius: 22px;
-        border: 1px solid rgba(119, 184, 30, 0.16);
-        background:
-            radial-gradient(circle at top right, rgba(119, 184, 30, 0.16), transparent 45%),
-            linear-gradient(135deg, #f8fbf2, #ffffff);
-    }
-
-    .integration-pill {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.85rem;
-        padding: 0.95rem 1rem;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.92);
-        border: 1px solid rgba(119, 184, 30, 0.12);
-    }
-
-    .integration-pill i {
-        width: 42px;
-        height: 42px;
-        border-radius: 14px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(119, 184, 30, 0.14);
-        color: #487016;
-        font-size: 1.1rem;
-        flex-shrink: 0;
-    }
-
-    .integration-pill strong {
-        display: block;
-        color: #22340f;
-        font-size: 1rem;
-        margin-bottom: 0.15rem;
-    }
-
-    .integration-pill span {
-        display: block;
-        color: #617153;
-        font-size: 0.92rem;
-        line-height: 1.45;
-    }
-
     .product-form-card #ai-generate-description {
         min-height: 46px;
         padding-inline: 1rem;
@@ -216,9 +166,6 @@
             font-size: 1.6rem;
         }
 
-        .integration-banner {
-            grid-template-columns: 1fr;
-        }
     }
 </style>
 {% endblock %}
@@ -231,23 +178,6 @@
             <div class="product-form-title">
                 <a href="{{ path('my_products') }}" class="btn btn-outline-secondary product-form-back"><i class="bi bi-arrow-left"></i></a>
                 <h5>{{ product ? 'Edit Product - ' ~ product.name : 'List a New Product' }}</h5>
-            </div>
-        </div>
-
-        <div class="integration-banner">
-            <div class="integration-pill">
-                <i class="bi bi-stars"></i>
-                <div>
-                    <strong>AI drafting</strong>
-                    <span>Use Hugging Face to generate a polished name, category, unit, and description from the product details you already typed.</span>
-                </div>
-            </div>
-            <div class="integration-pill">
-                <i class="bi bi-cloud-arrow-up"></i>
-                <div>
-                    <strong>Smart image upload</strong>
-                    <span>Product photos go to Cloudinary when configured, with your current local upload flow kept as a safe fallback.</span>
-                </div>
             </div>
         </div>
 
