@@ -90,4 +90,18 @@ class OrderRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    public function userHasPurchasedProduct(User $user, Product $product): bool
+    {
+        return (int) $this->createQueryBuilder('o')
+            ->select('COUNT(o.id)')
+            ->where('o.customer = :user')
+            ->andWhere('o.product = :product')
+            ->andWhere('o.status != :cancelled')
+            ->setParameter('user', $user)
+            ->setParameter('product', $product)
+            ->setParameter('cancelled', Order::STATUS_CANCELLED)
+            ->getQuery()
+            ->getSingleScalarResult() > 0;
+    }
 }
