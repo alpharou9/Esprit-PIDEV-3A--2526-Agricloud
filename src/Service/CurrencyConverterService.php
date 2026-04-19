@@ -44,6 +44,22 @@ class CurrencyConverterService
             }
 
             $data = $response->toArray(false);
+
+            if (isset($data[0]) && is_array($data[0])) {
+                $rates = [];
+
+                foreach ($data as $row) {
+                    $quote = strtoupper((string) ($row['quote'] ?? ''));
+                    $rate = $row['rate'] ?? null;
+
+                    if (in_array($quote, self::TARGET_CURRENCIES, true) && is_numeric($rate)) {
+                        $rates[$quote] = (float) $rate;
+                    }
+                }
+
+                return $this->ratesCache = $rates;
+            }
+
             $rates = is_array($data['rates'] ?? null) ? $data['rates'] : [];
 
             return $this->ratesCache = array_intersect_key($rates, array_flip(self::TARGET_CURRENCIES));

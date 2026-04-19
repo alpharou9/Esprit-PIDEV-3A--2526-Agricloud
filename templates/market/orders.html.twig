@@ -22,6 +22,7 @@
                     <th>Qty</th>
                     <th>Total</th>
                     <th>Status</th>
+                    <th>Payment</th>
                     <th>Date</th>
                     <th class="text-end">Actions</th>
                 </tr>
@@ -57,10 +58,22 @@
                             </small>
                         </div>
                     </td>
+                    <td>
+                        <div class="d-flex flex-column gap-2">
+                            <span class="badge bg-{{ order.paymentStatusColor }} {{ order.paymentStatus == 'pending' ? 'text-dark' : '' }} align-self-start">{{ order.paymentStatusLabel }}</span>
+                            <small class="text-muted">{{ order.paymentMethodLabel }}</small>
+                        </div>
+                    </td>
                     <td class="text-muted small">{{ order.orderDate ? order.orderDate|date('d M Y') : '-' }}</td>
                     <td class="text-end">
                         <div class="d-inline-flex gap-2">
                             <a href="{{ path('order_show', {id: order.id}) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
+                            {% if order.customer == app.user and order.paymentMethod == 'stripe' and order.paymentStatus != 'paid' and order.status != 'cancelled' %}
+                                <form method="post" action="{{ path('order_pay', {id: order.id}) }}" class="d-inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('order_pay_' ~ order.id) }}">
+                                    <button class="btn btn-sm btn-outline-primary" title="Pay with Stripe"><i class="bi bi-credit-card"></i></button>
+                                </form>
+                            {% endif %}
                             <a href="{{ path('order_export_pdf', {id: order.id}) }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-file-earmark-pdf"></i></a>
                         </div>
                     </td>

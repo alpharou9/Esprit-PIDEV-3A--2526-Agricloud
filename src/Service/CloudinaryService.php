@@ -36,9 +36,10 @@ class CloudinaryService
     private function uploadToCloudinary(UploadedFile $imageFile): ?array
     {
         $baseName = (string) $this->slugger->slug(pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME));
-        $publicId = sprintf('agricloud/products/%s-%s', $baseName !== '' ? $baseName : 'product', uniqid());
+        $folder = 'agricloud/products';
+        $publicId = sprintf('%s-%s', $baseName !== '' ? $baseName : 'product', uniqid());
         $timestamp = time();
-        $signature = sha1(sprintf('folder=agricloud/products&public_id=%s&timestamp=%d%s', $publicId, $timestamp, $this->apiSecret));
+        $signature = sha1(sprintf('folder=%s&public_id=%s&timestamp=%d%s', $folder, $publicId, $timestamp, $this->apiSecret));
 
         $formData = new FormDataPart([
             'file' => DataPart::fromPath(
@@ -46,7 +47,7 @@ class CloudinaryService
                 $imageFile->getClientOriginalName(),
                 $imageFile->getMimeType() ?: 'application/octet-stream'
             ),
-            'folder' => 'agricloud/products',
+            'folder' => $folder,
             'public_id' => $publicId,
             'timestamp' => (string) $timestamp,
             'api_key' => $this->apiKey,

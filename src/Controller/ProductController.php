@@ -26,9 +26,10 @@ class ProductController extends AbstractController
     {
         $q        = $request->query->get('q', '');
         $category = $request->query->get('category', '');
+        $sort     = $request->query->get('sort', '');
 
         $pagination = $paginator->paginate(
-            $repo->marketplaceQueryBuilder($q ?: null, $category ?: null),
+            $repo->marketplaceQueryBuilder($q ?: null, $category ?: null, $sort ?: null),
             $request->query->getInt('page', 1),
             12
         );
@@ -37,6 +38,7 @@ class ProductController extends AbstractController
             'pagination' => $pagination,
             'q'          => $q,
             'category'   => $category,
+            'sort'       => $sort,
         ]);
     }
 
@@ -154,8 +156,15 @@ class ProductController extends AbstractController
 
     // ── Delete product ────────────────────────────────────────────
     #[Route('/product/{id}/delete', name: 'product_delete', methods: ['POST'])]
-    public function delete(Product $product, Request $request, EntityManagerInterface $em, OrderRepository $orderRepository): Response
+    public function delete(int $id, Request $request, EntityManagerInterface $em, OrderRepository $orderRepository, ProductRepository $productRepository): Response
     {
+        $product = $productRepository->find($id);
+
+        if ($product === null) {
+            $this->addFlash('warning', 'This product was already removed or could not be found.');
+            return $this->redirectToRoute('my_products');
+        }
+
         if (!$this->isGranted('ROLE_ADMIN') && $product->getUser() !== $this->getUser()) {
             throw $this->createAccessDeniedException();
         }

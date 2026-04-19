@@ -8,9 +8,11 @@ use App\Service\CurrencyConverterService;
 use App\Service\EmailService;
 use App\Service\OrderStatusService;
 use App\Service\PdfService;
+use App\Service\StripeCheckoutService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
@@ -132,6 +134,48 @@ class OrderController extends AbstractController
 
         $this->addFlash('success', 'Order cancelled.');
         return $this->redirectToRoute('order_index');
+    }
+
+    #[Route('/{id}/pay', name: 'order_pay', methods: ['POST'])]
+    public function pay(Order $order, Request $request, EntityManagerInterface $em, StripeCheckoutService $stripeCheckoutService): Response
+    {
+        if ($order->getCustomer() !== $this->getUser()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid('order_pay_' . $order->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Invalid token.');
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        if ($order->getPaymentMethod() !== Order::PAYMENT_METHOD_STRIPE) {
+            $this->addFlash('error', 'This order is not configured for Stripe payment.');
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        if ($order->getPaymentStatus() === Order::PAYMENT_STATUS_PAID) {
+            $this->addFlash('success', 'This order has already been paid.');
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        if ($order->getStatus() === Order::STATUS_CANCELLED) {
+            $this->addFlash('error', 'Cancelled orders cannot be paid.');
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        $session = $stripeCheckoutService->createCheckoutSession([$order], $request);
+
+        if (!$session['success']) {
+            $this->addFlash('error', $session['message']);
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        $order->setStripeSessionId($session['sessionId']);
+        $order->setPaymentStatus(Order::PAYMENT_STATUS_PENDING);
+        $order->setUpdatedAt(new \DateTime());
+        $em->flush();
+
+        return new RedirectResponse($session['checkoutUrl']);
     }
 
     private function denyUnlessOrderVisible(Order $order): void

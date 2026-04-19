@@ -95,12 +95,32 @@
                 <dd class="col-sm-7">{{ order.customer.name }}</dd>
                 <dt class="col-sm-5 text-muted">Order Date</dt>
                 <dd class="col-sm-7 small">{{ order.orderDate ? order.orderDate|date('d M Y H:i') : '-' }}</dd>
+                <dt class="col-sm-5 text-muted">Payment Method</dt>
+                <dd class="col-sm-7">
+                    {{ order.paymentMethodLabel }}
+                    {% if order.paymentMethod == 'stripe' %}
+                        <div class="small text-muted">Charged in EUR from the TND order total at checkout time.</div>
+                    {% endif %}
+                </dd>
+                <dt class="col-sm-5 text-muted">Payment Status</dt>
+                <dd class="col-sm-7">
+                    <span class="badge bg-{{ order.paymentStatusColor }} {{ order.paymentStatus == 'pending' ? 'text-dark' : '' }}">{{ order.paymentStatusLabel }}</span>
+                </dd>
                 {% if order.cancelledAt %}
                 <dt class="col-sm-5 text-muted">Cancelled</dt>
                 <dd class="col-sm-7 small text-danger">{{ order.cancelledAt|date('d M Y') }}{% if order.cancelledReason %} - {{ order.cancelledReason }}{% endif %}</dd>
                 {% endif %}
             </dl>
         </div>
+
+        {% if order.customer == app.user and order.paymentMethod == 'stripe' and order.paymentStatus != 'paid' and order.status != 'cancelled' %}
+        <form method="post" action="{{ path('order_pay', {id: order.id}) }}" class="mb-3">
+            <input type="hidden" name="_token" value="{{ csrf_token('order_pay_' ~ order.id) }}">
+            <button class="btn btn-primary btn-sm w-100">
+                <i class="bi bi-credit-card-2-front me-1"></i>Pay with Stripe
+            </button>
+        </form>
+        {% endif %}
 
         {% if order.seller == app.user or is_granted('ROLE_ADMIN') %}
         <div class="card border-0 shadow-sm rounded-4 p-4 mb-3">

@@ -8,9 +8,11 @@ use App\Entity\Product;
 use App\Form\CheckoutType;
 use App\Repository\CartItemRepository;
 use App\Service\CurrencyConverterService;
+use App\Service\StripeCheckoutService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -105,7 +107,7 @@ class CartController extends AbstractController
     }
 
     #[Route('/checkout', name: 'cart_checkout', methods: ['GET', 'POST'])]
-    public function checkout(Request $request, EntityManagerInterface $em, CartItemRepository $cartRepo): Response
+    public function checkout(Request $request, EntityManagerInterface $em, CartItemRepository $cartRepo, StripeCheckoutService $stripeCheckoutService, CurrencyConverterService $currencyConverter): Response
     {
         $items = $cartRepo->findByUser($this->getUser());
 
@@ -117,10 +119,14 @@ class CartController extends AbstractController
         $total = array_sum(array_map(fn($i) => $i->getSubtotal(), $items));
         $form  = $this->createForm(CheckoutType::class);
         $form->handleRequest($request);
+        $stripeCurrency = $stripeCheckoutService->getStripeCurrency();
+        $convertedTotal = $currencyConverter->convertAmount($total);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
             $now  = new \DateTime();
+            $paymentMethod = (string) ($data['paymentMethod'] ?? Order::PAYMENT_METHOD_CASH);
+            $createdOrders = [];
 
             foreach ($items as $item) {
                 $product = $item->getProduct();
@@ -143,6 +149,8 @@ class CartController extends AbstractController
                 $order->setUnitPrice($product->getPrice());
                 $order->setTotalPrice((string)($product->getPrice() * $item->getQuantity()));
                 $order->setStatus('pending');
+                $order->setPaymentMethod($paymentMethod);
+                $order->setPaymentStatus(Order::PAYMENT_STATUS_PENDING);
                 $order->setShippingAddress($data['shippingAddress']);
                 $order->setShippingCity($data['shippingCity']);
                 $order->setShippingPostal($data['shippingPostal'] ?? null);
@@ -152,12 +160,49 @@ class CartController extends AbstractController
                 $order->setOrderDate($now);
                 $order->setCreatedAt($now);
                 $em->persist($order);
+                $createdOrders[] = $order;
 
                 $product->setQuantity($product->getQuantity() - $item->getQuantity());
                 $em->remove($item);
             }
 
             $em->flush();
+
+            if ($paymentMethod === Order::PAYMENT_METHOD_STRIPE) {
+                $session = $stripeCheckoutService->createCheckoutSession($createdOrders, $request);
+
+                if (!$session['success']) {
+                    foreach ($createdOrders as $order) {
+                        $product = $order->getProduct();
+
+                        if ($product !== null) {
+                            $product->setQuantity($product->getQuantity() + $order->getQuantity());
+                        }
+
+                        $restoredItem = new CartItem();
+                        $restoredItem->setUser($this->getUser());
+                        $restoredItem->setProduct($order->getProduct());
+                        $restoredItem->setQuantity($order->getQuantity());
+                        $restoredItem->setCreatedAt(new \DateTime());
+                        $em->persist($restoredItem);
+                        $em->remove($order);
+                    }
+
+                    $em->flush();
+                    $this->addFlash('error', $session['message']);
+
+                    return $this->redirectToRoute('order_index');
+                }
+
+                foreach ($createdOrders as $order) {
+                    $order->setStripeSessionId($session['sessionId']);
+                }
+
+                $em->flush();
+
+                return new RedirectResponse($session['checkoutUrl']);
+            }
+
             $this->addFlash('success', 'Order placed successfully! We will contact you shortly.');
             return $this->redirectToRoute('order_index');
         }
@@ -166,7 +211,69 @@ class CartController extends AbstractController
             'form'  => $form,
             'items' => $items,
             'total' => $total,
+            'stripeCurrency' => $stripeCurrency,
+            'stripeConvertedTotal' => $convertedTotal[$stripeCurrency] ?? null,
         ]);
+    }
+
+    #[Route('/checkout/stripe/success', name: 'cart_checkout_stripe_success', methods: ['GET'])]
+    public function stripeSuccess(Request $request, EntityManagerInterface $em, StripeCheckoutService $stripeCheckoutService): Response
+    {
+        $sessionId = (string) $request->query->get('session_id', '');
+        $session = $stripeCheckoutService->retrieveSession($sessionId);
+
+        if ($session === null) {
+            $this->addFlash('error', 'Unable to verify the Stripe payment session.');
+            return $this->redirectToRoute('order_index');
+        }
+
+        if (($session['payment_status'] ?? null) !== 'paid') {
+            $this->addFlash('warning', 'Stripe did not confirm the payment yet.');
+            return $this->redirectToRoute('order_index');
+        }
+
+        $orders = $em->getRepository(Order::class)->findBy([
+            'customer' => $this->getUser(),
+            'stripeSessionId' => $sessionId,
+        ]);
+
+        foreach ($orders as $order) {
+            $order->setPaymentStatus(Order::PAYMENT_STATUS_PAID);
+            $order->setUpdatedAt(new \DateTime());
+        }
+
+        $em->flush();
+
+        $this->addFlash('success', 'Stripe payment completed successfully.');
+        return $this->redirectToRoute('order_index');
+    }
+
+    #[Route('/checkout/stripe/cancel', name: 'cart_checkout_stripe_cancel', methods: ['GET'])]
+    public function stripeCancel(Request $request, EntityManagerInterface $em): Response
+    {
+        $sessionId = (string) $request->query->get('session_id', '');
+        $orders = $em->getRepository(Order::class)->findBy([
+            'customer' => $this->getUser(),
+            'stripeSessionId' => $sessionId,
+        ]);
+
+        foreach ($orders as $order) {
+            if ($order->getPaymentStatus() === Order::PAYMENT_STATUS_PAID) {
+                continue;
+            }
+
+            $order->setPaymentStatus(Order::PAYMENT_STATUS_CANCELLED);
+            $order->setStatus(Order::STATUS_CANCELLED);
+            $order->setCancelledAt(new \DateTime());
+            $order->setCancelledReason('Stripe checkout was cancelled.');
+            $order->setUpdatedAt(new \DateTime());
+            $order->getProduct()?->setQuantity($order->getProduct()->getQuantity() + $order->getQuantity());
+        }
+
+        $em->flush();
+
+        $this->addFlash('warning', 'Stripe checkout was cancelled. Your stock reservation has been released.');
+        return $this->redirectToRoute('order_index');
     }
 
     private function isProductSellable(Product $product): bool

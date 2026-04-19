@@ -3,6 +3,7 @@
 namespace App\Form;
 
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -15,6 +16,20 @@ class CheckoutType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
+            ->add('paymentMethod', ChoiceType::class, [
+                'label' => 'Payment Method',
+                'choices' => [
+                    'Cash on delivery' => 'cash',
+                    'Pay with Stripe' => 'stripe',
+                ],
+                'expanded' => true,
+                'multiple' => false,
+                'data' => 'cash',
+                'constraints' => [
+                    new Assert\NotBlank(message: 'Please choose a payment method.'),
+                    new Assert\Choice(choices: ['cash', 'stripe'], message: 'Choose a valid payment method.'),
+                ],
+            ])
             ->add('shippingAddress', TextareaType::class, [
                 'label' => 'Street Address',
                 'attr' => ['class' => 'form-control', 'rows' => 2],

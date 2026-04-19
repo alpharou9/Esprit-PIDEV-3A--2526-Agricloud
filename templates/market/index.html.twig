@@ -8,7 +8,7 @@
 .product-img{height:180px;object-fit:cover;width:100%}
 .product-img-placeholder{height:180px;background:linear-gradient(135deg,#d1e7dd,#a3cfbb);display:flex;align-items:center;justify-content:center;font-size:3rem;color:#198754}
 .market-filter-card{max-width:980px;border:1px solid rgba(119,184,30,.12);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(249,251,244,.98));border-radius:24px;box-shadow:0 14px 34px rgba(35,58,12,.07);padding:1rem 1rem .9rem}
-.market-filter-grid{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(220px,.9fr) auto auto;gap:.9rem;align-items:center}
+.market-filter-grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(200px,.8fr) minmax(200px,.8fr) auto auto;gap:.9rem;align-items:center}
 .market-search-wrap,.market-select-wrap{position:relative}
 .market-search-wrap .form-control,.market-select-wrap .form-select{min-height:52px;border-radius:16px;border:1px solid #d8e1cb;background:#fcfdf9;box-shadow:none;font-size:1rem;padding:.85rem 1rem;transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
 .market-search-wrap .form-control{padding-left:2.85rem}
@@ -54,10 +54,20 @@
                 {% endfor %}
             </select>
         </div>
+        <div class="market-select-wrap">
+            <select name="sort" class="form-select">
+                <option value="" {{ sort == '' ? 'selected' : '' }}>Sort by</option>
+                <option value="name_asc" {{ sort == 'name_asc' ? 'selected' : '' }}>Name A to Z</option>
+                <option value="name_desc" {{ sort == 'name_desc' ? 'selected' : '' }}>Name Z to A</option>
+                <option value="price_asc" {{ sort == 'price_asc' ? 'selected' : '' }}>Price low to high</option>
+                <option value="price_desc" {{ sort == 'price_desc' ? 'selected' : '' }}>Price high to low</option>
+                <option value="newest" {{ sort == 'newest' ? 'selected' : '' }}>Newest first</option>
+            </select>
+        </div>
         <button class="btn btn-success market-filter-action" type="submit">
             <i class="bi bi-sliders me-1"></i>Filter
         </button>
-        {% if q or category %}
+        {% if q or category or sort %}
             <a href="{{ path('market_index') }}" class="btn btn-outline-danger market-filter-reset d-inline-flex align-items-center justify-content-center">
                 <i class="bi bi-x-lg me-1"></i>Reset
             </a>
@@ -65,9 +75,9 @@
     </div>
 
     <div class="category-pills">
-        <a href="{{ path('market_index', {q: q}) }}" class="category-pill {{ category == '' ? 'active' : '' }}">All</a>
+        <a href="{{ path('market_index', {q: q, sort: sort}) }}" class="category-pill {{ category == '' ? 'active' : '' }}">All</a>
         {% for label, val in {'Vegetables':'vegetables','Fruits':'fruits','Grains':'grains','Dairy':'dairy','Meat':'meat','Herbs':'herbs','Other':'other'} %}
-            <a href="{{ path('market_index', {q: q, category: val}) }}" class="category-pill {{ category == val ? 'active' : '' }}">{{ label }}</a>
+            <a href="{{ path('market_index', {q: q, category: val, sort: sort}) }}" class="category-pill {{ category == val ? 'active' : '' }}">{{ label }}</a>
         {% endfor %}
     </div>
 </form>

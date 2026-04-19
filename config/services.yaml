@@ -34,3 +34,7 @@ services:
     App\Service\CurrencyConverterService:
         arguments:
             $apiUrl: '%env(CURRENCY_API_URL)%'
+
+    App\Service\StripeCheckoutService:
+        arguments:
+            $secretKey: '%env(default::STRIPE_SECRET_KEY)%'
