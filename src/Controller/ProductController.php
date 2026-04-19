@@ -90,9 +90,14 @@ class ProductController extends AbstractController
         $product->setViews(($product->getViews() ?? 0) + 1);
         $em->flush();
 
+        $displayPrices = array_merge(
+            ['TND' => (float) $product->getPrice()],
+            $currencyConverter->convertAmount($product->getPrice())
+        );
+
         return $this->render('market/show.html.twig', [
             'product' => $product,
-            'convertedPrice' => $currencyConverter->convertAmount($product->getPrice()),
+            'displayPrices' => $displayPrices,
         ]);
     }
 

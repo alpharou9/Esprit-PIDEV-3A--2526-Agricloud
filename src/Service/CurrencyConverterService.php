@@ -8,7 +8,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class CurrencyConverterService
 {
     private const BASE_CURRENCY = 'TND';
-    private const TARGET_CURRENCIES = ['EUR', 'USD'];
+    private const TARGET_CURRENCIES = ['EUR', 'USD', 'GBP', 'CAD', 'MAD'];
 
     private ?array $ratesCache = null;
 

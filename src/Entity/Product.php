@@ -151,4 +151,61 @@ class Product
 
     public function getUpdatedAt(): ?\DateTimeInterface { return $this->updatedAt; }
     public function setUpdatedAt(?\DateTimeInterface $v): static { $this->updatedAt = $v; return $this; }
+
+    public function getBenefitsTitle(): string
+    {
+        return match ($this->normalizeCategory()) {
+            'fruits' => 'Fresh fruit benefits',
+            'vegetables' => 'Everyday vegetable benefits',
+            'dairy' => 'Dairy product benefits',
+            'meat' => 'Protein-rich benefits',
+            'grains' => 'Grain and pantry benefits',
+            'herbs' => 'Fresh herb benefits',
+            default => 'Why shoppers choose this product',
+        };
+    }
+
+    public function getBenefitsText(): string
+    {
+        $name = $this->name ?? 'This product';
+        $quantity = $this->quantity ?? 0;
+
+        return match ($this->normalizeCategory()) {
+            'fruits' => sprintf(
+                '%s is a practical choice for fresh snacks, desserts, and light meals. It brings natural flavor, everyday freshness, and a simple way to add more fruit to the kitchen.',
+                $name
+            ),
+            'vegetables' => sprintf(
+                '%s is useful for daily cooking because it works well in salads, sauces, and home-style meals. It adds freshness, color, and a healthy base for quick recipes.',
+                $name
+            ),
+            'dairy' => sprintf(
+                '%s is convenient for breakfast, cooking, or simple family meals. It offers a fresh farm-style option that feels practical, nourishing, and easy to use every day.',
+                $name
+            ),
+            'meat' => sprintf(
+                '%s is a strong option for balanced meals thanks to its filling and versatile nature. It is well suited for hearty dishes, meal prep, and protein-focused recipes.',
+                $name
+            ),
+            'grains' => sprintf(
+                '%s is a dependable pantry staple that helps build affordable and satisfying meals. It is easy to store, useful in many recipes, and practical for regular cooking.',
+                $name
+            ),
+            'herbs' => sprintf(
+                '%s brings fresh aroma and a clean finishing touch to many dishes. A small amount can quickly improve flavor and make simple meals feel more vibrant.',
+                $name
+            ),
+            default => sprintf(
+                '%s is a simple marketplace choice for buyers who want reliable quality and everyday usefulness. With %d %s available, it is well suited for practical shopping and regular home use.',
+                $name,
+                $quantity,
+                $this->unit ?? 'units'
+            ),
+        };
+    }
+
+    private function normalizeCategory(): string
+    {
+        return strtolower(trim((string) $this->category));
+    }
 }
