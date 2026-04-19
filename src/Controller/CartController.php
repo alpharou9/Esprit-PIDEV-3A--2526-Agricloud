@@ -9,8 +9,11 @@ use App\Form\CheckoutType;
 use App\Repository\CartItemRepository;
 use App\Service\CurrencyConverterService;
 use App\Service\StripeCheckoutService;
+use App\Service\TemporaryShippingStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,6 +25,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_USER')]
 class CartController extends AbstractController
 {
+    private const EXTERNAL_SHIPPING_PLACEHOLDER = 'Shipping details are collected outside AgriCloud.';
+
     #[Route('', name: 'cart_index', methods: ['GET'])]
     public function index(CartItemRepository $cartRepo, CurrencyConverterService $currencyConverter): Response
     {
@@ -107,7 +112,7 @@ class CartController extends AbstractController
     }
 
     #[Route('/checkout', name: 'cart_checkout', methods: ['GET', 'POST'])]
-    public function checkout(Request $request, EntityManagerInterface $em, CartItemRepository $cartRepo, StripeCheckoutService $stripeCheckoutService, CurrencyConverterService $currencyConverter): Response
+    public function checkout(Request $request, EntityManagerInterface $em, CartItemRepository $cartRepo, StripeCheckoutService $stripeCheckoutService, CurrencyConverterService $currencyConverter, TemporaryShippingStorage $temporaryShippingStorage): Response
     {
         $items = $cartRepo->findByUser($this->getUser());
 
@@ -126,6 +131,22 @@ class CartController extends AbstractController
             $data = $form->getData();
             $now  = new \DateTime();
             $paymentMethod = (string) ($data['paymentMethod'] ?? Order::PAYMENT_METHOD_CASH);
+            $temporaryShippingDetails = null;
+
+            if ($paymentMethod === Order::PAYMENT_METHOD_CASH) {
+                $temporaryShippingDetails = $this->buildCashShippingDetails($form, $data);
+
+                if ($temporaryShippingDetails === null) {
+                    return $this->render('market/checkout.html.twig', [
+                        'form'  => $form,
+                        'items' => $items,
+                        'total' => $total,
+                        'stripeCurrency' => $stripeCurrency,
+                        'stripeConvertedTotal' => $convertedTotal[$stripeCurrency] ?? null,
+                    ]);
+                }
+            }
+
             $createdOrders = [];
 
             foreach ($items as $item) {
@@ -151,12 +172,12 @@ class CartController extends AbstractController
                 $order->setStatus('pending');
                 $order->setPaymentMethod($paymentMethod);
                 $order->setPaymentStatus(Order::PAYMENT_STATUS_PENDING);
-                $order->setShippingAddress($data['shippingAddress']);
-                $order->setShippingCity($data['shippingCity']);
-                $order->setShippingPostal($data['shippingPostal'] ?? null);
-                $order->setShippingEmail($data['shippingEmail']);
-                $order->setShippingPhone($data['shippingPhone'] ?? null);
-                $order->setNotes($data['notes'] ?? null);
+                $order->setShippingAddress(self::EXTERNAL_SHIPPING_PLACEHOLDER);
+                $order->setShippingCity(null);
+                $order->setShippingPostal(null);
+                $order->setShippingEmail(null);
+                $order->setShippingPhone(null);
+                $order->setNotes(null);
                 $order->setOrderDate($now);
                 $order->setCreatedAt($now);
                 $em->persist($order);
@@ -167,6 +188,10 @@ class CartController extends AbstractController
             }
 
             $em->flush();
+
+            if ($paymentMethod === Order::PAYMENT_METHOD_CASH && $temporaryShippingDetails !== null) {
+                $temporaryShippingStorage->storeForOrders($createdOrders, $temporaryShippingDetails);
+            }
 
             if ($paymentMethod === Order::PAYMENT_METHOD_STRIPE) {
                 $session = $stripeCheckoutService->createCheckoutSession($createdOrders, $request);
@@ -203,7 +228,7 @@ class CartController extends AbstractController
                 return new RedirectResponse($session['checkoutUrl']);
             }
 
-            $this->addFlash('success', 'Order placed successfully! We will contact you shortly.');
+            $this->addFlash('success', 'Order placed successfully.');
             return $this->redirectToRoute('order_index');
         }
 
@@ -284,5 +309,71 @@ class CartController extends AbstractController
             && $product->getQuantity() > 0
             && $seller instanceof UserInterface
             && $seller->getStatus() !== 'blocked';
+    }
+
+    /**
+     * Validates and normalizes cash-on-delivery shipping data without persisting it.
+     */
+    private function buildCashShippingDetails(FormInterface $form, array $data): ?array
+    {
+        $name = trim((string) ($data['shippingName'] ?? ''));
+        $address = trim((string) ($data['shippingAddress'] ?? ''));
+        $city = trim((string) ($data['shippingCity'] ?? ''));
+        $email = trim((string) ($data['shippingEmail'] ?? ''));
+        $phone = trim((string) ($data['shippingPhone'] ?? ''));
+        $postalCode = trim((string) ($data['shippingPostal'] ?? ''));
+        $notes = trim((string) ($data['notes'] ?? ''));
+
+        $isValid = true;
+
+        if ($name === '' || mb_strlen($name) > 150) {
+            $form->get('shippingName')->addError(new FormError('Please enter a valid full name for delivery.'));
+            $isValid = false;
+        }
+
+        if ($address === '' || mb_strlen($address) < 5 || mb_strlen($address) > 500) {
+            $form->get('shippingAddress')->addError(new FormError('Please enter a delivery address between 5 and 500 characters.'));
+            $isValid = false;
+        }
+
+        if ($city === '' || mb_strlen($city) > 100) {
+            $form->get('shippingCity')->addError(new FormError('Please enter a valid city.'));
+            $isValid = false;
+        }
+
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 150) {
+            $form->get('shippingEmail')->addError(new FormError('Please enter a valid contact email.'));
+            $isValid = false;
+        }
+
+        if ($postalCode !== '' && !preg_match('/^\d{4,10}$/', $postalCode)) {
+            $form->get('shippingPostal')->addError(new FormError('Postal code must contain 4 to 10 digits.'));
+            $isValid = false;
+        }
+
+        if ($phone !== '' && !preg_match('/^\+?[0-9\s\-]{8,20}$/', $phone)) {
+            $form->get('shippingPhone')->addError(new FormError('Phone must be 8 to 20 digits and may start with +.'));
+            $isValid = false;
+        }
+
+        if (mb_strlen($notes) > 1000) {
+            $form->get('notes')->addError(new FormError('Delivery notes cannot exceed 1,000 characters.'));
+            $isValid = false;
+        }
+
+        if (!$isValid) {
+            return null;
+        }
+
+        return [
+            'name' => $name,
+            'line1' => $address,
+            'city' => $city,
+            'email' => $email,
+            'phone' => $phone !== '' ? $phone : null,
+            'postal_code' => $postalCode !== '' ? $postalCode : null,
+            'country' => 'TN',
+            'notes' => $notes !== '' ? $notes : null,
+        ];
     }
 }

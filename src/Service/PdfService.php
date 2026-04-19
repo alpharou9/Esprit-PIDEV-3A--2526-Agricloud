@@ -14,7 +14,7 @@ class PdfService
     ) {
     }
 
-    public function generateOrderPdf(Order $order): string
+    public function generateOrderPdf(Order $order, ?array $shippingDetails = null): string
     {
         $options = new Options();
         $options->set('isRemoteEnabled', true);
@@ -23,6 +23,7 @@ class PdfService
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($this->twig->render('market/order_pdf.html.twig', [
             'order' => $order,
+            'shippingDetails' => $shippingDetails,
         ]));
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();

@@ -9,6 +9,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class StripeCheckoutService
 {
+    private const SHIPPING_COUNTRIES = ['TN', 'FR', 'DE', 'IT', 'ES', 'GB', 'US'];
     private const ZERO_DECIMAL_CURRENCIES = [
         'bif', 'clp', 'djf', 'gnf', 'jpy', 'kmf', 'krw', 'mga', 'pyg', 'rwf', 'ugx', 'vnd', 'vuv', 'xaf', 'xof', 'xpf',
     ];
@@ -50,9 +51,15 @@ class StripeCheckoutService
             'success_url' => $this->buildAbsoluteUrl($request, '/market/cart/checkout/stripe/success?session_id={CHECKOUT_SESSION_ID}'),
             'cancel_url' => $this->buildAbsoluteUrl($request, '/market/cart/checkout/stripe/cancel?session_id={CHECKOUT_SESSION_ID}'),
             'payment_method_types[]' => 'card',
+            'phone_number_collection[enabled]' => 'true',
+            'customer_creation' => 'always',
             'metadata[order_ids]' => implode(',', array_map(static fn (Order $order) => (string) $order->getId(), $orders)),
             'metadata[presentment_currency]' => strtolower($stripeCurrency),
         ];
+
+        foreach (self::SHIPPING_COUNTRIES as $index => $countryCode) {
+            $payload[sprintf('shipping_address_collection[allowed_countries][%d]', $index)] = $countryCode;
+        }
 
         foreach (array_values($orders) as $index => $order) {
             $convertedUnitAmount = round(((float) $order->getUnitPrice()) * (float) $rates[$stripeCurrency], 2);
@@ -137,6 +144,34 @@ class StripeCheckoutService
         return 'EUR';
     }
 
+    public function extractShippingDetails(?array $session): ?array
+    {
+        if (!is_array($session)) {
+            return null;
+        }
+
+        $shippingDetails = $session['shipping_details'] ?? null;
+        $customerDetails = $session['customer_details'] ?? null;
+        $address = is_array($shippingDetails['address'] ?? null) ? $shippingDetails['address'] : [];
+
+        if ($shippingDetails === null && $customerDetails === null) {
+            return null;
+        }
+
+        return [
+            'name' => $shippingDetails['name'] ?? $customerDetails['name'] ?? null,
+            'phone' => $shippingDetails['phone'] ?? $customerDetails['phone'] ?? null,
+            'email' => $customerDetails['email'] ?? null,
+            'line1' => $address['line1'] ?? null,
+            'line2' => $address['line2'] ?? null,
+            'city' => $address['city'] ?? null,
+            'state' => $address['state'] ?? null,
+            'postal_code' => $address['postal_code'] ?? null,
+            'country' => $address['country'] ?? null,
+            'formatted' => $this->formatAddress($address),
+        ];
+    }
+
     private function toStripeAmount(string|float|int $amount, string $currency): int
     {
         $currency = strtolower($currency);
@@ -148,5 +183,23 @@ class StripeCheckoutService
     private function buildAbsoluteUrl(Request $request, string $path): string
     {
         return rtrim($request->getSchemeAndHttpHost(), '/') . $path;
+    }
+
+    private function formatAddress(array $address): ?string
+    {
+        $parts = array_filter([
+            $address['line1'] ?? null,
+            $address['line2'] ?? null,
+            $address['city'] ?? null,
+            $address['state'] ?? null,
+            $address['postal_code'] ?? null,
+            $address['country'] ?? null,
+        ], static fn (?string $value) => $value !== null && trim($value) !== '');
+
+        if ($parts === []) {
+            return null;
+        }
+
+        return implode(', ', $parts);
     }
 }

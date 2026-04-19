@@ -9,6 +9,7 @@ use App\Service\EmailService;
 use App\Service\OrderStatusService;
 use App\Service\PdfService;
 use App\Service\StripeCheckoutService;
+use App\Service\TemporaryShippingStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -48,24 +49,27 @@ class OrderController extends AbstractController
     }
 
     #[Route('/{id}', name: 'order_show', methods: ['GET'])]
-    public function show(Order $order, OrderStatusService $orderStatusService, CurrencyConverterService $currencyConverter): Response
+    public function show(Order $order, OrderStatusService $orderStatusService, CurrencyConverterService $currencyConverter, StripeCheckoutService $stripeCheckoutService, TemporaryShippingStorage $temporaryShippingStorage): Response
     {
         $this->denyUnlessOrderVisible($order);
+        $shippingDetails = $this->resolveShippingDetails($order, $stripeCheckoutService, $temporaryShippingStorage);
 
         return $this->render('market/order_show.html.twig', [
             'order' => $order,
             'availableStatuses' => $orderStatusService->getSelectableStatuses($order),
             'convertedUnitPrice' => $currencyConverter->convertAmount($order->getUnitPrice()),
             'convertedTotalPrice' => $currencyConverter->convertAmount($order->getTotalPrice()),
+            'shippingDetails' => $shippingDetails,
         ]);
     }
 
     #[Route('/{id}/pdf', name: 'order_export_pdf', methods: ['GET'])]
-    public function exportPdf(Order $order, PdfService $pdfService): Response
+    public function exportPdf(Order $order, PdfService $pdfService, StripeCheckoutService $stripeCheckoutService, TemporaryShippingStorage $temporaryShippingStorage): Response
     {
         $this->denyUnlessOrderVisible($order);
+        $shippingDetails = $this->resolveShippingDetails($order, $stripeCheckoutService, $temporaryShippingStorage);
 
-        $response = new Response($pdfService->generateOrderPdf($order));
+        $response = new Response($pdfService->generateOrderPdf($order, $shippingDetails));
         $response->headers->set('Content-Type', 'application/pdf');
         $response->headers->set(
             'Content-Disposition',
@@ -187,5 +191,20 @@ class OrderController extends AbstractController
             && $order->getSeller() !== $user) {
             throw $this->createAccessDeniedException();
         }
+    }
+
+    private function resolveShippingDetails(Order $order, StripeCheckoutService $stripeCheckoutService, TemporaryShippingStorage $temporaryShippingStorage): ?array
+    {
+        if ($order->getPaymentMethod() === Order::PAYMENT_METHOD_STRIPE && $order->getStripeSessionId()) {
+            return $stripeCheckoutService->extractShippingDetails(
+                $stripeCheckoutService->retrieveSession((string) $order->getStripeSessionId())
+            );
+        }
+
+        if ($order->getPaymentMethod() === Order::PAYMENT_METHOD_CASH) {
+            return $temporaryShippingStorage->getForOrder($order);
+        }
+
+        return null;
     }
 }

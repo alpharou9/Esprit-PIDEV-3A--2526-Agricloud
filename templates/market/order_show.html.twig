@@ -70,20 +70,34 @@
 
         <div class="card border-0 shadow-sm rounded-4 p-4">
             <h6 class="fw-bold mb-3">Shipping Details</h6>
-            <dl class="row mb-0">
-                <dt class="col-sm-4 text-muted">Address</dt>
-                <dd class="col-sm-8">{{ order.shippingAddress }}</dd>
-                <dt class="col-sm-4 text-muted">City</dt>
-                <dd class="col-sm-8">{{ order.shippingCity }}{% if order.shippingPostal %} - {{ order.shippingPostal }}{% endif %}</dd>
-                <dt class="col-sm-4 text-muted">Email</dt>
-                <dd class="col-sm-8">{{ order.shippingEmail }}</dd>
-                <dt class="col-sm-4 text-muted">Phone</dt>
-                <dd class="col-sm-8">{{ order.shippingPhone ?? '-' }}</dd>
-                {% if order.notes %}
-                <dt class="col-sm-4 text-muted">Notes</dt>
-                <dd class="col-sm-8">{{ order.notes }}</dd>
-                {% endif %}
-            </dl>
+            {% if shippingDetails %}
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted">Name</dt>
+                    <dd class="col-sm-8">{{ shippingDetails.name ?: '-' }}</dd>
+                    <dt class="col-sm-4 text-muted">Address</dt>
+                    <dd class="col-sm-8">{{ shippingDetails.formatted ?: '-' }}</dd>
+                    <dt class="col-sm-4 text-muted">Email</dt>
+                    <dd class="col-sm-8">{{ shippingDetails.email ?: '-' }}</dd>
+                    <dt class="col-sm-4 text-muted">Phone</dt>
+                    <dd class="col-sm-8">{{ shippingDetails.phone ?: '-' }}</dd>
+                    {% if shippingDetails.notes %}
+                    <dt class="col-sm-4 text-muted">Notes</dt>
+                    <dd class="col-sm-8">{{ shippingDetails.notes }}</dd>
+                    {% endif %}
+                </dl>
+            {% elseif order.paymentMethod == 'stripe' %}
+                <div class="text-muted small">
+                    Shipping details are managed by Stripe Checkout and are not stored in AgriCloud. They will appear here after Stripe completes the session and returns them.
+                </div>
+            {% elseif order.paymentMethod == 'cash' %}
+                <div class="text-muted small">
+                    Cash delivery details are stored temporarily and may have expired or already been cleared after processing.
+                </div>
+            {% else %}
+                <div class="text-muted small">
+                    This order does not store shipping details in AgriCloud.
+                </div>
+            {% endif %}
         </div>
     </div>
 

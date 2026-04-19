@@ -38,3 +38,7 @@ services:
     App\Service\StripeCheckoutService:
         arguments:
             $secretKey: '%env(default::STRIPE_SECRET_KEY)%'
+
+    App\Service\TemporaryShippingStorage:
+        arguments:
+            $cache: '@cache.app'

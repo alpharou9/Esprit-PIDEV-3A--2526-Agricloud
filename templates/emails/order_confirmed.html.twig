@@ -44,20 +44,13 @@
                             <td style="padding:12px 0;font-size:14px;color:#6a7d59;border-top:1px solid #e2ecd5;">Total</td>
                             <td style="padding:12px 0;font-size:18px;font-weight:700;color:#0f8a47;text-align:right;border-top:1px solid #e2ecd5;">{{ order.totalPrice }} TND</td>
                         </tr>
-                        <tr>
-                            <td style="padding:12px 0 0;font-size:14px;color:#6a7d59;border-top:1px solid #e2ecd5;vertical-align:top;">Delivery</td>
-                            <td style="padding:12px 0 0;font-size:15px;line-height:1.6;color:#213117;text-align:right;border-top:1px solid #e2ecd5;">
-                                {{ order.shippingAddress }}<br>
-                                {{ order.shippingCity }}{% if order.shippingPostal %}, {{ order.shippingPostal }}{% endif %}
-                            </td>
-                        </tr>
                     </table>
                 </div>
 
                 <div style="background:#fff8e8;border:1px solid #f1d68d;border-radius:18px;padding:18px 20px;margin:24px 0;">
                     <div style="font-size:14px;font-weight:700;color:#8a6400;margin-bottom:6px;">What happens next</div>
                     <div style="font-size:14px;line-height:1.7;color:#6d5820;">
-                        You will be able to follow the order status from your account as it moves from confirmation to preparation, shipment, and delivery.
+                        You will be able to follow the order status from your account as it moves from confirmation to preparation, shipment, and delivery. If you paid with Stripe, your shipping details stay on the hosted Stripe checkout instead of being stored in AgriCloud.
                     </div>
                 </div>
 
