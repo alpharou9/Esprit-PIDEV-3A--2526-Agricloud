@@ -4,15 +4,45 @@ namespace App\Service;
 
 class ChatbotService
 {
+    public function __construct(
+        private readonly RecipeAssistantService $recipeAssistantService,
+    ) {
+    }
+
     /**
      * Simple keyword matching keeps the assistant predictable and easy to maintain.
      */
-    public function reply(string $message): string
+    public function reply(string $message): array
     {
         $normalized = $this->normalize($message);
 
         if ($normalized === '') {
-            return 'Ask me about products, cart, orders, farms, events, blog posts, or your account and I will guide you.';
+            return [
+                'reply' => 'Ask me about products, cart, orders, farms, events, blog posts, your account, or ask for a recipe and I will guide you.',
+            ];
+        }
+
+        if ($this->recipeAssistantService->isRecipeRequest($normalized)) {
+            return [
+                'reply' => 'Here are several simple recipes I can prepare with marketplace products. Choose a dish and I will check the ingredients for you.',
+                'recipes' => $this->recipeAssistantService->getRecipeSuggestions(),
+            ];
+        }
+
+        $recipeSlug = $this->recipeAssistantService->findRecipeSlugFromMessage($normalized);
+        if ($recipeSlug !== null) {
+            $preview = $this->recipeAssistantService->buildRecipePreview($recipeSlug);
+
+            if ($preview !== null) {
+                $reply = $preview['missing'] === []
+                    ? sprintf('Great choice. I found all the ingredients for %s.', $preview['name'])
+                    : sprintf('I found part of the ingredients for %s. Some items are still missing.', $preview['name']);
+
+                return [
+                    'reply' => $reply,
+                    'recipePreview' => $preview,
+                ];
+            }
         }
 
         $responses = [
@@ -60,11 +90,13 @@ class ChatbotService
 
         foreach ($responses as $response) {
             if ($this->containsAny($normalized, $response['keywords'])) {
-                return $response['answer'];
+                return ['reply' => $response['answer']];
             }
         }
 
-        return 'I am not sure about that yet. Try asking about products, cart, checkout, orders, farms, events, blog, profile, or account actions on the platform.';
+        return [
+            'reply' => 'I am not sure about that yet. Try asking about products, cart, checkout, orders, farms, events, blog, profile, or ask me to suggest a recipe.',
+        ];
     }
 
     private function containsAny(string $message, array $keywords): bool

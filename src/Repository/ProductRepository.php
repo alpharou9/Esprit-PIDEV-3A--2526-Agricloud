@@ -101,4 +101,70 @@ class ProductRepository extends ServiceEntityRepository
             ->getQuery()
             ->getArrayResult();
     }
+
+    public function findBestMarketplaceMatchForTerms(array $terms): ?Product
+    {
+        $terms = array_values(array_unique(array_filter(array_map(static function ($term) {
+            $normalized = mb_strtolower(trim((string) $term));
+
+            return $normalized !== '' ? $normalized : null;
+        }, $terms))));
+
+        if ($terms === []) {
+            return null;
+        }
+
+        $qb = $this->createQueryBuilder('p')
+            ->where('p.status = :status')
+            ->andWhere('p.quantity > 0')
+            ->setParameter('status', 'approved')
+            ->setMaxResults(12);
+
+        $orX = $qb->expr()->orX();
+        foreach ($terms as $index => $term) {
+            $orX->add(sprintf('LOWER(p.name) LIKE :term_%d', $index));
+            $qb->setParameter(sprintf('term_%d', $index), '%' . $term . '%');
+        }
+
+        $products = $qb
+            ->andWhere($orX)
+            ->orderBy('p.quantity', 'DESC')
+            ->addOrderBy('p.views', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        if ($products === []) {
+            return null;
+        }
+
+        usort($products, function (Product $left, Product $right) use ($terms): int {
+            return $this->scoreRecipeMatch($right, $terms) <=> $this->scoreRecipeMatch($left, $terms);
+        });
+
+        return $products[0] ?? null;
+    }
+
+    private function scoreRecipeMatch(Product $product, array $terms): int
+    {
+        $name = mb_strtolower($product->getName());
+        $score = 0;
+
+        foreach ($terms as $term) {
+            if ($name === $term) {
+                $score += 100;
+                continue;
+            }
+
+            if (str_starts_with($name, $term)) {
+                $score += 60;
+                continue;
+            }
+
+            if (str_contains($name, $term)) {
+                $score += 30;
+            }
+        }
+
+        return $score + min($product->getQuantity(), 20);
+    }
 }

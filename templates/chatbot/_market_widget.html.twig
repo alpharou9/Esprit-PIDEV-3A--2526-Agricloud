@@ -31,6 +31,15 @@
         .market-assistant-input:focus{border-color:rgba(119,184,30,.72);box-shadow:0 0 0 .2rem rgba(119,184,30,.12)}
         .market-assistant-send{min-width:112px;height:52px;border:none;border-radius:16px;background:#198754;color:#fff;font-weight:700;box-shadow:0 12px 24px rgba(25,135,84,.18)}
         .market-assistant-note{margin-top:.55rem;font-size:.82rem;color:#718260}
+        .market-assistant-recipes,.market-assistant-preview{margin-top:.8rem;display:grid;gap:.7rem}
+        .market-assistant-recipe-card,.market-assistant-preview-card{border:1px solid #e2ecd5;border-radius:16px;padding:.85rem .95rem;background:#f8fbf2}
+        .market-assistant-recipe-card h6,.market-assistant-preview-card h6{margin:0 0 .35rem;font-size:.96rem;color:#243616}
+        .market-assistant-recipe-card p,.market-assistant-preview-card p{margin:0;font-size:.84rem;color:#617252;line-height:1.6}
+        .market-assistant-action{margin-top:.7rem}
+        .market-assistant-action button{border:none;border-radius:12px;padding:.6rem .85rem;background:#198754;color:#fff;font-weight:700;font-size:.84rem}
+        .market-assistant-list{margin:.55rem 0 0;padding-left:1rem;font-size:.85rem;color:#425534}
+        .market-assistant-list li + li{margin-top:.25rem}
+        .market-assistant-missing{margin-top:.5rem;font-size:.83rem;color:#a46a09}
         @media (max-width: 575.98px){
             .market-assistant-widget{right:14px;bottom:14px}
             .market-assistant-panel{right:-2px;bottom:76px;width:min(100vw - 20px,390px);height:min(72vh,620px)}
@@ -56,7 +65,9 @@
                     <button type="button" class="market-assistant-chip" data-market-question="How do I add a product?">Add product</button>
                     <button type="button" class="market-assistant-chip" data-market-question="How do I use the cart and checkout?">Cart help</button>
                     <button type="button" class="market-assistant-chip" data-market-question="How can I track my order status?">Order status</button>
-                    <button type="button" class="market-assistant-chip" data-market-question="How do filters work in the marketplace?">Filters</button>
+                    <button type="button" class="market-assistant-chip" data-market-question="Suggest a recipe with marketplace ingredients">Recipe ideas</button>
+                    <button type="button" class="market-assistant-chip" data-market-question="Show me a breakfast recipe">Breakfast</button>
+                    <button type="button" class="market-assistant-chip" data-market-question="Suggest a chicken recipe">Chicken dishes</button>
                 </div>
 
                 <div class="market-assistant-messages" id="marketAssistantMessages">
@@ -95,6 +106,8 @@
         const input = document.getElementById('marketAssistantInput');
         const sendButton = document.getElementById('marketAssistantSend');
         const endpoint = '{{ path('chatbot_message') }}';
+        const addRecipeEndpoint = '{{ path('chatbot_recipe_add') }}';
+        const recipeToken = '{{ csrf_token('chatbot_recipe_add') }}';
         const suggestionButtons = document.querySelectorAll('[data-market-question]');
 
         if (!widget || !panel || !toggle || !messages || !input || !sendButton) {
@@ -110,7 +123,7 @@
             }
         }
 
-        function addMessage(type, text) {
+        function addMessage(type, text, payload = {}) {
             const wrapper = document.createElement('div');
             wrapper.className = `market-assistant-message ${type}`;
 
@@ -124,10 +137,151 @@
             bubble.className = 'market-assistant-bubble';
             bubble.textContent = text;
 
+            if (type === 'bot' && Array.isArray(payload.recipes) && payload.recipes.length > 0) {
+                bubble.appendChild(buildRecipeSuggestions(payload.recipes));
+            }
+
+            if (type === 'bot' && payload.recipePreview) {
+                bubble.appendChild(buildRecipePreview(payload.recipePreview));
+            }
+
             wrapper.appendChild(avatar);
             wrapper.appendChild(bubble);
             messages.appendChild(wrapper);
             messages.scrollTop = messages.scrollHeight;
+        }
+
+        function buildRecipeSuggestions(recipes) {
+            const container = document.createElement('div');
+            container.className = 'market-assistant-recipes';
+
+            recipes.forEach((recipe) => {
+                const card = document.createElement('div');
+                card.className = 'market-assistant-recipe-card';
+
+                const title = document.createElement('h6');
+                title.textContent = recipe.name;
+
+                const description = document.createElement('p');
+                description.textContent = `${recipe.description} (${recipe.ingredientCount} ingredients)`;
+
+                const actions = document.createElement('div');
+                actions.className = 'market-assistant-action';
+
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = 'Choose this dish';
+                button.addEventListener('click', () => requestRecipePreview(recipe.slug, recipe.name));
+
+                actions.appendChild(button);
+                card.appendChild(title);
+                card.appendChild(description);
+                card.appendChild(actions);
+                container.appendChild(card);
+            });
+
+            return container;
+        }
+
+        function buildRecipePreview(recipePreview) {
+            const card = document.createElement('div');
+            card.className = 'market-assistant-preview';
+
+            const panel = document.createElement('div');
+            panel.className = 'market-assistant-preview-card';
+
+            const title = document.createElement('h6');
+            title.textContent = recipePreview.name;
+
+            const description = document.createElement('p');
+            description.textContent = recipePreview.description;
+
+            const ingredientList = document.createElement('ul');
+            ingredientList.className = 'market-assistant-list';
+
+            recipePreview.matches.forEach((match) => {
+                const item = document.createElement('li');
+                item.textContent = `${match.label}: ${match.productName} (${match.productPrice} TND / ${match.productUnit})`;
+                ingredientList.appendChild(item);
+            });
+
+            panel.appendChild(title);
+            panel.appendChild(description);
+            panel.appendChild(ingredientList);
+
+            if (Array.isArray(recipePreview.missing) && recipePreview.missing.length > 0) {
+                const missing = document.createElement('div');
+                missing.className = 'market-assistant-missing';
+                missing.textContent = `Missing ingredients: ${recipePreview.missing.join(', ')}`;
+                panel.appendChild(missing);
+            }
+
+            if (recipePreview.canAdd) {
+                const actions = document.createElement('div');
+                actions.className = 'market-assistant-action';
+
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = 'Add ingredients to cart';
+                button.addEventListener('click', () => confirmRecipeAdd(recipePreview.slug));
+
+                actions.appendChild(button);
+                panel.appendChild(actions);
+            }
+
+            card.appendChild(panel);
+
+            return card;
+        }
+
+        async function requestRecipePreview(slug, recipeName) {
+            sendButton.disabled = true;
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ recipe: slug })
+                });
+
+                const data = await response.json();
+                addMessage('user', `I choose ${recipeName}`);
+                addMessage('bot', data.reply || 'Here is the recipe preview.', {
+                    recipePreview: data.recipePreview || null
+                });
+            } catch (error) {
+                addMessage('bot', 'I could not load the recipe ingredients right now. Please try again.');
+            } finally {
+                sendButton.disabled = false;
+                sendButton.innerHTML = '<i class="bi bi-send-fill me-2"></i>Send';
+            }
+        }
+
+        async function confirmRecipeAdd(slug) {
+            try {
+                const response = await fetch(addRecipeEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ recipe: slug, _token: recipeToken })
+                });
+
+                const data = await response.json();
+                addMessage('bot', data.reply || 'Recipe update complete.');
+
+                if (data.ok && data.redirectUrl) {
+                    window.setTimeout(() => {
+                        window.location.href = data.redirectUrl;
+                    }, 900);
+                }
+            } catch (error) {
+                addMessage('bot', 'I could not add the ingredients to your cart right now. Please try again.');
+            }
         }
 
         async function sendMessage() {
@@ -155,7 +309,10 @@
                 });
 
                 const data = await response.json();
-                addMessage('bot', data.reply || 'Something went wrong while reading the assistant response.');
+                addMessage('bot', data.reply || 'Something went wrong while reading the assistant response.', {
+                    recipes: data.recipes || [],
+                    recipePreview: data.recipePreview || null
+                });
             } catch (error) {
                 addMessage('bot', 'The market assistant is temporarily unavailable. Please try again in a moment.');
             } finally {
