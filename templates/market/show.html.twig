@@ -69,6 +69,31 @@
     .review-form-select {
         max-width: 170px;
     }
+
+    .stock-state {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.55rem 0.9rem;
+        border-radius: 999px;
+        font-size: 0.92rem;
+        font-weight: 700;
+    }
+
+    .stock-state-out {
+        color: #b42318;
+        background: #fef3f2;
+    }
+
+    .stock-state-low {
+        color: #b54708;
+        background: #fff7ed;
+    }
+
+    .stock-state-ok {
+        color: #166534;
+        background: #ecfdf3;
+    }
 </style>
 
 <div class="d-flex align-items-center gap-2 mb-4">
@@ -158,6 +183,22 @@
             <span><i class="bi bi-layers me-1"></i>{{ product.quantity }} {{ product.unit }} available</span>
         </div>
 
+        <div class="mb-4">
+            {% if product.quantity == 0 %}
+                <div class="stock-state stock-state-out">
+                    <i class="bi bi-x-octagon-fill"></i>Out of stock
+                </div>
+            {% elseif product.quantity <= 5 %}
+                <div class="stock-state stock-state-low">
+                    <i class="bi bi-fire"></i>Only {{ product.quantity }} left in stock
+                </div>
+            {% else %}
+                <div class="stock-state stock-state-ok">
+                    <i class="bi bi-check-circle-fill"></i>In stock
+                </div>
+            {% endif %}
+        </div>
+
         {% if product.status == 'approved' and product.quantity > 0 and product.user != app.user %}
             <form method="post" action="{{ path('cart_add', {id: product.id}) }}" class="d-flex gap-2 align-items-center">
                 <input type="hidden" name="_token" value="{{ csrf_token('cart_add_' ~ product.id) }}">
@@ -171,8 +212,8 @@
                 <i class="bi bi-info-circle me-1"></i>This is your own listing.
             </div>
         {% elseif product.quantity == 0 %}
-            <div class="alert alert-warning small">
-                <i class="bi bi-exclamation-triangle me-1"></i>Out of stock.
+            <div class="alert alert-danger small">
+                <i class="bi bi-exclamation-triangle me-1"></i>This product is currently out of stock.
             </div>
         {% endif %}
 

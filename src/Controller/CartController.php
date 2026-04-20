@@ -283,16 +283,18 @@ class CartController extends AbstractController
         ]);
 
         foreach ($orders as $order) {
-            if ($order->getPaymentStatus() === Order::PAYMENT_STATUS_PAID) {
+            if ($order->getPaymentStatus() === Order::PAYMENT_STATUS_PAID || $order->getPaymentStatus() === Order::PAYMENT_STATUS_CANCELLED) {
                 continue;
             }
 
             $order->setPaymentStatus(Order::PAYMENT_STATUS_CANCELLED);
-            $order->setStatus(Order::STATUS_CANCELLED);
-            $order->setCancelledAt(new \DateTime());
-            $order->setCancelledReason('Stripe checkout was cancelled.');
-            $order->setUpdatedAt(new \DateTime());
-            $order->getProduct()?->setQuantity($order->getProduct()->getQuantity() + $order->getQuantity());
+            if ($order->getStatus() !== Order::STATUS_CANCELLED) {
+                $order->setStatus(Order::STATUS_CANCELLED);
+                $order->setCancelledAt(new \DateTime());
+                $order->setCancelledReason('Stripe checkout was cancelled.');
+                $order->setUpdatedAt(new \DateTime());
+                $order->getProduct()?->setQuantity($order->getProduct()->getQuantity() + $order->getQuantity());
+            }
         }
 
         $em->flush();

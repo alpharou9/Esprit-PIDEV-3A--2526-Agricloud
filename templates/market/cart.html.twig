@@ -1,5 +1,5 @@
 {% extends 'base.html.twig' %}
-{% block title %}Cart — AgriCloud{% endblock %}
+{% block title %}Cart - AgriCloud{% endblock %}
 
 {% block body %}
 <div class="d-flex align-items-center gap-2 mb-4">
@@ -49,8 +49,8 @@
                                 {% set converted = itemConversions[item.id].price ?? {} %}
                                 {% if converted is not empty %}
                                     <div class="text-muted small">
-                                        {% if converted.EUR is defined %}<span class="me-2">€ {{ converted.EUR|number_format(2) }}</span>{% endif %}
-                                        {% if converted.USD is defined %}<span>$ {{ converted.USD|number_format(2) }}</span>{% endif %}
+                                        {% if converted.EUR is defined %}<span class="me-2">EUR {{ converted.EUR|number_format(2) }}</span>{% endif %}
+                                        {% if converted.USD is defined %}<span>USD {{ converted.USD|number_format(2) }}</span>{% endif %}
                                     </div>
                                 {% endif %}
                             </td>
@@ -60,8 +60,8 @@
                                 {% set convertedSubtotal = itemConversions[item.id].subtotal ?? {} %}
                                 {% if convertedSubtotal is not empty %}
                                     <div class="text-muted small fw-normal">
-                                        {% if convertedSubtotal.EUR is defined %}<span class="me-2">€ {{ convertedSubtotal.EUR|number_format(2) }}</span>{% endif %}
-                                        {% if convertedSubtotal.USD is defined %}<span>$ {{ convertedSubtotal.USD|number_format(2) }}</span>{% endif %}
+                                        {% if convertedSubtotal.EUR is defined %}<span class="me-2">EUR {{ convertedSubtotal.EUR|number_format(2) }}</span>{% endif %}
+                                        {% if convertedSubtotal.USD is defined %}<span>USD {{ convertedSubtotal.USD|number_format(2) }}</span>{% endif %}
                                     </div>
                                 {% endif %}
                             </td>
@@ -80,7 +80,7 @@
     </div>
 
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
             <h6 class="fw-bold mb-3">Order Summary</h6>
             <div class="d-flex justify-content-between mb-2">
                 <span class="text-muted">Items ({{ items|length }})</span>
@@ -91,17 +91,20 @@
                 <span class="text-success">Free</span>
             </div>
             <hr>
-            <div class="d-flex justify-content-between fw-bold fs-5 mb-4">
+            <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
                 <span>Total</span>
                 <div class="text-end">
                     <div class="text-success">{{ total|number_format(2) }} TND</div>
                     {% if convertedTotal is not empty %}
                         <div class="text-muted small fw-normal">
-                            {% if convertedTotal.EUR is defined %}<span class="me-2">€ {{ convertedTotal.EUR|number_format(2) }}</span>{% endif %}
-                            {% if convertedTotal.USD is defined %}<span>$ {{ convertedTotal.USD|number_format(2) }}</span>{% endif %}
+                            {% if convertedTotal.EUR is defined %}<span class="me-2">EUR {{ convertedTotal.EUR|number_format(2) }}</span>{% endif %}
+                            {% if convertedTotal.USD is defined %}<span>USD {{ convertedTotal.USD|number_format(2) }}</span>{% endif %}
                         </div>
                     {% endif %}
                 </div>
+            </div>
+            <div class="small text-muted mb-4">
+                Review your items here before moving to checkout. Stock is confirmed one last time when the order is placed.
             </div>
             <a href="{{ path('cart_checkout') }}" class="btn btn-success w-100">
                 <i class="bi bi-credit-card me-1"></i>Proceed to Checkout

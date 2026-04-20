@@ -11,6 +11,10 @@
 .product-rating-stars{font-size:.72rem;letter-spacing:.06em;color:#f4b400;line-height:1}
 .product-rating-meta{font-size:.72rem;font-weight:700;color:#355c19;line-height:1.1}
 .product-rating-empty{font-size:.72rem;font-weight:600;color:#6c757d;line-height:1.1}
+.product-stock-chip{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .65rem;border-radius:999px;font-size:.74rem;font-weight:700}
+.product-stock-chip-out{background:#fef3f2;color:#b42318}
+.product-stock-chip-low{background:#fff7ed;color:#b54708}
+.product-stock-chip-ok{background:#ecfdf3;color:#166534}
 .market-filter-card{max-width:980px;border:1px solid rgba(119,184,30,.12);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(249,251,244,.98));border-radius:24px;box-shadow:0 14px 34px rgba(35,58,12,.07);padding:1rem 1rem .9rem}
 .market-filter-grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(200px,.8fr) minmax(200px,.8fr) auto auto;gap:.9rem;align-items:center}
 .market-search-wrap,.market-select-wrap{position:relative}
@@ -133,6 +137,21 @@
                     {% endif %}
                 </div>
                 <p class="text-muted small mb-2 flex-grow-1">{{ product.description|slice(0,80) }}{% if product.description|length > 80 %}...{% endif %}</p>
+                <div class="mb-2">
+                    {% if product.quantity == 0 %}
+                        <span class="product-stock-chip product-stock-chip-out">
+                            <i class="bi bi-x-octagon-fill"></i>Out of stock
+                        </span>
+                    {% elseif product.quantity <= 5 %}
+                        <span class="product-stock-chip product-stock-chip-low">
+                            <i class="bi bi-fire"></i>Only {{ product.quantity }} left in stock
+                        </span>
+                    {% else %}
+                        <span class="product-stock-chip product-stock-chip-ok">
+                            <i class="bi bi-check-circle-fill"></i>In stock
+                        </span>
+                    {% endif %}
+                </div>
                 <div class="d-flex justify-content-between align-items-center mt-auto">
                     <span class="fw-bold text-success fs-5">{{ product.price }} TND<span class="text-muted small fw-normal">/{{ product.unit }}</span></span>
                     {% if product.quantity == 0 %}

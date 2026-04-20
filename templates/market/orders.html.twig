@@ -38,8 +38,8 @@
                         {% set convertedTotal = orderConversions[order.id].totalPrice ?? {} %}
                         {% if convertedTotal is not empty %}
                             <div class="text-muted small fw-normal">
-                                {% if convertedTotal.EUR is defined %}<span class="me-2">€ {{ convertedTotal.EUR|number_format(2) }}</span>{% endif %}
-                                {% if convertedTotal.USD is defined %}<span>$ {{ convertedTotal.USD|number_format(2) }}</span>{% endif %}
+                                {% if convertedTotal.EUR is defined %}<span class="me-2">EUR {{ convertedTotal.EUR|number_format(2) }}</span>{% endif %}
+                                {% if convertedTotal.USD is defined %}<span>USD {{ convertedTotal.USD|number_format(2) }}</span>{% endif %}
                             </div>
                         {% endif %}
                     </td>

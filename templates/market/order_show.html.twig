@@ -57,10 +57,10 @@
                         <span class="fw-bold text-success">{{ order.totalPrice }} TND</span>
                         {% if convertedUnitPrice is not empty or convertedTotalPrice is not empty %}
                         <div class="text-muted small mt-1">
-                            {% if convertedUnitPrice.EUR is defined %}<span class="me-3">Unit: € {{ convertedUnitPrice.EUR|number_format(2) }}</span>{% endif %}
-                            {% if convertedUnitPrice.USD is defined %}<span class="me-3">Unit: $ {{ convertedUnitPrice.USD|number_format(2) }}</span>{% endif %}
-                            {% if convertedTotalPrice.EUR is defined %}<span class="me-3">Total: € {{ convertedTotalPrice.EUR|number_format(2) }}</span>{% endif %}
-                            {% if convertedTotalPrice.USD is defined %}<span>Total: $ {{ convertedTotalPrice.USD|number_format(2) }}</span>{% endif %}
+                            {% if convertedUnitPrice.EUR is defined %}<span class="me-3">Unit: EUR {{ convertedUnitPrice.EUR|number_format(2) }}</span>{% endif %}
+                            {% if convertedUnitPrice.USD is defined %}<span class="me-3">Unit: USD {{ convertedUnitPrice.USD|number_format(2) }}</span>{% endif %}
+                            {% if convertedTotalPrice.EUR is defined %}<span class="me-3">Total: EUR {{ convertedTotalPrice.EUR|number_format(2) }}</span>{% endif %}
+                            {% if convertedTotalPrice.USD is defined %}<span>Total: USD {{ convertedTotalPrice.USD|number_format(2) }}</span>{% endif %}
                         </div>
                         {% endif %}
                     </div>
