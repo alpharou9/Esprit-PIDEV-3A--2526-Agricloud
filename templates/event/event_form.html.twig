@@ -1,0 +1,92 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ event ? 'Edit ' ~ event.title : 'Create Event' }} — AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ path('event_my') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h5 class="fw-bold mb-0">{{ event ? 'Edit Event — ' ~ event.title : 'Create New Event' }}</h5>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4" style="max-width:760px">
+    <div class="card-body p-4">
+        {{ form_start(form, {attr: {enctype: 'multipart/form-data'}}) }}
+
+        <div class="mb-3">
+            {{ form_label(form.title) }}
+            {{ form_widget(form.title) }}
+            {{ form_errors(form.title) }}
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                {{ form_label(form.category) }}
+                {{ form_widget(form.category) }}
+                {{ form_errors(form.category) }}
+            </div>
+            <div class="col-md-6">
+                {{ form_label(form.status) }}
+                {{ form_widget(form.status) }}
+                {{ form_errors(form.status) }}
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                {{ form_label(form.eventDate) }}
+                {{ form_widget(form.eventDate) }}
+                {{ form_errors(form.eventDate) }}
+            </div>
+            <div class="col-md-6">
+                {{ form_label(form.endDate) }}
+                {{ form_widget(form.endDate) }}
+                {{ form_errors(form.endDate) }}
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-8">
+                {{ form_label(form.location) }}
+                {{ form_widget(form.location) }}
+                {{ form_errors(form.location) }}
+            </div>
+            <div class="col-md-4">
+                {{ form_label(form.capacity) }}
+                {{ form_widget(form.capacity) }}
+                {{ form_errors(form.capacity) }}
+            </div>
+        </div>
+
+        <div class="mb-3">
+            {{ form_label(form.registrationDeadline) }}
+            {{ form_widget(form.registrationDeadline) }}
+            {{ form_errors(form.registrationDeadline) }}
+        </div>
+
+        <div class="mb-3">
+            {{ form_label(form.description) }}
+            {{ form_widget(form.description) }}
+            {{ form_errors(form.description) }}
+        </div>
+
+        <div class="mb-4">
+            {{ form_label(form.imageFile) }}
+            {% if event and event.image %}
+                <div class="mb-2">
+                    <img src="{{ asset('uploads/events/' ~ event.image) }}" class="rounded-3" style="height:80px;object-fit:cover" alt="">
+                    <div class="form-text">Upload a new image to replace the current one.</div>
+                </div>
+            {% endif %}
+            {{ form_widget(form.imageFile) }}
+            {{ form_errors(form.imageFile) }}
+            <div class="form-text">Max 3MB — JPG, PNG or WEBP.</div>
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-1"></i>{{ event ? 'Save Changes' : 'Create Event' }}
+        </button>
+        <a href="{{ path('event_my') }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
