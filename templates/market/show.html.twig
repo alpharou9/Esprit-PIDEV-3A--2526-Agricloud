@@ -1,78 +1,364 @@
 {% extends 'base.html.twig' %}
-{% block title %}{{ product.name }} — AgriCloud{% endblock %}
+
+{% block title %}{{ product.name }} - AgriCloud{% endblock %}
 
 {% block body %}
+<style>
+    .product-detail-card {
+        background: #fff;
+        border: 1px solid rgba(25, 135, 84, 0.08);
+        border-radius: 1.5rem;
+        box-shadow: 0 12px 30px rgba(22, 52, 31, 0.08);
+    }
+
+    .product-detail-image {
+        width: 100%;
+        max-height: 360px;
+        object-fit: cover;
+        border-radius: 1.5rem;
+    }
+
+    .product-price-card,
+    .product-benefits-card,
+    .product-review-card {
+        background: linear-gradient(180deg, #ffffff 0%, #f7fbf6 100%);
+        border: 1px solid rgba(25, 135, 84, 0.12);
+        border-radius: 1.25rem;
+    }
+
+    .currency-select {
+        max-width: 180px;
+        border-radius: 999px;
+    }
+
+    .price-value {
+        color: #198754;
+        letter-spacing: -0.03em;
+    }
+
+    .price-note,
+    .benefits-text,
+    .review-note {
+        color: #5f6f63;
+    }
+
+    .benefits-icon,
+    .review-score-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        background: rgba(25, 135, 84, 0.12);
+        color: #198754;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .review-stars {
+        color: #f4b400;
+        letter-spacing: 0.08em;
+    }
+
+    .review-item + .review-item {
+        border-top: 1px solid rgba(25, 135, 84, 0.08);
+        margin-top: 1rem;
+        padding-top: 1rem;
+    }
+
+    .review-form-select {
+        max-width: 170px;
+    }
+
+    .stock-state {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.55rem 0.9rem;
+        border-radius: 999px;
+        font-size: 0.92rem;
+        font-weight: 700;
+    }
+
+    .stock-state-out {
+        color: #b42318;
+        background: #fef3f2;
+    }
+
+    .stock-state-low {
+        color: #b54708;
+        background: #fff7ed;
+    }
+
+    .stock-state-ok {
+        color: #166534;
+        background: #ecfdf3;
+    }
+</style>
+
 <div class="d-flex align-items-center gap-2 mb-4">
-    <a href="{{ path('market_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <a href="{{ path('market_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i>
+    </a>
     <h5 class="fw-bold mb-0">{{ product.name }}</h5>
 </div>
 
 <div class="row g-4">
-    <div class="col-md-5">
-        {% if product.imageUrl %}
-            <img src="{{ product.imageExternal ? product.imageUrl : asset(product.imageUrl) }}" class="w-100 rounded-4" style="max-height:360px;object-fit:cover" alt="{{ product.name }}">
-        {% else %}
-            <div class="rounded-4 d-flex align-items-center justify-content-center" style="height:320px;background:linear-gradient(135deg,#d1e7dd,#a3cfbb);font-size:5rem;color:#198754">
-                <i class="bi bi-bag-heart"></i>
-            </div>
-        {% endif %}
+    <div class="col-lg-5">
+        <div class="product-detail-card p-3 p-md-4">
+            {% if product.imageUrl %}
+                <img
+                    src="{{ product.imageExternal ? product.imageUrl : asset(product.imageUrl) }}"
+                    class="product-detail-image"
+                    alt="{{ product.name }}"
+                >
+            {% else %}
+                <div class="rounded-4 d-flex align-items-center justify-content-center product-detail-image" style="background:linear-gradient(135deg,#d1e7dd,#a3cfbb);font-size:5rem;color:#198754;">
+                    <i class="bi bi-bag-heart"></i>
+                </div>
+            {% endif %}
+        </div>
     </div>
 
-    <div class="col-md-7">
-        <div class="d-flex gap-2 mb-3 flex-wrap">
-            {% if product.category %}<span class="badge bg-light text-dark border">{{ product.category|capitalize }}</span>{% endif %}
-            <span class="badge {% if product.status == 'approved' %}bg-success{% elseif product.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ product.status|capitalize }}</span>
-            <span class="text-muted small"><i class="bi bi-eye me-1"></i>{{ product.views }} views</span>
+    <div class="col-lg-7">
+        <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+            {% if product.category %}
+                <span class="badge bg-light text-dark border">{{ product.category|capitalize }}</span>
+            {% endif %}
+            <span class="badge {% if product.status == 'approved' %}bg-success{% elseif product.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                {{ product.status|capitalize }}
+            </span>
+            <span class="text-muted small">
+                <i class="bi bi-eye me-1"></i>{{ product.views }} views
+            </span>
         </div>
 
-        <div class="fs-2 fw-bold text-success mb-1">{{ product.price }} TND <span class="fs-6 text-muted fw-normal">/ {{ product.unit }}</span></div>
-        {% if convertedPrice is not empty %}
-        <div class="text-muted small mb-2">
-            {% if convertedPrice.EUR is defined %}<span class="me-3">€ {{ convertedPrice.EUR|number_format(2) }}</span>{% endif %}
-            {% if convertedPrice.USD is defined %}<span>$ {{ convertedPrice.USD|number_format(2) }}</span>{% endif %}
+        <div class="product-price-card p-4 mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-start">
+                <div>
+                    <div class="small text-uppercase text-muted fw-semibold mb-2">Displayed price</div>
+                    <div class="fs-2 fw-bold price-value mb-1">
+                        <span id="product-price-value">{{ displayPrices.TND|number_format(2) }}</span>
+                        <span id="product-price-currency">TND</span>
+                        <span class="fs-6 text-muted fw-normal">/ {{ product.unit }}</span>
+                    </div>
+                    <div class="price-note small">
+                        Real product price is stored in TND. The selector only changes the displayed conversion.
+                    </div>
+                </div>
+
+                <div class="w-100 w-md-auto">
+                    <label for="currency-selector" class="form-label small fw-semibold text-muted mb-2">Choose currency</label>
+                    <select id="currency-selector" class="form-select currency-select">
+                        {% for currency, amount in displayPrices %}
+                            <option value="{{ currency }}" {% if currency == 'TND' %}selected{% endif %}>{{ currency }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
         </div>
-        {% endif %}
-        <div class="text-muted small mb-3"><i class="bi bi-layers me-1"></i>{{ product.quantity }} {{ product.unit }} available</div>
 
         {% if product.description %}
-        <p class="mb-3">{{ product.description }}</p>
+            <p class="mb-3">{{ product.description }}</p>
         {% endif %}
+
+        <div class="product-benefits-card p-4 mb-4">
+            <div class="d-flex align-items-start gap-3">
+                <span class="benefits-icon">
+                    <i class="bi bi-stars"></i>
+                </span>
+                <div>
+                    <h6 class="fw-bold mb-2">{{ product.benefitsTitle }}</h6>
+                    <p class="mb-0 benefits-text">{{ product.benefitsText }}</p>
+                </div>
+            </div>
+        </div>
 
         <div class="d-flex gap-3 mb-4 flex-wrap text-muted small">
             <span><i class="bi bi-person me-1"></i>Sold by <strong>{{ product.user.name }}</strong></span>
-            {% if product.farm %}<span><i class="bi bi-house-heart me-1"></i>{{ product.farm.name }}</span>{% endif %}
-            <span><i class="bi bi-calendar me-1"></i>{{ product.createdAt ? product.createdAt|date('d M Y') : '—' }}</span>
+            {% if product.farm %}
+                <span><i class="bi bi-house-heart me-1"></i>{{ product.farm.name }}</span>
+            {% endif %}
+            <span><i class="bi bi-calendar me-1"></i>{{ product.createdAt ? product.createdAt|date('d M Y') : '-' }}</span>
+            <span><i class="bi bi-layers me-1"></i>{{ product.quantity }} {{ product.unit }} available</span>
+        </div>
+
+        <div class="mb-4">
+            {% if product.quantity == 0 %}
+                <div class="stock-state stock-state-out">
+                    <i class="bi bi-x-octagon-fill"></i>Out of stock
+                </div>
+            {% elseif product.quantity <= 5 %}
+                <div class="stock-state stock-state-low">
+                    <i class="bi bi-fire"></i>Only {{ product.quantity }} left in stock
+                </div>
+            {% else %}
+                <div class="stock-state stock-state-ok">
+                    <i class="bi bi-check-circle-fill"></i>In stock
+                </div>
+            {% endif %}
         </div>
 
         {% if product.status == 'approved' and product.quantity > 0 and product.user != app.user %}
-        <form method="post" action="{{ path('cart_add', {id: product.id}) }}" class="d-flex gap-2 align-items-center">
-            <input type="hidden" name="_token" value="{{ csrf_token('cart_add_' ~ product.id) }}">
-            <input type="number" name="qty" value="1" min="1" max="{{ product.quantity }}" class="form-control" style="width:80px">
-            <button type="submit" class="btn btn-success px-4">
-                <i class="bi bi-cart-plus me-1"></i>Add to Cart
-            </button>
-        </form>
+            <form method="post" action="{{ path('cart_add', {id: product.id}) }}" class="d-flex gap-2 align-items-center">
+                <input type="hidden" name="_token" value="{{ csrf_token('cart_add_' ~ product.id) }}">
+                <input type="number" name="qty" value="1" min="1" max="{{ product.quantity }}" class="form-control" style="width:80px">
+                <button type="submit" class="btn btn-success px-4">
+                    <i class="bi bi-cart-plus me-1"></i>Add to Cart
+                </button>
+            </form>
         {% elseif product.user == app.user %}
-        <div class="alert alert-info small"><i class="bi bi-info-circle me-1"></i>This is your own listing.</div>
+            <div class="alert alert-info small">
+                <i class="bi bi-info-circle me-1"></i>This is your own listing.
+            </div>
         {% elseif product.quantity == 0 %}
-        <div class="alert alert-warning small"><i class="bi bi-exclamation-triangle me-1"></i>Out of stock.</div>
+            <div class="alert alert-danger small">
+                <i class="bi bi-exclamation-triangle me-1"></i>This product is currently out of stock.
+            </div>
         {% endif %}
 
         {% if product.user == app.user or is_granted('ROLE_ADMIN') %}
-        <div class="d-flex gap-2 mt-3">
-            <a href="{{ path('product_edit', {id: product.id}) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
-            {% if is_granted('ROLE_ADMIN') and product.status == 'pending' %}
-            <form method="post" action="{{ path('product_approve', {id: product.id}) }}" class="d-inline">
-                <input type="hidden" name="_token" value="{{ csrf_token('approve_product_' ~ product.id) }}">
-                <button class="btn btn-success btn-sm"><i class="bi bi-check-lg me-1"></i>Approve</button>
-            </form>
-            <form method="post" action="{{ path('product_reject', {id: product.id}) }}" class="d-inline">
-                <input type="hidden" name="_token" value="{{ csrf_token('reject_product_' ~ product.id) }}">
-                <button class="btn btn-danger btn-sm"><i class="bi bi-x-lg me-1"></i>Reject</button>
-            </form>
-            {% endif %}
-        </div>
+            <div class="d-flex gap-2 mt-3">
+                <a href="{{ path('product_edit', {id: product.id}) }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-pencil me-1"></i>Edit
+                </a>
+                {% if is_granted('ROLE_ADMIN') and product.status == 'pending' %}
+                    <form method="post" action="{{ path('product_approve', {id: product.id}) }}" class="d-inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('approve_product_' ~ product.id) }}">
+                        <button class="btn btn-success btn-sm">
+                            <i class="bi bi-check-lg me-1"></i>Approve
+                        </button>
+                    </form>
+                    <form method="post" action="{{ path('product_reject', {id: product.id}) }}" class="d-inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('reject_product_' ~ product.id) }}">
+                        <button class="btn btn-danger btn-sm">
+                            <i class="bi bi-x-lg me-1"></i>Reject
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
         {% endif %}
     </div>
 </div>
+
+<div class="row g-4 mt-1">
+    <div class="col-12">
+        <div class="product-review-card p-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between gap-4">
+                <div class="d-flex gap-3">
+                    <span class="review-score-icon">
+                        <i class="bi bi-chat-heart"></i>
+                    </span>
+                    <div>
+                        <h5 class="fw-bold mb-1">Customer reviews</h5>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="review-stars">
+                                {% set averageRounded = reviewStats.averageRating is not null ? reviewStats.averageRating|round(0, 'common') : 0 %}
+                                {% for i in 1..5 %}
+                                    <i class="bi {% if i <= averageRounded %}bi-star-fill{% else %}bi-star{% endif %}"></i>
+                                {% endfor %}
+                            </span>
+                            <span class="fw-semibold">
+                                {{ reviewStats.averageRating is not null ? reviewStats.averageRating|number_format(1) ~ '/5' : 'No rating yet' }}
+                            </span>
+                            <span class="text-muted small">({{ reviewStats.reviewCount }} review{{ reviewStats.reviewCount == 1 ? '' : 's' }})</span>
+                        </div>
+                        <p class="mb-0 mt-2 review-note">Only customers who purchased this product can submit one review.</p>
+                    </div>
+                </div>
+
+                {% if canReview %}
+                    <div class="text-lg-end">
+                        <span class="badge bg-light text-dark border">You can review this product</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if canReview %}
+                <form method="post" action="{{ path('product_review_create', {id: product.id}) }}" class="mt-4">
+                    <input type="hidden" name="_token" value="{{ csrf_token('review_product_' ~ product.id) }}">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="review-rating" class="form-label fw-semibold">Your rating</label>
+                            <select id="review-rating" name="rating" class="form-select review-form-select" required>
+                                <option value="">Choose</option>
+                                {% for value in 5..1 %}
+                                    <option value="{{ value }}">{{ value }} star{{ value == 1 ? '' : 's' }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-9">
+                            <label for="review-comment" class="form-label fw-semibold">Your comment</label>
+                            <textarea
+                                id="review-comment"
+                                name="comment"
+                                class="form-control"
+                                rows="3"
+                                maxlength="500"
+                                placeholder="Share a short and helpful opinion about this product."
+                                required
+                            ></textarea>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-send-check me-1"></i>Submit review
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            {% elseif app.user and product.user != app.user %}
+                <div class="alert alert-light border mt-4 mb-0">
+                    You can leave a review after purchasing this product, and only one review is allowed per customer.
+                </div>
+            {% endif %}
+
+            <div class="mt-4">
+                {% if reviews is empty %}
+                    <div class="text-muted">No reviews yet. The first buyer review will appear here.</div>
+                {% else %}
+                    {% for review in reviews %}
+                        <div class="review-item">
+                            <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                <div>
+                                    <div class="fw-semibold">{{ review.user.name }}</div>
+                                    <div class="review-stars small">
+                                        {% for i in 1..5 %}
+                                            <i class="bi {% if i <= review.rating %}bi-star-fill{% else %}bi-star{% endif %}"></i>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="text-muted small">{{ review.createdAt|date('d M Y') }}</div>
+                            </div>
+                            <p class="mb-0">{{ review.comment }}</p>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const prices = {{ displayPrices|json_encode|raw }};
+        const selector = document.getElementById('currency-selector');
+        const priceValue = document.getElementById('product-price-value');
+        const priceCurrency = document.getElementById('product-price-currency');
+
+        if (!selector || !priceValue || !priceCurrency) {
+            return;
+        }
+
+        const renderPrice = () => {
+            const currency = selector.value;
+            const amount = Number(prices[currency] ?? prices.TND ?? 0);
+
+            priceValue.textContent = amount.toFixed(2);
+            priceCurrency.textContent = currency;
+        };
+
+        selector.addEventListener('change', renderPrice);
+        renderPrice();
+    })();
+</script>
 {% endblock %}

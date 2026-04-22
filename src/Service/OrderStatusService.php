@@ -6,6 +6,11 @@ use App\Entity\Order;
 
 class OrderStatusService
 {
+    public function __construct(
+        private readonly TemporaryShippingStorage $temporaryShippingStorage,
+    ) {
+    }
+
     public function getAllowedStatuses(): array
     {
         return Order::getAllowedStatuses();
@@ -82,6 +87,10 @@ class OrderStatusService
 
         $order->setStatus($nextStatus);
         $order->setUpdatedAt(new \DateTime());
+
+        if (in_array($nextStatus, [Order::STATUS_DELIVERED, Order::STATUS_CANCELLED], true)) {
+            $this->temporaryShippingStorage->deleteForOrder($order);
+        }
 
         return [
             'success' => true,

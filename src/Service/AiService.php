@@ -50,7 +50,7 @@ class AiService
         $stock = trim((string) $stock);
         $descriptionHint = trim((string) $descriptionHint);
 
-        $huggingFaceToken = trim($this->huggingFaceApiToken);
+        $huggingFaceToken = trim((string) $this->huggingFaceApiToken);
 
         if ($huggingFaceToken !== '') {
             $generated = $this->generateWithHuggingFace($huggingFaceToken, $name, $category, $unit, $price, $origin, $stock, $descriptionHint);
@@ -119,6 +119,8 @@ class AiService
                             'type' => 'json_object',
                         ],
                     ],
+                    'timeout' => 12,
+                    'max_duration' => 15,
                 ]
             );
         } catch (TransportExceptionInterface) {
@@ -160,13 +162,29 @@ class AiService
         string $stock,
         string $descriptionHint,
     ): ?array {
-        $decoded = json_decode(trim($content), true);
+        $decoded = json_decode($this->extractJsonObject($content), true);
 
         if (!is_array($decoded)) {
             return null;
         }
 
         return $this->normalizeDraftArray($decoded, $name, $category, $unit, $price, $origin, $stock, $descriptionHint);
+    }
+
+    private function extractJsonObject(string $content): string
+    {
+        $content = trim($content);
+        $content = preg_replace('/^```(?:json)?\s*/i', '', $content) ?? $content;
+        $content = preg_replace('/\s*```$/', '', $content) ?? $content;
+
+        $start = strpos($content, '{');
+        $end = strrpos($content, '}');
+
+        if ($start === false || $end === false || $end <= $start) {
+            return $content;
+        }
+
+        return substr($content, $start, $end - $start + 1);
     }
 
     private function generateFallbackDraft(
@@ -203,15 +221,15 @@ class AiService
     ): array {
         $fallback = $this->generateFallbackDraft($name, $category, $unit, $price, $origin, $stock, $descriptionHint);
 
-        $resolvedName = trim((string) ($draft['name'] ?? ''));
-        if ($resolvedName === '') {
+        $resolvedName = $this->cleanSingleLine((string) ($draft['name'] ?? ''));
+        if ($resolvedName === '' || mb_strlen($resolvedName) > 150) {
             $resolvedName = $fallback['name'];
         }
 
         $resolvedCategory = $this->normalizeCategory((string) ($draft['category'] ?? '')) ?? $fallback['category'];
         $resolvedUnit = $this->normalizeUnit((string) ($draft['unit'] ?? '')) ?? $fallback['unit'];
 
-        $resolvedDescription = trim((string) ($draft['description'] ?? ''));
+        $resolvedDescription = $this->cleanDescription((string) ($draft['description'] ?? ''));
         if ($resolvedDescription === '') {
             $resolvedDescription = $fallback['description'];
         }
@@ -220,8 +238,30 @@ class AiService
             'name' => $resolvedName,
             'category' => $resolvedCategory,
             'unit' => $resolvedUnit,
-            'description' => preg_replace('/\s+/', ' ', $resolvedDescription) ?: $resolvedDescription,
+            'description' => $resolvedDescription,
         ];
+    }
+
+    private function cleanSingleLine(string $value): string
+    {
+        $value = trim(strip_tags($value));
+        $value = preg_replace('/\s+/', ' ', $value) ?? $value;
+        $value = trim($value, " \t\n\r\0\x0B\"'`.,;:");
+
+        return $value;
+    }
+
+    private function cleanDescription(string $value): string
+    {
+        $value = trim(strip_tags($value));
+        $value = preg_replace('/\s+/', ' ', $value) ?? $value;
+        $value = trim($value, " \t\n\r\0\x0B\"'`");
+
+        if (mb_strlen($value) > 900) {
+            $value = rtrim(mb_substr($value, 0, 897), " \t\n\r\0\x0B.,;:") . '...';
+        }
+
+        return $value;
     }
 
     private function buildFallbackDescription(
@@ -232,10 +272,21 @@ class AiService
         string $stock,
         string $descriptionHint,
     ): string {
-        $introCategory = $category !== '' ? strtolower($category) : 'farm-fresh';
+        $name = $this->cleanSingleLine($name);
+        $displayName = $name !== '' ? ucfirst($name) : 'This product';
+        $introCategory = match ($category) {
+            'vegetables' => 'fresh vegetable',
+            'fruits' => 'fresh fruit',
+            'grains' => 'quality grain',
+            'dairy' => 'farm dairy',
+            'meat' => 'farm meat',
+            'herbs' => 'fresh herb',
+            default => 'farm-fresh',
+        };
+
         $sentenceOne = sprintf(
             '%s is a %s product prepared for customers who want dependable quality, freshness, and everyday value.',
-            $name,
+            $displayName,
             $introCategory
         );
 
@@ -266,6 +317,25 @@ class AiService
     private function normalizeCategory(string $category): ?string
     {
         $category = strtolower(trim($category));
+        $category = str_replace([' ', '-', '_'], '', $category);
+
+        $aliases = [
+            'vegetable' => 'vegetables',
+            'veggies' => 'vegetables',
+            'fruit' => 'fruits',
+            'grain' => 'grains',
+            'cereal' => 'grains',
+            'cereals' => 'grains',
+            'milk' => 'dairy',
+            'cheese' => 'dairy',
+            'herb' => 'herbs',
+            'spice' => 'herbs',
+            'spices' => 'herbs',
+            'nuts' => 'other',
+            'pantry' => 'other',
+        ];
+
+        $category = $aliases[$category] ?? $category;
 
         return in_array($category, self::ALLOWED_CATEGORIES, true) ? $category : null;
     }
@@ -273,6 +343,29 @@ class AiService
     private function normalizeUnit(string $unit): ?string
     {
         $unit = strtolower(trim($unit));
+        $unit = str_replace([' ', '-', '_'], '', $unit);
+
+        $aliases = [
+            'kilogram' => 'kg',
+            'kilograms' => 'kg',
+            'kilo' => 'kg',
+            'kilos' => 'kg',
+            'gram' => 'g',
+            'grams' => 'g',
+            'l' => 'litre',
+            'liter' => 'litre',
+            'liters' => 'litre',
+            'litres' => 'litre',
+            'pcs' => 'piece',
+            'pc' => 'piece',
+            'pieces' => 'piece',
+            'bottle' => 'piece',
+            'bottles' => 'piece',
+            'pack' => 'box',
+            'bundle' => 'bunch',
+        ];
+
+        $unit = $aliases[$unit] ?? $unit;
 
         return in_array($unit, self::ALLOWED_UNITS, true) ? $unit : null;
     }

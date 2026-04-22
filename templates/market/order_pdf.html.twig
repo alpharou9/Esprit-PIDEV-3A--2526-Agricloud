@@ -45,11 +45,17 @@
             <td>
                 <div class="panel">
                     <h2 class="panel-title">Shipping Details</h2>
-                    <div class="detail-row"><span class="detail-label">Address</span> {{ order.shippingAddress }}</div>
-                    <div class="detail-row"><span class="detail-label">City</span> {{ order.shippingCity ?: '-' }}</div>
-                    <div class="detail-row"><span class="detail-label">Postal</span> {{ order.shippingPostal ?: '-' }}</div>
-                    <div class="detail-row"><span class="detail-label">Email</span> {{ order.shippingEmail ?: '-' }}</div>
-                    <div class="detail-row"><span class="detail-label">Phone</span> {{ order.shippingPhone ?: '-' }}</div>
+                    {% if shippingDetails %}
+                        <div class="detail-row"><span class="detail-label">Name</span> {{ shippingDetails.name ?: '-' }}</div>
+                        <div class="detail-row"><span class="detail-label">Address</span> {{ shippingDetails.formatted ?: '-' }}</div>
+                        <div class="detail-row"><span class="detail-label">Email</span> {{ shippingDetails.email ?: '-' }}</div>
+                        <div class="detail-row"><span class="detail-label">Phone</span> {{ shippingDetails.phone ?: '-' }}</div>
+                        {% if shippingDetails.notes %}
+                            <div class="detail-row"><span class="detail-label">Notes</span> {{ shippingDetails.notes }}</div>
+                        {% endif %}
+                    {% else %}
+                        <div class="detail-row">Shipping details are collected outside AgriCloud and are not persisted in the local database.</div>
+                    {% endif %}
                 </div>
             </td>
         </tr>
@@ -77,13 +83,6 @@
             </tr>
         </tbody>
     </table>
-
-    {% if order.notes %}
-        <div class="panel">
-            <h2 class="panel-title">Notes</h2>
-            <div>{{ order.notes }}</div>
-        </div>
-    {% endif %}
 
     <div class="footer">
         Generated on {{ "now"|date('d M Y H:i') }} by AgriCloud

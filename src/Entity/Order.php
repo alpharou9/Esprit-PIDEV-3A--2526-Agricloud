@@ -16,6 +16,12 @@ class Order
     public const STATUS_SHIPPED = 'shipped';
     public const STATUS_DELIVERED = 'delivered';
     public const STATUS_CANCELLED = 'cancelled';
+    public const PAYMENT_METHOD_CASH = 'cash';
+    public const PAYMENT_METHOD_STRIPE = 'stripe';
+    public const PAYMENT_STATUS_PENDING = 'pending';
+    public const PAYMENT_STATUS_PAID = 'paid';
+    public const PAYMENT_STATUS_FAILED = 'failed';
+    public const PAYMENT_STATUS_CANCELLED = 'cancelled';
 
     public const FLOW_STATUSES = [
         self::STATUS_PENDING,
@@ -53,6 +59,15 @@ class Order
 
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $status = self::STATUS_PENDING;
+
+    #[ORM\Column(name: 'payment_method', length: 20, nullable: true)]
+    private ?string $paymentMethod = self::PAYMENT_METHOD_CASH;
+
+    #[ORM\Column(name: 'payment_status', length: 20, nullable: true)]
+    private ?string $paymentStatus = self::PAYMENT_STATUS_PENDING;
+
+    #[ORM\Column(name: 'stripe_session_id', length: 255, nullable: true)]
+    private ?string $stripeSessionId = null;
 
     #[ORM\Column(name: 'shipping_address', type: 'text')]
     #[Assert\NotBlank(message: 'Shipping address is required.')]
@@ -241,6 +256,70 @@ class Order
 
     public function getUpdatedAt(): ?\DateTimeInterface { return $this->updatedAt; }
     public function setUpdatedAt(?\DateTimeInterface $v): static { $this->updatedAt = $v; return $this; }
+
+    public function getPaymentMethod(): ?string
+    {
+        return $this->paymentMethod ?? self::PAYMENT_METHOD_CASH;
+    }
+
+    public function setPaymentMethod(?string $paymentMethod): static
+    {
+        $this->paymentMethod = $paymentMethod ?: self::PAYMENT_METHOD_CASH;
+
+        return $this;
+    }
+
+    public function getPaymentStatus(): ?string
+    {
+        return $this->paymentStatus ?? self::PAYMENT_STATUS_PENDING;
+    }
+
+    public function setPaymentStatus(?string $paymentStatus): static
+    {
+        $this->paymentStatus = $paymentStatus ?: self::PAYMENT_STATUS_PENDING;
+
+        return $this;
+    }
+
+    public function getStripeSessionId(): ?string
+    {
+        return $this->stripeSessionId;
+    }
+
+    public function setStripeSessionId(?string $stripeSessionId): static
+    {
+        $this->stripeSessionId = $stripeSessionId;
+
+        return $this;
+    }
+
+    public function getPaymentMethodLabel(): string
+    {
+        return match ($this->getPaymentMethod()) {
+            self::PAYMENT_METHOD_STRIPE => 'Stripe',
+            default => 'Cash on delivery',
+        };
+    }
+
+    public function getPaymentStatusLabel(): string
+    {
+        return match ($this->getPaymentStatus()) {
+            self::PAYMENT_STATUS_PAID => 'Paid',
+            self::PAYMENT_STATUS_FAILED => 'Failed',
+            self::PAYMENT_STATUS_CANCELLED => 'Cancelled',
+            default => 'Pending',
+        };
+    }
+
+    public function getPaymentStatusColor(): string
+    {
+        return match ($this->getPaymentStatus()) {
+            self::PAYMENT_STATUS_PAID => 'success',
+            self::PAYMENT_STATUS_FAILED => 'danger',
+            self::PAYMENT_STATUS_CANCELLED => 'secondary',
+            default => 'warning',
+        };
+    }
 
     private function normalizeStatus(?string $status): ?string
     {

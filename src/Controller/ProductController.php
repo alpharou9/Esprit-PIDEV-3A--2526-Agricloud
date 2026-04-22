@@ -3,9 +3,11 @@
 namespace App\Controller;
 
 use App\Entity\Product;
+use App\Entity\Review;
 use App\Form\ProductType;
 use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
+use App\Repository\ReviewRepository;
 use App\Service\CloudinaryService;
 use App\Service\CurrencyConverterService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,21 +24,31 @@ class ProductController extends AbstractController
 {
     // ── Marketplace (all approved products) ──────────────────────
     #[Route('', name: 'market_index', methods: ['GET'])]
-    public function index(Request $request, ProductRepository $repo, PaginatorInterface $paginator): Response
+    public function index(
+        Request $request,
+        ProductRepository $repo,
+        PaginatorInterface $paginator,
+        ReviewRepository $reviewRepository
+    ): Response
     {
         $q        = $request->query->get('q', '');
         $category = $request->query->get('category', '');
+        $sort     = $request->query->get('sort', '');
 
         $pagination = $paginator->paginate(
-            $repo->marketplaceQueryBuilder($q ?: null, $category ?: null),
+            $repo->marketplaceQueryBuilder($q ?: null, $category ?: null, $sort ?: null),
             $request->query->getInt('page', 1),
             12
         );
+
+        $productReviewStats = $reviewRepository->findStatsForProducts($pagination->getItems());
 
         return $this->render('market/index.html.twig', [
             'pagination' => $pagination,
             'q'          => $q,
             'category'   => $category,
+            'sort'       => $sort,
+            'productReviewStats' => $productReviewStats,
         ]);
     }
 
@@ -83,15 +95,103 @@ class ProductController extends AbstractController
 
     // ── Product detail ────────────────────────────────────────────
     #[Route('/product/{id}', name: 'product_show', methods: ['GET'])]
-    public function show(Product $product, EntityManagerInterface $em, CurrencyConverterService $currencyConverter): Response
+    public function show(
+        Product $product,
+        EntityManagerInterface $em,
+        CurrencyConverterService $currencyConverter,
+        ReviewRepository $reviewRepository,
+        OrderRepository $orderRepository
+    ): Response
     {
         $product->setViews(($product->getViews() ?? 0) + 1);
         $em->flush();
 
+        $displayPrices = array_merge(
+            ['TND' => (float) $product->getPrice()],
+            $currencyConverter->convertAmount($product->getPrice())
+        );
+
+        $reviews = $reviewRepository->findForProduct($product);
+        $reviewStats = $reviewRepository->findStatsForProduct($product);
+        $currentUser = $this->getUser();
+        $currentCustomer = $currentUser instanceof \App\Entity\User ? $currentUser : null;
+
+        $canReview = $currentCustomer !== null
+            && $currentCustomer !== $product->getUser()
+            && $orderRepository->userHasPurchasedProduct($currentCustomer, $product)
+            && !$reviewRepository->hasUserReviewedProduct($currentCustomer, $product);
+
         return $this->render('market/show.html.twig', [
             'product' => $product,
-            'convertedPrice' => $currencyConverter->convertAmount($product->getPrice()),
+            'displayPrices' => $displayPrices,
+            'reviews' => $reviews,
+            'reviewStats' => $reviewStats,
+            'canReview' => $canReview,
         ]);
+    }
+
+    #[Route('/product/{id}/review', name: 'product_review_create', methods: ['POST'])]
+    public function createReview(
+        Product $product,
+        Request $request,
+        EntityManagerInterface $em,
+        ReviewRepository $reviewRepository,
+        OrderRepository $orderRepository
+    ): Response
+    {
+        $user = $this->getUser();
+
+        if (!$user instanceof \App\Entity\User) {
+            $this->addFlash('error', 'Please sign in to submit a review.');
+            return $this->redirectToRoute('product_show', ['id' => $product->getId()]);
+        }
+
+        if (!$this->isCsrfTokenValid('review_product_' . $product->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Invalid review form submission.');
+            return $this->redirectToRoute('product_show', ['id' => $product->getId()]);
+        }
+
+        if ($user === $product->getUser()) {
+            $this->addFlash('error', 'You cannot review your own product.');
+            return $this->redirectToRoute('product_show', ['id' => $product->getId()]);
+        }
+
+        if (!$orderRepository->userHasPurchasedProduct($user, $product)) {
+            $this->addFlash('error', 'Only customers who purchased this product can submit a review.');
+            return $this->redirectToRoute('product_show', ['id' => $product->getId()]);
+        }
+
+        if ($reviewRepository->hasUserReviewedProduct($user, $product)) {
+            $this->addFlash('warning', 'You already reviewed this product.');
+            return $this->redirectToRoute('product_show', ['id' => $product->getId()]);
+        }
+
+        $rating = $request->request->getInt('rating');
+        $comment = trim((string) $request->request->get('comment', ''));
+
+        if ($rating < 1 || $rating > 5) {
+            $this->addFlash('error', 'Please choose a rating between 1 and 5 stars.');
+            return $this->redirectToRoute('product_show', ['id' => $product->getId()]);
+        }
+
+        if (mb_strlen($comment) < 5 || mb_strlen($comment) > 500) {
+            $this->addFlash('error', 'Review comment must be between 5 and 500 characters.');
+            return $this->redirectToRoute('product_show', ['id' => $product->getId()]);
+        }
+
+        $review = (new Review())
+            ->setProduct($product)
+            ->setUser($user)
+            ->setRating($rating)
+            ->setComment($comment)
+            ->setCreatedAt(new \DateTimeImmutable());
+
+        $em->persist($review);
+        $em->flush();
+
+        $this->addFlash('success', 'Thanks for sharing your review.');
+
+        return $this->redirectToRoute('product_show', ['id' => $product->getId()]);
     }
 
     // ── My listings ───────────────────────────────────────────────
@@ -154,8 +254,15 @@ class ProductController extends AbstractController
 
     // ── Delete product ────────────────────────────────────────────
     #[Route('/product/{id}/delete', name: 'product_delete', methods: ['POST'])]
-    public function delete(Product $product, Request $request, EntityManagerInterface $em, OrderRepository $orderRepository): Response
+    public function delete(int $id, Request $request, EntityManagerInterface $em, OrderRepository $orderRepository, ProductRepository $productRepository): Response
     {
+        $product = $productRepository->find($id);
+
+        if ($product === null) {
+            $this->addFlash('warning', 'This product was already removed or could not be found.');
+            return $this->redirectToRoute('my_products');
+        }
+
         if (!$this->isGranted('ROLE_ADMIN') && $product->getUser() !== $this->getUser()) {
             throw $this->createAccessDeniedException();
         }

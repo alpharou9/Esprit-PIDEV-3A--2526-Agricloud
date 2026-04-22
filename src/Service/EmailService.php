@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\Order;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
@@ -14,6 +15,7 @@ class EmailService
         private readonly MailerInterface $mailer,
         private readonly PdfService $pdfService,
         private readonly string $fromEmail,
+        private readonly ParameterBagInterface $parameterBag,
     ) {
     }
 
@@ -38,8 +40,18 @@ class EmailService
             ->htmlTemplate('emails/order_confirmed.html.twig')
             ->context([
                 'order' => $order,
+                'logo_cid' => null,
             ])
             ->attach($pdfContent, sprintf('order-%d.pdf', $order->getId()), 'application/pdf');
+
+        $logoPath = $this->getLogoPath();
+        if ($logoPath !== null) {
+            $email->embedFromPath($logoPath, 'agricloud-logo');
+            $email->context([
+                'order' => $order,
+                'logo_cid' => 'cid:agricloud-logo',
+            ]);
+        }
 
         try {
             $this->mailer->send($email);
@@ -54,5 +66,16 @@ class EmailService
             'sent' => true,
             'message' => 'Order confirmed and confirmation email sent.',
         ];
+    }
+
+    private function getLogoPath(): ?string
+    {
+        $logoPath = $this->parameterBag->get('kernel.project_dir') . '/public/theme/img/agricloud-email-logo.svg';
+
+        if (!is_file($logoPath)) {
+            return null;
+        }
+
+        return $logoPath;
     }
 }

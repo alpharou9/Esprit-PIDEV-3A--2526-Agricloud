@@ -6,11 +6,15 @@ use App\Entity\Order;
 use App\Repository\OrderRepository;
 use App\Service\CurrencyConverterService;
 use App\Service\EmailService;
+use App\Service\OrderGroupService;
 use App\Service\OrderStatusService;
 use App\Service\PdfService;
+use App\Service\StripeCheckoutService;
+use App\Service\TemporaryShippingStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
@@ -21,7 +25,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class OrderController extends AbstractController
 {
     #[Route('', name: 'order_index', methods: ['GET'])]
-    public function index(OrderRepository $repo, CurrencyConverterService $currencyConverter): Response
+    public function index(OrderRepository $repo, CurrencyConverterService $currencyConverter, OrderGroupService $orderGroupService): Response
     {
         $role = $this->isGranted('ROLE_ADMIN') ? 'admin' : 'customer';
 
@@ -38,32 +42,52 @@ class OrderController extends AbstractController
             ];
         }
 
+        $myOrderGroups = $orderGroupService->group($myOrders);
+        $mySaleGroups = $orderGroupService->group($mySales);
+        $groupConversions = [];
+
+        foreach (array_merge($myOrderGroups, $mySaleGroups) as $group) {
+            $groupConversions[$group['key']] = $currencyConverter->convertAmount($group['totalPrice']);
+        }
+
         return $this->render('market/orders.html.twig', [
             'myOrders' => $myOrders,
             'mySales'  => $mySales,
+            'myOrderGroups' => $myOrderGroups,
+            'mySaleGroups' => $mySaleGroups,
             'orderConversions' => $orderConversions,
+            'groupConversions' => $groupConversions,
+            'orderGroupService' => $orderGroupService,
         ]);
     }
 
     #[Route('/{id}', name: 'order_show', methods: ['GET'])]
-    public function show(Order $order, OrderStatusService $orderStatusService, CurrencyConverterService $currencyConverter): Response
+    public function show(Order $order, OrderRepository $orderRepository, OrderStatusService $orderStatusService, CurrencyConverterService $currencyConverter, StripeCheckoutService $stripeCheckoutService, TemporaryShippingStorage $temporaryShippingStorage): Response
     {
         $this->denyUnlessOrderVisible($order);
+        $relatedOrders = $this->filterVisibleOrders($orderRepository->findCheckoutSiblings($order));
+        $shippingDetails = $this->resolveShippingDetails($order, $stripeCheckoutService, $temporaryShippingStorage);
+        $orderTotal = array_sum(array_map(static fn (Order $line): float => (float) $line->getTotalPrice(), $relatedOrders));
 
         return $this->render('market/order_show.html.twig', [
             'order' => $order,
+            'orderLines' => $relatedOrders,
+            'orderTotal' => $orderTotal,
             'availableStatuses' => $orderStatusService->getSelectableStatuses($order),
             'convertedUnitPrice' => $currencyConverter->convertAmount($order->getUnitPrice()),
             'convertedTotalPrice' => $currencyConverter->convertAmount($order->getTotalPrice()),
+            'convertedOrderTotal' => $currencyConverter->convertAmount($orderTotal),
+            'shippingDetails' => $shippingDetails,
         ]);
     }
 
     #[Route('/{id}/pdf', name: 'order_export_pdf', methods: ['GET'])]
-    public function exportPdf(Order $order, PdfService $pdfService): Response
+    public function exportPdf(Order $order, PdfService $pdfService, StripeCheckoutService $stripeCheckoutService, TemporaryShippingStorage $temporaryShippingStorage): Response
     {
         $this->denyUnlessOrderVisible($order);
+        $shippingDetails = $this->resolveShippingDetails($order, $stripeCheckoutService, $temporaryShippingStorage);
 
-        $response = new Response($pdfService->generateOrderPdf($order));
+        $response = new Response($pdfService->generateOrderPdf($order, $shippingDetails));
         $response->headers->set('Content-Type', 'application/pdf');
         $response->headers->set(
             'Content-Disposition',
@@ -77,7 +101,7 @@ class OrderController extends AbstractController
     }
 
     #[Route('/{id}/status', name: 'order_status', methods: ['POST'])]
-    public function updateStatus(Order $order, Request $request, EntityManagerInterface $em, EmailService $emailService, OrderStatusService $orderStatusService): Response
+    public function updateStatus(Order $order, Request $request, EntityManagerInterface $em, EmailService $emailService, OrderStatusService $orderStatusService, OrderRepository $orderRepository): Response
     {
         $user = $this->getUser();
         if (!$this->isGranted('ROLE_ADMIN') && $order->getSeller() !== $user) {
@@ -90,27 +114,32 @@ class OrderController extends AbstractController
         }
 
         $status = (string) $request->request->get('status');
-        $result = $orderStatusService->applyStatusChange($order, $status, $request->request->get('reason'));
+        $targetOrders = $this->filterStatusEditableOrders($orderRepository->findCheckoutSiblings($order));
+        $result = null;
 
-        if (!$result['success']) {
-            $this->addFlash('error', $result['message']);
-            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        foreach ($targetOrders as $targetOrder) {
+            $result = $orderStatusService->applyStatusChange($targetOrder, $status, $request->request->get('reason'));
+
+            if (!$result['success']) {
+                $this->addFlash('error', $result['message']);
+                return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+            }
         }
 
         $em->flush();
 
-        if ($result['confirmedJustNow']) {
+        if ($result !== null && $result['confirmedJustNow']) {
             $emailResult = $emailService->sendOrderConfirmedEmail($order);
             $this->addFlash($emailResult['sent'] ? 'success' : 'warning', $emailResult['message']);
         } else {
-            $this->addFlash('success', $result['message']);
+            $this->addFlash('success', sprintf('Order status updated for %d item(s).', count($targetOrders)));
         }
 
         return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
     }
 
     #[Route('/{id}/cancel', name: 'order_cancel', methods: ['POST'])]
-    public function cancel(Order $order, Request $request, EntityManagerInterface $em, OrderStatusService $orderStatusService): Response
+    public function cancel(Order $order, Request $request, EntityManagerInterface $em, OrderStatusService $orderStatusService, OrderRepository $orderRepository): Response
     {
         if ($order->getCustomer() !== $this->getUser()) {
             throw $this->createAccessDeniedException();
@@ -121,17 +150,76 @@ class OrderController extends AbstractController
             return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
         }
 
-        $result = $orderStatusService->applyStatusChange($order, Order::STATUS_CANCELLED, 'Cancelled by customer');
+        foreach ($orderRepository->findCheckoutSiblings($order) as $targetOrder) {
+            if ($targetOrder->getCustomer() !== $this->getUser()) {
+                continue;
+            }
 
-        if (!$result['success']) {
-            $this->addFlash('error', $result['message']);
-            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+            $result = $orderStatusService->applyStatusChange($targetOrder, Order::STATUS_CANCELLED, 'Cancelled by customer');
+
+            if (!$result['success']) {
+                $this->addFlash('error', $result['message']);
+                return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+            }
         }
 
         $em->flush();
 
         $this->addFlash('success', 'Order cancelled.');
         return $this->redirectToRoute('order_index');
+    }
+
+    #[Route('/{id}/pay', name: 'order_pay', methods: ['POST'])]
+    public function pay(Order $order, Request $request, EntityManagerInterface $em, StripeCheckoutService $stripeCheckoutService, OrderRepository $orderRepository): Response
+    {
+        if ($order->getCustomer() !== $this->getUser()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid('order_pay_' . $order->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Invalid token.');
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        if ($order->getPaymentMethod() !== Order::PAYMENT_METHOD_STRIPE) {
+            $this->addFlash('error', 'This order is not configured for Stripe payment.');
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        if ($order->getPaymentStatus() === Order::PAYMENT_STATUS_PAID) {
+            $this->addFlash('success', 'This order has already been paid.');
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        if ($order->getStatus() === Order::STATUS_CANCELLED) {
+            $this->addFlash('error', 'Cancelled orders cannot be paid.');
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        $payableOrders = array_values(array_filter(
+            $orderRepository->findCheckoutSiblings($order),
+            fn (Order $targetOrder): bool => $targetOrder->getCustomer() === $this->getUser()
+                && $targetOrder->getPaymentMethod() === Order::PAYMENT_METHOD_STRIPE
+                && $targetOrder->getPaymentStatus() !== Order::PAYMENT_STATUS_PAID
+                && $targetOrder->getStatus() !== Order::STATUS_CANCELLED
+        ));
+
+        $session = $stripeCheckoutService->createCheckoutSession($payableOrders ?: [$order], $request);
+
+        if (!$session['success']) {
+            $this->addFlash('error', $session['message']);
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        foreach ($payableOrders ?: [$order] as $targetOrder) {
+            $targetOrder->setStripeSessionId($session['sessionId']);
+            $targetOrder->setPaymentStatus(Order::PAYMENT_STATUS_PENDING);
+            $targetOrder->setUpdatedAt(new \DateTime());
+        }
+
+        $em->flush();
+
+        return new RedirectResponse($session['checkoutUrl']);
     }
 
     private function denyUnlessOrderVisible(Order $order): void
@@ -143,5 +231,47 @@ class OrderController extends AbstractController
             && $order->getSeller() !== $user) {
             throw $this->createAccessDeniedException();
         }
+    }
+
+    /**
+     * @param Order[] $orders
+     *
+     * @return Order[]
+     */
+    private function filterVisibleOrders(array $orders): array
+    {
+        $user = $this->getUser();
+
+        return array_values(array_filter($orders, fn (Order $order): bool => $this->isGranted('ROLE_ADMIN')
+            || $order->getCustomer() === $user
+            || $order->getSeller() === $user));
+    }
+
+    /**
+     * @param Order[] $orders
+     *
+     * @return Order[]
+     */
+    private function filterStatusEditableOrders(array $orders): array
+    {
+        $user = $this->getUser();
+
+        return array_values(array_filter($orders, fn (Order $order): bool => $this->isGranted('ROLE_ADMIN')
+            || $order->getSeller() === $user));
+    }
+
+    private function resolveShippingDetails(Order $order, StripeCheckoutService $stripeCheckoutService, TemporaryShippingStorage $temporaryShippingStorage): ?array
+    {
+        if ($order->getPaymentMethod() === Order::PAYMENT_METHOD_STRIPE && $order->getStripeSessionId()) {
+            return $stripeCheckoutService->extractShippingDetails(
+                $stripeCheckoutService->retrieveSession((string) $order->getStripeSessionId())
+            );
+        }
+
+        if ($order->getPaymentMethod() === Order::PAYMENT_METHOD_CASH) {
+            return $temporaryShippingStorage->getForOrder($order);
+        }
+
+        return null;
     }
 }
