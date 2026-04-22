@@ -2,9 +2,7 @@
 
 namespace App\Form;
 
-use App\Entity\Farm;
 use App\Entity\Field;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
@@ -19,15 +17,15 @@ class FieldType extends AbstractType
         $builder
             ->add('name', TextType::class, [
                 'label' => 'Field Name',
-                'attr' => ['placeholder' => 'e.g. North Wheat Section']
+                'attr' => ['placeholder' => 'Enter field name']
             ])
             ->add('area', NumberType::class, [
-                'label' => 'Area (in ha)',
-                'attr' => ['placeholder' => 'Enter size in hectares']
+                'label' => 'Area (ha)',
+                'attr' => ['placeholder' => 'e.g. 1.5']
             ])
-            ->add('soil_type', ChoiceType::class, [
+            ->add('soilType', ChoiceType::class, [
                 'label' => 'Soil Type',
-                'choices' => [
+                'choices'  => [
                     'Sandy soil' => 'Sandy soil',
                     'Clay soil' => 'Clay soil',
                     'Silt soil' => 'Silt soil',
@@ -36,32 +34,18 @@ class FieldType extends AbstractType
                     'Chalky soil' => 'Chalky soil',
                     'Saline soil' => 'Saline soil',
                 ],
-            ])
-            ->add('crop_type', ChoiceType::class, [
-                'label' => 'Crop Type',
-                'choices' => [
-                    'Cereal crops' => 'Cereal crops',
-                    'Pulse crops' => 'Pulse crops',
-                    'Oilseed crops' => 'Oilseed crops',
-                    'Cash crops' => 'Cash crops',
-                    'Horticultural crops' => 'Horticultural crops',
-                    'Plantation crops' => 'Plantation crops',
-                ],
-            ])
-            ->add('coordinates', TextType::class, [
-                'label' => 'Coordinates (Polygon/Points)',
-                'attr' => ['placeholder' => 'e.g. 36.80, 10.18']
+                'placeholder' => 'Select soil type',
             ])
             ->add('status', ChoiceType::class, [
+                'label' => 'Status',
                 'choices' => [
-                    'Active' => 'Active',
-                    'Inactive' => 'Inactive',
-                    'Under Maintenance' => 'Under Maintenance',
+                    'Active' => 'active',
+                    'Not Active' => 'not active',
                 ],
-            ]);
-            
-            // Note: 'farm_id' is excluded here because we will link it 
-            // automatically in the Controller based on the URL context.
+            ])
+            // We REMOVE 'Farmid' from here because the Controller 
+            // handles it automatically via the URL parameter.
+        ;
     }
 
     public function configureOptions(OptionsResolver $resolver): void

@@ -1,37 +1,4 @@
-{{ form_start(form, {'attr': {'class': 'row g-3'}}) }}
-    <div class="col-md-12">
-        <label class="form-label fw-bold">Farm Name</label>
-        {{ form_widget(form.name, {'attr': {'class': 'form-control', 'placeholder': 'Green Valley'}}) }}
-    </div>
-    <div class="col-md-6">
-        <label class="form-label fw-bold">Governorate</label>
-        {{ form_widget(form.location, {'attr': {'class': 'form-select'}}) }}
-    </div>
-    <div class="col-md-6">
-        <label class="form-label fw-bold">Type of Farm</label>
-        {{ form_widget(form.farm_type, {'attr': {'class': 'form-select'}}) }}
-    </div>
-    <div class="col-md-4">
-        <label class="form-label fw-bold">Area (ha)</label>
-        {{ form_widget(form.area, {'attr': {'class': 'form-control'}}) }}
-    </div>
-    <div class="col-md-4">
-        <label class="form-label fw-bold">Latitude</label>
-        {{ form_widget(form.latitude, {'attr': {'class': 'form-control'}}) }}
-    </div>
-    <div class="col-md-4">
-        <label class="form-label fw-bold">Longitude</label>
-        {{ form_widget(form.longitude, {'attr': {'class': 'form-control'}}) }}
-    </div>
-    <div class="col-12">
-        <label class="form-label fw-bold">Description</label>
-        {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': '4'}}) }}
-    </div>
-    <div class="col-12">
-        <label class="form-label fw-bold">Image URL</label>
-        {{ form_widget(form.image, {'attr': {'class': 'form-control'}}) }}
-    </div>
-    <div class="col-12 mt-4">
-        <button class="btn btn-success btn-lg w-100 shadow-sm">{{ button_label|default('Save Farm') }}</button>
-    </div>
+{{ form_start(form) }}
+    {{ form_widget(form) }}
+    <button class="btn">{{ button_label|default('Save') }}</button>
 {{ form_end(form) }}

@@ -7,7 +7,7 @@
 
     {{ include('field/_form.html.twig', {'button_label': 'Update'}) }}
 
-    <a href="{{ path('app_field_index') }}">back to list</a>
+<a href="{{ path('app_field_index', {'farm_id': field.farmid.id}) }}" class="btn btn-secondary mt-3">back to list</a>
 
     {{ include('field/_delete_form.html.twig') }}
 {% endblock %}

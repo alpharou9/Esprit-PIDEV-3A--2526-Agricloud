@@ -1,11 +1,12 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}New Field{% endblock %}
+{% block title %}New Field for {{ farm.name }}{% endblock %}
 
 {% block body %}
-    <h1>Create new Field</h1>
+    <h1>Create New Field</h1>
 
     {{ include('field/_form.html.twig') }}
 
-    <a href="{{ path('app_field_index') }}">back to list</a>
+    {# UPDATE THIS LINE TO INCLUDE THE FARM ID #}
+    <a href="{{ path('app_field_index', {'farm_id': farm.id}) }}" class="btn btn-secondary mt-3">back to list</a>
 {% endblock %}

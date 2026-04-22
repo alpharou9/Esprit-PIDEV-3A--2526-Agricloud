@@ -3,35 +3,22 @@
 namespace App\Controller;
 
 use App\Entity\Farm;
-use App\Form\FarmType;
+use App\Form\FarmType; // Ensure this matches your form class name
 use App\Repository\FarmRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/farm')]
 final class FarmController extends AbstractController
 {
     /**
-     * 1. PUBLIC MARKETPLACE
+     * ADMIN: Dashboard view to manage and approve farms
      */
-    #[Route('/', name: 'app_farm_index', methods: ['GET'])]
-    public function index(FarmRepository $farmRepository): Response
-    {
-        return $this->render('farm/index.html.twig', [
-            'farms' => $farmRepository->findBy(['status' => 'approved']),
-        ]);
-    }
-
-    /**
-     * 2. ADMIN DASHBOARD
-     */
-    #[Route('/admin/dashboard', name: 'admin_dashboard', methods: ['GET'])]
-    public function adminDashboard(FarmRepository $farmRepository): Response
+    #[Route('/admin/list', name: 'app_admin_farm_index', methods: ['GET'])]
+    public function adminIndex(FarmRepository $farmRepository): Response
     {
         return $this->render('farm/admin_index.html.twig', [
             'farms' => $farmRepository->findAll(),
@@ -39,9 +26,20 @@ final class FarmController extends AbstractController
     }
 
     /**
-     * 3. MY FARMS (Farmer View)
+     * FARMER: Main portal view showing approved farms
      */
-    #[Route('/my-farms', name: 'app_my_farms', methods: ['GET'])]
+    #[Route('/portal', name: 'app_farmer_farm_index', methods: ['GET'])]
+    public function farmerIndex(FarmRepository $farmRepository): Response
+    {
+        return $this->render('farm/farmer_index.html.twig', [
+            'farms' => $farmRepository->findAll(),
+        ]);
+    }
+
+    /**
+     * FARMER: "My Farms" management table
+     */
+    #[Route('/my-farms', name: 'app_farmer_my_farms', methods: ['GET'])]
     public function myFarms(FarmRepository $farmRepository): Response
     {
         return $this->render('farm/my_farms.html.twig', [
@@ -50,69 +48,7 @@ final class FarmController extends AbstractController
     }
 
     /**
-     * CREATE NEW FARM WITH IMAGE UPLOAD
-     */
-    #[Route('/new', name: 'app_farm_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
-    {
-        $farm = new Farm();
-        $form = $this->createForm(FarmType::class, $farm);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            /** @var UploadedFile $imageFile */
-            $imageFile = $form->get('image')->getData();
-
-            if ($imageFile) {
-                $newFilename = $this->uploadImage($imageFile, $slugger);
-                $farm->setImage($newFilename);
-            }
-
-            $entityManager->persist($farm);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Farm created and pending approval!');
-            return $this->redirectToRoute('app_my_farms', [], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->render('farm/new.html.twig', [
-            'farm' => $farm,
-            'form' => $form,
-        ]);
-    }
-
-    /**
-     * EDIT FARM WITH IMAGE UPDATE
-     */
-    #[Route('/{id}/edit', name: 'app_farm_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Farm $farm, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
-    {
-        $form = $this->createForm(FarmType::class, $farm);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            /** @var UploadedFile $imageFile */
-            $imageFile = $form->get('image')->getData();
-
-            if ($imageFile) {
-                $newFilename = $this->uploadImage($imageFile, $slugger);
-                $farm->setImage($newFilename);
-            }
-
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Farm updated successfully.');
-            return $this->redirectToRoute('app_my_farms', [], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->render('farm/edit.html.twig', [
-            'farm' => $farm,
-            'form' => $form,
-        ]);
-    }
-
-    /**
-     * ADMIN ACTION: APPROVE
+     * ADMIN: Action to approve a pending farm
      */
     #[Route('/{id}/approve', name: 'app_farm_approve', methods: ['POST'])]
     public function approve(Farm $farm, EntityManagerInterface $entityManager): Response
@@ -121,46 +57,29 @@ final class FarmController extends AbstractController
         $entityManager->flush();
 
         $this->addFlash('success', 'Farm approved successfully!');
-        return $this->redirectToRoute('admin_dashboard');
+
+        return $this->redirectToRoute('app_admin_farm_index');
     }
 
-    /**
-     * DELETE FARM
-     */
-    #[Route('/{id}', name: 'app_farm_delete', methods: ['POST'])]
-    public function delete(Request $request, Farm $farm, EntityManagerInterface $entityManager): Response
+    #[Route('/new', name: 'app_farm_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$farm->getId(), $request->request->get('_token'))) {
-            $entityManager->remove($farm);
+        $farm = new Farm();
+        // Updated to FarmType (check if your form is named Farm1Type or FarmType)
+        $form = $this->createForm(FarmType::class, $farm);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($farm);
             $entityManager->flush();
+
+            return $this->redirectToRoute('app_farmer_my_farms', [], Response::HTTP_SEE_OTHER);
         }
 
-        if ($request->query->get('from') === 'admin') {
-            return $this->redirectToRoute('admin_dashboard');
-        }
-
-        return $this->redirectToRoute('app_my_farms', [], Response::HTTP_SEE_OTHER);
-    }
-
-    /**
-     * HELPER METHOD: HANDLES FILE UPLOAD LOGIC
-     */
-    private function uploadImage($imageFile, SluggerInterface $slugger): string
-    {
-        $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
-        $safeFilename = $slugger->slug($originalFilename);
-        $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
-
-        try {
-            $imageFile->move(
-                $this->getParameter('kernel.project_dir') . '/public/uploads/farms',
-                $newFilename
-            );
-        } catch (FileException $e) {
-            throw new \Exception('Failed to upload image.');
-        }
-
-        return $newFilename;
+        return $this->render('farm/new.html.twig', [
+            'farm' => $farm,
+            'form' => $form,
+        ]);
     }
 
     #[Route('/{id}', name: 'app_farm_show', methods: ['GET'])]
@@ -169,5 +88,37 @@ final class FarmController extends AbstractController
         return $this->render('farm/show.html.twig', [
             'farm' => $farm,
         ]);
+    }
+
+    #[Route('/{id}/edit', name: 'app_farm_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Farm $farm, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(FarmType::class, $farm);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+
+            return $this->redirectToRoute('app_farmer_my_farms', [], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->render('farm/edit.html.twig', [
+            'farm' => $farm,
+            'form' => $form,
+        ]);
+    }
+
+    #[Route('/{id}', name: 'app_farm_delete', methods: ['POST'])]
+    public function delete(Request $request, Farm $farm, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$farm->getId(), $request->getPayload()->getString('_token'))) {
+            $entityManager->remove($farm);
+            $entityManager->flush();
+            $this->addFlash('success', 'Farm deleted successfully.');
+        }
+
+        // Redirect back to the page they came from (Admin or Farmer list)
+        $referer = $request->headers->get('referer');
+        return $this->redirect($referer ?: $this->generateUrl('app_choice'));
     }
 }
