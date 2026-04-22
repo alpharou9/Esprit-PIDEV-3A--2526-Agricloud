@@ -3,97 +3,194 @@
 {% block title %}Admin Management - AgriCloud{% endblock %}
 
 {% block body %}
-<div class="pt-3 pb-2 mb-4 border-bottom">
-    <h1 class="h2 text-primary">Farm Management Console</h1>
-    <p class="text-muted">Reviewing all registered farms. Approved farms remain here for tracking.</p>
-</div>
+<style>
+    :root {
+        --agri-dark: #1d3108;
+        --agri-lime: #82b414;
+        --agri-bg: #f4f7f2;
+    }
 
-<div class="card shadow-sm border-0">
-    <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">Global Farm List</h5>
+    body { background-color: var(--agri-bg); }
+
+    .agri-card {
+        background: white;
+        border-radius: 20px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        overflow: visible; /* Changed to visible to ensure buttons show */
+        margin-bottom: 1.5rem;
+    }
+
+    .agri-banner {
+        background-color: var(--agri-dark);
+        height: 180px;
+        position: relative;
+        padding: 2rem;
+        color: white;
+    }
+
+    .agri-status-box {
+        background: white;
+        padding: 1.2rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        min-width: 160px;
+        text-align: center;
+        margin-top: -45px;
+        z-index: 5;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .farm-list-header {
+        background-color: #f8f9fa;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        color: #666;
+        letter-spacing: 0.5px;
+    }
+
+    .farm-item-row {
+        background: white;
+        border: 1px solid #eee;
+        border-radius: 16px;
+        transition: all 0.2s ease;
+    }
+
+    .farm-item-row:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+        border-color: var(--agri-lime);
+    }
+
+    .farm-avatar {
+        width: 55px;
+        height: 55px;
+        border-radius: 14px;
+        object-fit: cover;
+        background: #f0f2f0;
+    }
+
+    .btn-action {
+        width: 38px;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: 0.2s;
+    }
+
+    .btn-approve-lg {
+        background-color: var(--agri-lime);
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    .btn-approve-lg:hover { background-color: #6d9610; color: white; }
+</style>
+
+<div class="container-fluid py-4 px-md-5">
+    <div class="agri-card shadow-sm">
+        <div class="agri-banner">
+            <h1 class="fw-bold h2 mb-1">Farm Management Console</h1>
+            <p class="opacity-75">Review and approve agricultural registrations for AgriCloud.</p>
+        </div>
+        
+        <div class="d-flex gap-4 px-4 mb-4">
+            <div class="agri-status-box">
+                <div class="text-muted small mb-1">Total Farms</div>
+                <div class="h3 fw-bold mb-0 text-dark">{{ farms|length }}</div>
+            </div>
+            <div class="agri-status-box">
+                <div class="text-muted small mb-1">Awaiting Review</div>
+                {% set pending = 0 %}
+                {% for f in farms %}{% if f.status != 'approved' %}{% set pending = pending + 1 %}{% endif %}{% endfor %}
+                <div class="h3 fw-bold mb-0 {% if pending > 0 %}text-warning{% else %}text-success{% endif %}">
+                    {{ pending }}
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th style="width: 50px;">ID</th>
-                    <th>Farm Name</th>
-                    <th>Location</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for farm in farms %}
-                {# Highlight pending rows to grab admin attention #}
-                <tr class="{% if farm.status == 'pending' %}table-warning{% endif %}">
-                    <td>{{ farm.id }}</td>
-                    <td>
-                        <strong>{{ farm.name }}</strong>
-                        <br><small class="text-muted">{{ farm.area }} ha</small>
-                    </td>
-                    <td>{{ farm.location }}</td>
-                    <td>{{ farm.farmType }}</td>
-                    <td>
-                        {% if farm.status == 'approved' %}
-                            <span class="badge bg-success shadow-sm">
-                                <i class="bi bi-check-circle"></i> Approved
-                            </span>
+
+    <div class="agri-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-list-task me-2 text-success"></i>Global List</h5>
+        </div>
+
+        <div class="farm-list-header d-none d-lg-flex mb-3">
+            <div style="flex: 2.5;">Farm Details</div>
+            <div style="flex: 1.5;">Location</div>
+            <div style="flex: 1.5;">Status</div>
+            <div style="flex: 1.5;" class="text-end pe-4">Actions</div>
+        </div>
+
+        {% for farm in farms %}
+            <div class="farm-item-row d-flex align-items-center p-3 mb-3 {% if farm.status != 'approved' %}border-warning-subtle bg-light-subtle{% endif %}">
+                <div class="d-flex align-items-center" style="flex: 2.5;">
+                    <div class="me-3">
+                        {% if farm.image %}
+                            <img src="{{ asset('uploads/farms/' ~ farm.image) }}" class="farm-avatar shadow-sm">
                         {% else %}
-                            <span class="badge bg-warning text-dark shadow-sm">
-                                <i class="bi bi-clock"></i> Pending
-                            </span>
+                            <div class="farm-avatar d-flex align-items-center justify-content-center text-muted border">
+                                <i class="bi bi-tree fs-4"></i>
+                            </div>
                         {% endif %}
-                    </td>
-                    <td class="text-end">
-                        <div class="btn-group shadow-sm">
-                            {# Approval Action: Only visible if pending #}
-                            {% if farm.status == 'pending' %}
-                                <form method="post" action="{{ path('app_farm_approve', {'id': farm.id}) }}" onsubmit="return confirm('Confirm approval for {{ farm.name }}?');" style="display:inline;">
-                                    <button class="btn btn-sm btn-success">Approve</button>
-                                </form>
-                            {% endif %}
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold text-dark">{{ farm.name }}</h6>
+                        <small class="text-muted">{{ farm.area }} ha • {{ farm.farmType }}</small>
+                    </div>
+                </div>
 
-                            <a href="{{ path('app_farm_show', {'id': farm.id}) }}" class="btn btn-sm btn-outline-secondary">Details</a>
+                <div style="flex: 1.5;" class="text-muted small">
+                    <i class="bi bi-geo-alt text-danger me-1"></i>{{ farm.location }}
+                </div>
 
-                            {# Delete Action #}
-                            <form method="post" action="{{ path('app_farm_delete', {'id': farm.id}) }}?from=admin" onsubmit="return confirm('Are you sure you want to reject/delete this farm?');" style="display:inline;">
-                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ farm.id) }}">
-                                <button class="btn btn-sm btn-outline-danger">Delete</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            {% else %}
-                <tr>
-                    <td colspan="6" class="text-center py-5">
-                        <p class="text-muted mb-0">No farms have been registered yet.</p>
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+                <div style="flex: 1.5;">
+                    {% if farm.status == 'approved' %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2">
+                            <i class="bi bi-check-circle me-1"></i>Approved
+                        </span>
+                    {% else %}
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-2">
+                            <i class="bi bi-clock me-1"></i>Pending Review
+                        </span>
+                    {% endif %}
+                </div>
 
-<div class="mt-4">
-    <div class="row text-center">
-        <div class="col-md-4">
-            <div class="p-3 bg-light rounded border">
-                <h6 class="text-muted mb-1">Total Farms</h6>
-                <h3 class="fw-bold">{{ farms|length }}</h3>
+                <div style="flex: 1.5;" class="text-end d-flex justify-content-end align-items-center gap-2">
+                    {% if farm.status != 'approved' %}
+                        <form method="post" action="{{ path('app_farm_approve', {'id': farm.id}) }}">
+                            <button class="btn btn-approve-lg shadow-sm">Approve</button>
+                        </form>
+                    {% endif %}
+                    
+                    <a href="{{ path('app_farm_show', {'id': farm.id}) }}" class="btn btn-action btn-light border shadow-sm text-primary" title="View Details">
+                        <i class="bi bi-eye"></i>
+                    </a>
+
+                    <form method="post" action="{{ path('app_farm_delete', {'id': farm.id}) }}" onsubmit="return confirm('Delete this record permanently?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ farm.id) }}">
+                        <input type="hidden" name="from" value="admin">
+                        <button class="btn btn-action btn-outline-danger shadow-sm" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
             </div>
-        </div>
-        {# Example of filtering counts in Twig #}
-        {% set pending_count = 0 %}
-        {% for f in farms %}{% if f.status == 'pending' %}{% set pending_count = pending_count + 1 %}{% endif %}{% endfor %}
-        <div class="col-md-4">
-            <div class="p-3 bg-light rounded border">
-                <h6 class="text-muted mb-1">Awaiting Review</h6>
-                <h3 class="fw-bold text-warning">{{ pending_count }}</h3>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox display-1 text-light mb-3 d-block"></i>
+                <h5 class="text-muted">No farms found in the database.</h5>
             </div>
-        </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

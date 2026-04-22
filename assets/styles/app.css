@@ -1,3 +1,33 @@
+:root {
+    --agri-dark: #1d3108; /* The dark sidebar green */
+    --agri-lime: #82b414; /* The bright action green */
+    --agri-bg: #f4f7f2;   /* The soft off-white background */
+}
+
 body {
-    background-color: skyblue;
+    background-color: var(--agri-bg);
+    font-family: 'Inter', sans-serif;
+}
+
+/* AgriCloud Custom Card */
+.agri-card {
+    background: white;
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+.agri-btn-lime {
+    background-color: var(--agri-lime);
+    color: white;
+    border-radius: 10px;
+    border: none;
+    padding: 10px 20px;
+    transition: 0.3s;
+}
+
+.agri-btn-lime:hover {
+    background-color: #6d9610;
+    color: white;
 }

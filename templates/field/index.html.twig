@@ -1,45 +1,168 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Field index{% endblock %}
+{% block title %}Field Inventory - AgriCloud{% endblock %}
 
 {% block body %}
-    <h1>Field index</h1>
+<style>
+    :root {
+        --agri-dark: #1d3108; /* Dark forest green header */
+        --agri-lime: #82b414; /* AgriCloud primary green */
+        --agri-bg: #f4f7f2;   /* Soft background tint */
+    }
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Area</th>
-                <th>Soil_type</th>
-                <th>Crop_type</th>
-                <th>Coordinates</th>
-                <th>Status</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
+    body { background-color: var(--agri-bg); }
+
+    .agri-card {
+        background: white;
+        border-radius: 20px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+    }
+
+    .agri-banner {
+        background-color: var(--agri-dark);
+        height: 160px;
+        padding: 2rem;
+        color: white;
+        border-radius: 20px 20px 0 0;
+    }
+
+    .field-item-row {
+        background: white;
+        border: 1px solid #eee;
+        border-radius: 16px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .field-item-row:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+        border-color: var(--agri-lime);
+    }
+
+    .field-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        background-color: #f0f7e6;
+        color: var(--agri-lime);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .badge-soil {
+        background-color: #f8f9fa;
+        color: #555;
+        border: 1px solid #ddd;
+        font-weight: 600;
+        border-radius: 8px;
+    }
+
+    .badge-crop {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+        font-weight: 600;
+        border-radius: 8px;
+    }
+
+    .action-circle {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e0e0e0;
+        background: #fff;
+        color: #555;
+        transition: 0.2s;
+    }
+
+    .action-circle:hover { 
+        background: #f8f9fa; 
+        color: var(--agri-lime); 
+        border-color: var(--agri-lime); 
+    }
+</style>
+
+<div class="container py-4">
+    <div class="agri-card">
+        <div class="agri-banner d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="fw-bold h2 mb-1">Field Inventory</h1>
+                <p class="opacity-75">Detailed overview of your soil types and crop distribution.</p>
+            </div>
+            <a href="{{ path('app_field_new') }}" class="btn btn-light fw-bold rounded-pill px-4 shadow-sm">
+                <i class="bi bi-plus-lg me-2 text-success"></i>Add New Field
+            </a>
+        </div>
+    </div>
+
+    <div class="agri-card p-4">
+        <h5 class="fw-bold mb-4 text-dark">Your Registered Fields</h5>
+
+        {# List Header (Desktop Only) #}
+        <div class="d-none d-lg-flex px-3 py-2 text-muted small fw-bold text-uppercase mb-2">
+            <div style="flex: 2;">Field Name & Area</div>
+            <div style="flex: 1.5;">Soil & Crop Type</div>
+            <div style="flex: 1.5;">Coordinates</div>
+            <div style="flex: 1;" class="text-end pe-4">Actions</div>
+        </div>
+
         {% for field in fields %}
-            <tr>
-                <td>{{ field.id }}</td>
-                <td>{{ field.name }}</td>
-                <td>{{ field.area }}</td>
-                <td>{{ field.soilType }}</td>
-                <td>{{ field.cropType }}</td>
-                <td>{{ field.coordinates }}</td>
-                <td>{{ field.status }}</td>
-                <td>
-                    <a href="{{ path('app_field_show', {'id': field.id}) }}">show</a>
-                    <a href="{{ path('app_field_edit', {'id': field.id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="8">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            <div class="field-item-row shadow-sm">
+                <div class="d-flex align-items-center" style="flex: 2;">
+                    <div class="field-icon me-3">
+                        <i class="bi bi-grid-3x3"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold text-dark">{{ field.name }}</h6>
+                        <small class="text-muted">{{ field.area }} hectares</small>
+                    </div>
+                </div>
 
-    <a href="{{ path('app_field_new') }}">Create new</a>
+                <div style="flex: 1.5;" class="d-flex gap-2">
+                    <span class="badge badge-soil px-3 py-2">{{ field.soilType }}</span>
+                    <span class="badge badge-crop px-3 py-2">{{ field.cropType }}</span>
+                </div>
+
+                <div style="flex: 1.5;" class="text-muted small">
+                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ field.coordinates }}
+                </div>
+
+                <div style="flex: 1;" class="text-end d-flex justify-content-end gap-2">
+                    <a href="{{ path('app_field_show', {'id': field.id}) }}" class="action-circle" title="View">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="{{ path('app_field_edit', {'id': field.id}) }}" class="action-circle" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <form method="post" action="{{ path('app_field_delete', {'id': field.id}) }}" onsubmit="return confirm('Delete this field?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ field.id) }}">
+                        <button class="action-circle text-danger border-danger-subtle">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <div class="mb-3 text-muted opacity-30">
+                    <i class="bi bi-slash-circle display-1"></i>
+                </div>
+                <h5 class="text-muted">No records found</h5>
+                <p class="small text-muted">Register a field to start monitoring production data.</p>
+                <a href="{{ path('app_field_new') }}" class="btn btn-success rounded-pill px-4 mt-2">Create New Field</a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}

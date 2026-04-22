@@ -5,12 +5,13 @@ namespace App\Form;
 use App\Entity\Farm;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\File;
 
 class FarmType extends AbstractType
 {
@@ -23,31 +24,31 @@ class FarmType extends AbstractType
             ])
             ->add('location', ChoiceType::class, [
                 'label' => 'Location (Governorate)',
-                'choices' => [
-                    'Ariana' => 'ariana',
-                    'Beja' => 'beja',
-                    'Ben Arous' => 'ben_arous',
-                    'Bizerte' => 'bizerte',
-                    'Gabes' => 'gabes',
-                    'Gafsa' => 'gafsa',
-                    'Jendouba' => 'jendouba',
-                    'Kairouan' => 'kairouan',
-                    'Kasserine' => 'kasserine',
-                    'Kebili' => 'kebili',
-                    'Kef' => 'kef',
-                    'Mahdia' => 'mahdia',
-                    'Manouba' => 'manouba',
-                    'Medenine' => 'medenine',
-                    'Monastir' => 'monastir',
-                    'Nabeul' => 'nabeul',
-                    'Sfax' => 'sfax',
-                    'Sidi Bouzid' => 'sidi_bouzid',
-                    'Siliana' => 'siliana',
-                    'Sousse' => 'sousse',
-                    'Tataouine' => 'tataouine',
-                    'Tozeur' => 'tozeur',
-                    'Tunis' => 'tunis',
-                    'Zaghouan' => 'zaghouan',
+                'choices'  => [
+                    'Ariana' => 'Ariana',
+                    'Beja' => 'Beja',
+                    'Ben Arous' => 'Ben Arous',
+                    'Bizerte' => 'Bizerte',
+                    'Gabes' => 'Gabes',
+                    'Gafsa' => 'Gafsa',
+                    'Jendouba' => 'Jendouba',
+                    'Kairouan' => 'Kairouan',
+                    'Kasserine' => 'Kasserine',
+                    'Kebili' => 'Kebili',
+                    'Kef' => 'Kef',
+                    'Mahdia' => 'Mahdia',
+                    'Manouba' => 'Manouba',
+                    'Medenine' => 'Medenine',
+                    'Monastir' => 'Monastir',
+                    'Nabeul' => 'Nabeul',
+                    'Sfax' => 'Sfax',
+                    'Sidi Bouzid' => 'Sidi Bouzid',
+                    'Siliana' => 'Siliana',
+                    'Sousse' => 'Sousse',
+                    'Tataouine' => 'Tataouine',
+                    'Tozeur' => 'Tozeur',
+                    'Tunis' => 'Tunis',
+                    'Zaghouan' => 'Zaghouan',
                 ],
             ])
             ->add('latitude', NumberType::class, [
@@ -64,28 +65,37 @@ class FarmType extends AbstractType
             ])
             ->add('farm_type', ChoiceType::class, [
                 'label' => 'Type of the Farm',
-                'choices' => [
+                'choices'  => [
                     'Arable' => 'Arable',
-                    'Vegetable' => 'Vegetable',
+                    'Pastoral' => 'Pastoral',
+                    'Mixed' => 'Mixed',
                     'Orchard' => 'Orchard',
-                    'Herb' => 'Herb',
-                    'Flower' => 'Flower',
-                    'Organic' => 'Organic',
-                    'Hydroponic' => 'Hydroponic',
-                    'Vertical' => 'Vertical',
+                    'Vegetable' => 'Vegetable',
+                    'Vineyard' => 'Vineyard',
                 ],
             ])
             ->add('description', TextareaType::class, [
                 'attr' => ['rows' => 5]
             ])
-            // Using TextType for image path for now; change to FileType if uploading actual files
-            ->add('image', TextType::class, [
+            ->add('image', FileType::class, [
+                'label' => 'Farm Photo (Upload from PC)',
+                // This field is not mapped to any Entity property directly 
+                // because we handle the file upload manually in the controller
+                'mapped' => false,
                 'required' => false,
-                'label' => 'Image URL/Path'
+                'constraints' => [
+                    new File([
+                        'maxSize' => '5M',
+                        'mimeTypes' => [
+                            'image/jpeg',
+                            'image/png',
+                            'image/webp',
+                        ],
+                        'mimeTypesMessage' => 'Please upload a valid image (JPEG, PNG or WEBP)',
+                    ])
+                ],
             ])
-            ->add('status', HiddenType::class, [
-                'data' => 'pending',
-            ]);
+        ;
     }
 
     public function configureOptions(OptionsResolver $resolver): void
