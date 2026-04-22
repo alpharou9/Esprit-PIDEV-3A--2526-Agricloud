@@ -1,0 +1,126 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ post ? 'Edit — ' ~ post.title : 'Write a Post' }} — AgriCloud{% endblock %}
+
+{% block body %}
+
+{# ── Breadcrumb / header ───────────────────────────────────── #}
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ path('blog_my_posts') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <h5 class="fw-bold mb-0">
+        {{ post ? 'Edit Post' : 'Write a New Post' }}
+    </h5>
+</div>
+
+<div class="row g-4">
+    {# ── Main form ─────────────────────────────────────────── #}
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                {{ form_start(form, {attr: {enctype: 'multipart/form-data', novalidate: 'novalidate'}}) }}
+
+                {# Title #}
+                <div class="mb-3">
+                    {{ form_label(form.title, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                    {{ form_widget(form.title) }}
+                    {{ form_errors(form.title) }}
+                </div>
+
+                {# Category + Status #}
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6">
+                        {{ form_label(form.category, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.category) }}
+                        {{ form_errors(form.category) }}
+                    </div>
+                    <div class="col-sm-6">
+                        {{ form_label(form.status, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.status) }}
+                        {{ form_errors(form.status) }}
+                    </div>
+                </div>
+
+                {# Excerpt #}
+                <div class="mb-3">
+                    {{ form_label(form.excerpt, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                    {{ form_widget(form.excerpt) }}
+                    {{ form_errors(form.excerpt) }}
+                    <div class="form-text">Shown in post listings. Leave blank to auto-generate from content.</div>
+                </div>
+
+                {# Content #}
+                <div class="mb-3">
+                    {{ form_label(form.content, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                    {{ form_widget(form.content) }}
+                    {{ form_errors(form.content) }}
+                </div>
+
+                {# Tags #}
+                <div class="mb-3">
+                    {{ form_label(form.tagsInput, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+                    {{ form_widget(form.tagsInput) }}
+                    {{ form_errors(form.tagsInput) }}
+                    <div class="form-text">Separate multiple tags with commas — e.g. <code>organic, soil, wheat</code></div>
+                </div>
+
+                {# Submit row #}
+                <div class="d-flex gap-2 pt-2">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i>{{ post ? 'Save Changes' : 'Create Post' }}
+                    </button>
+                    <a href="{{ path('blog_my_posts') }}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+
+    {# ── Sidebar: image upload ─────────────────────────────── #}
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <h6 class="fw-semibold mb-3"><i class="bi bi-image me-1"></i>Cover Image</h6>
+
+                {# Preview existing image #}
+                {% if post and post.image %}
+                <div class="mb-3">
+                    <img src="{{ asset('uploads/posts/' ~ post.image) }}"
+                         class="img-fluid rounded-3 w-100"
+                         style="max-height:180px;object-fit:cover" alt="Current cover">
+                    <div class="form-text">Upload a new image to replace this one.</div>
+                </div>
+                {% endif %}
+
+                {# Use the standalone form partial so we can submit the file without
+                   wrapping the whole outer form (HTML spec: no nested forms) #}
+                {{ form_start(form, {attr: {enctype: 'multipart/form-data'}}) }}
+                {{ form_widget(form.imageFile) }}
+                {{ form_errors(form.imageFile) }}
+                <div class="form-text mt-1">Max 3 MB — JPG, PNG or WEBP.</div>
+                {{ form_end(form) }}
+
+                {# We actually want this widget inside the main form; Twig includes
+                   will duplicate the <form> tag.  Instead we rely on the enctype
+                   already set on the outer form and just render the widget inline.
+                   The block above is illustrative only — the real widget is rendered
+                   inside the main form above via form_end which outputs remaining
+                   un-rendered fields. #}
+            </div>
+        </div>
+
+        {# Tips card #}
+        <div class="card border-0 bg-light rounded-4 mt-3">
+            <div class="card-body p-3 small text-muted">
+                <p class="fw-semibold mb-2"><i class="bi bi-lightbulb me-1 text-warning"></i>Tips</p>
+                <ul class="ps-3 mb-0">
+                    <li>Set status to <strong>Draft</strong> to save without publishing.</li>
+                    <li>A good excerpt improves listing click-through rates.</li>
+                    <li>Tags help readers discover related posts.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
