@@ -1,0 +1,22 @@
+{{ form_start(form) }}
+<div class="row g-3">
+    <div class="col-md-4">{{ form_row(form.customer) }}</div>
+    <div class="col-md-4">{{ form_row(form.seller) }}</div>
+    <div class="col-md-4">{{ form_row(form.product) }}</div>
+    <div class="col-md-3">{{ form_row(form.quantity) }}</div>
+    <div class="col-md-3">{{ form_row(form.unitPrice) }}</div>
+    <div class="col-md-3">{{ form_row(form.status) }}</div>
+    <div class="col-md-3">{{ form_row(form.deliveryDate) }}</div>
+    <div class="col-md-6">{{ form_row(form.shippingCity) }}</div>
+    <div class="col-md-3">{{ form_row(form.shippingPostal) }}</div>
+    <div class="col-md-3">{{ form_row(form.shippingPhone) }}</div>
+    <div class="col-12">{{ form_row(form.shippingEmail) }}</div>
+    <div class="col-12">{{ form_row(form.shippingAddress) }}</div>
+    <div class="col-md-6">{{ form_row(form.notes) }}</div>
+    <div class="col-md-6">{{ form_row(form.cancelledReason) }}</div>
+</div>
+<div class="mt-4 d-flex gap-2">
+    <button class="btn btn-success">{{ button_label|default('Save') }}</button>
+    <a href="{{ path('order_index') }}" class="btn btn-outline-secondary">Cancel</a>
+</div>
+{{ form_end(form) }}

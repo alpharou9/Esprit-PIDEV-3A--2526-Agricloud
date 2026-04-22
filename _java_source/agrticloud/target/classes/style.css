@@ -1,0 +1,1089 @@
+/* ===== AgriCloud Modern Theme ===== */
+
+/* ---------- ROOT & GLOBAL (Light Theme) ---------- */
+.root {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-font-size: 13px;
+    -fx-background-color: -agri-bg;
+
+    /* Light theme colors */
+    -agri-bg: #F5F7F5;
+    -agri-card: #FFFFFF;
+    -agri-card-hover: #FAFCFA;
+    -agri-text: #212121;
+    -agri-text-muted: #757575;
+    -agri-border: #E0E0E0;
+    -agri-green: #2E7D32;
+    -agri-green-light: #4CAF50;
+    -agri-green-dark: #1B5E20;
+    -agri-green-hover: #388E3C;
+    -agri-green-bg: #E8F5E9;
+    -agri-sidebar: #1B3A1D;
+    -agri-sidebar-hover: #2E5731;
+    -agri-sidebar-active: #2E7D32;
+    -agri-input-bg: #FFFFFF;
+    -agri-input-border: #E0E0E0;
+    -agri-shadow: rgba(0,0,0,0.06);
+}
+
+/* ---------- DARK THEME ---------- */
+.root.theme-dark {
+    -agri-bg: #1a1a2e;
+    -agri-card: #16213e;
+    -agri-card-hover: #1a2745;
+    -agri-text: #e0e0e0;
+    -agri-text-muted: #9e9e9e;
+    -agri-border: #2a2a4a;
+    -agri-green: #4CAF50;
+    -agri-green-light: #66BB6A;
+    -agri-green-dark: #2E7D32;
+    -agri-green-hover: #56C05A;
+    -agri-green-bg: rgba(76,175,80,0.15);
+    -agri-sidebar: #0f0f23;
+    -agri-sidebar-hover: #1a1a3e;
+    -agri-sidebar-active: #4CAF50;
+    -agri-input-bg: #1a2745;
+    -agri-input-border: #2a2a4a;
+    -agri-shadow: rgba(0,0,0,0.3);
+}
+
+/* ---------- SIDEBAR ---------- */
+.sidebar {
+    -fx-background-color: -agri-sidebar;
+    -fx-padding: 0;
+    -fx-min-width: 220;
+    -fx-max-width: 220;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 2, 0);
+}
+
+.sidebar-logo {
+    -fx-padding: 24 20 20 20;
+    -fx-background-color: rgba(0,0,0,0.12);
+}
+
+.sidebar-logo .label {
+    -fx-text-fill: white;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.sidebar-logo .label.subtitle {
+    -fx-text-fill: #81C784;
+    -fx-font-size: 11px;
+    -fx-font-weight: normal;
+}
+
+.sidebar-menu {
+    -fx-padding: 12 0 0 0;
+    -fx-spacing: 2;
+}
+
+.menu-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #B0BEC5;
+    -fx-font-size: 13.5px;
+    -fx-padding: 12 20 12 24;
+    -fx-alignment: CENTER-LEFT;
+    -fx-cursor: hand;
+    -fx-background-radius: 0;
+    -fx-border-width: 0 0 0 3;
+    -fx-border-color: transparent;
+    -fx-max-width: 10000;
+    -fx-min-width: 220;
+}
+
+.menu-item:hover {
+    -fx-background-color: -agri-sidebar-hover;
+    -fx-text-fill: white;
+}
+
+.menu-item-active {
+    -fx-background-color: rgba(46,125,50,0.25);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-border-color: -agri-green-light;
+    -fx-border-width: 0 0 0 3;
+}
+
+.menu-item-active:hover {
+    -fx-background-color: rgba(46,125,50,0.35);
+    -fx-text-fill: white;
+}
+
+/* ---------- CONTENT AREA ---------- */
+.content-area {
+    -fx-background-color: -agri-bg;
+    -fx-padding: 0;
+}
+
+.page-header {
+    -fx-background-color: -agri-card;
+    -fx-padding: 20 28 16 28;
+    -fx-border-color: -agri-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.page-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -agri-text;
+}
+
+.page-subtitle {
+    -fx-font-size: 12.5px;
+    -fx-text-fill: -agri-text-muted;
+    -fx-padding: 2 0 0 0;
+}
+
+.page-body {
+    -fx-padding: 20 28 20 28;
+    -fx-spacing: 16;
+}
+
+/* ---------- CARDS ---------- */
+.card {
+    -fx-background-color: -agri-card;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: -agri-border;
+    -fx-border-width: 1;
+    -fx-padding: 18;
+    -fx-effect: dropshadow(gaussian, -agri-shadow, 4, 0, 0, 1);
+}
+
+.card:hover {
+    -fx-effect: dropshadow(gaussian, -agri-shadow, 8, 0, 0, 2);
+}
+
+.card-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -agri-text;
+    -fx-padding: 0 0 10 0;
+}
+
+/* ---------- FORM ---------- */
+.form-grid {
+    -fx-hgap: 12;
+    -fx-vgap: 10;
+}
+
+.form-label {
+    -fx-text-fill: -agri-text;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.text-field, .text-area, .combo-box, .date-picker {
+    -fx-background-color: -agri-input-bg;
+    -fx-border-color: -agri-input-border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 7 10 7 10;
+    -fx-font-size: 12.5px;
+    -fx-text-fill: -agri-text;
+}
+
+.text-field:focused, .text-area:focused, .combo-box:focused, .date-picker:focused {
+    -fx-border-color: -agri-green-light;
+    -fx-effect: dropshadow(gaussian, rgba(76,175,80,0.2), 6, 0, 0, 0);
+}
+
+.text-area {
+    -fx-padding: 6 8 6 8;
+}
+
+.text-area .content {
+    -fx-background-color: -agri-input-bg;
+    -fx-background-radius: 6;
+}
+
+.combo-box .list-cell {
+    -fx-padding: 4 8 4 8;
+    -fx-text-fill: -agri-text;
+}
+
+.combo-box .list-view {
+    -fx-background-color: -agri-card;
+}
+
+.combo-box .list-view .list-cell {
+    -fx-background-color: -agri-card;
+    -fx-text-fill: -agri-text;
+}
+
+.combo-box .list-view .list-cell:hover {
+    -fx-background-color: -agri-green-bg;
+}
+
+.price-label {
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+    -fx-text-fill: -agri-green;
+    -fx-padding: 4 0 4 4;
+}
+
+/* ---------- INLINE VALIDATION ---------- */
+.field-error {
+    -fx-border-color: #E53935;
+    -fx-effect: dropshadow(gaussian, rgba(229,57,53,0.2), 6, 0, 0, 0);
+}
+
+.error-message {
+    -fx-text-fill: #E53935;
+    -fx-font-size: 10.5px;
+    -fx-padding: 2 0 0 2;
+}
+
+/* ---------- BUTTONS ---------- */
+.btn-bar {
+    -fx-spacing: 10;
+    -fx-padding: 6 0 0 0;
+}
+
+.btn-primary {
+    -fx-background-color: -agri-green;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 22 8 22;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-font-size: 12.5px;
+}
+
+.btn-primary:hover {
+    -fx-background-color: -agri-green-hover;
+    -fx-effect: dropshadow(gaussian, rgba(76,175,80,0.3), 6, 0, 0, 2);
+}
+
+.btn-primary:pressed {
+    -fx-background-color: -agri-green-dark;
+    -fx-effect: dropshadow(gaussian, rgba(76,175,80,0.1), 2, 0, 0, 1);
+}
+
+.btn-success {
+    -fx-background-color: #43A047;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 22 8 22;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-font-size: 12.5px;
+}
+
+.btn-success:hover {
+    -fx-background-color: #388E3C;
+    -fx-effect: dropshadow(gaussian, rgba(67,160,71,0.3), 6, 0, 0, 2);
+}
+
+.btn-warning {
+    -fx-background-color: #FB8C00;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 22 8 22;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-font-size: 12.5px;
+}
+
+.btn-warning:hover {
+    -fx-background-color: #EF6C00;
+    -fx-effect: dropshadow(gaussian, rgba(251,140,0,0.3), 6, 0, 0, 2);
+}
+
+.btn-danger {
+    -fx-background-color: #E53935;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 22 8 22;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-font-size: 12.5px;
+}
+
+.btn-danger:hover {
+    -fx-background-color: #C62828;
+    -fx-effect: dropshadow(gaussian, rgba(229,57,53,0.3), 6, 0, 0, 2);
+}
+
+.btn-secondary {
+    -fx-background-color: -agri-card;
+    -fx-text-fill: -agri-text-muted;
+    -fx-font-weight: bold;
+    -fx-padding: 8 22 8 22;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-font-size: 12.5px;
+    -fx-border-color: -agri-border;
+    -fx-border-radius: 6;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: -agri-green-bg;
+    -fx-border-color: -agri-green-light;
+}
+
+/* Small icon button for card actions */
+.btn-icon {
+    -fx-background-color: transparent;
+    -fx-text-fill: -agri-text-muted;
+    -fx-font-size: 13px;
+    -fx-padding: 4 8 4 8;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+    -fx-border-radius: 6;
+}
+
+.btn-icon:hover {
+    -fx-background-color: -agri-green-bg;
+    -fx-text-fill: -agri-green;
+}
+
+.btn-icon-danger:hover {
+    -fx-background-color: #FFEBEE;
+    -fx-text-fill: #E53935;
+}
+
+/* ---------- DASHBOARD ---------- */
+.stat-card {
+    -fx-background-color: -agri-card;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: -agri-border;
+    -fx-border-width: 1;
+    -fx-padding: 22 24 22 24;
+    -fx-min-width: 180;
+    -fx-effect: dropshadow(gaussian, -agri-shadow, 4, 0, 0, 1);
+}
+
+.stat-card:hover {
+    -fx-effect: dropshadow(gaussian, -agri-shadow, 10, 0, 0, 3);
+}
+
+.stat-icon-circle {
+    -fx-min-width: 42;
+    -fx-min-height: 42;
+    -fx-max-width: 42;
+    -fx-max-height: 42;
+    -fx-background-radius: 21;
+    -fx-alignment: CENTER;
+}
+
+.stat-icon-letter {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.stat-value {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -agri-text;
+}
+
+.stat-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: -agri-text-muted;
+    -fx-padding: 2 0 0 0;
+}
+
+.stat-name {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -agri-text;
+    -fx-padding: 4 0 0 0;
+}
+
+/* ---------- SETTINGS ---------- */
+.settings-section {
+    -fx-padding: 16;
+    -fx-spacing: 12;
+}
+
+.settings-row {
+    -fx-spacing: 12;
+    -fx-alignment: CENTER-LEFT;
+}
+
+/* Toggle switch styling */
+.toggle-btn {
+    -fx-background-color: #BDBDBD;
+    -fx-background-radius: 14;
+    -fx-padding: 3 28 3 8;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-min-width: 56;
+    -fx-min-height: 28;
+}
+
+.toggle-btn:selected {
+    -fx-background-color: -agri-green;
+    -fx-padding: 3 8 3 28;
+}
+
+/* ---------- SEARCH & FILTER ---------- */
+.search-bar {
+    -fx-padding: 8 0 8 0;
+    -fx-spacing: 12;
+}
+
+.search-field {
+    -fx-background-color: -agri-input-bg;
+    -fx-border-color: -agri-input-border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 7 10 7 10;
+    -fx-font-size: 12.5px;
+    -fx-text-fill: -agri-text;
+}
+
+.search-field:focused {
+    -fx-border-color: -agri-green-light;
+    -fx-effect: dropshadow(gaussian, rgba(76,175,80,0.2), 6, 0, 0, 0);
+}
+
+.filter-combo {
+    -fx-background-color: -agri-input-bg;
+    -fx-border-color: -agri-input-border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 4 8 4 8;
+    -fx-min-width: 140;
+}
+
+/* ---------- IMAGE UPLOAD ---------- */
+.image-upload-box {
+    -fx-background-color: -agri-green-bg;
+    -fx-border-color: -agri-border;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 12;
+    -fx-spacing: 8;
+}
+
+.image-frame {
+    -fx-background-color: -agri-bg;
+    -fx-border-color: -agri-border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-border-style: dashed;
+    -fx-border-width: 1.5;
+}
+
+.image-placeholder-text {
+    -fx-text-fill: -agri-text-muted;
+    -fx-font-size: 11px;
+    -fx-font-style: italic;
+}
+
+.image-path-label {
+    -fx-text-fill: -agri-text-muted;
+    -fx-font-size: 10px;
+    -fx-wrap-text: true;
+    -fx-max-width: 150;
+    -fx-alignment: CENTER;
+}
+
+.btn-upload {
+    -fx-background-color: -agri-green;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 12 6 12;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.btn-upload:hover {
+    -fx-background-color: -agri-green-hover;
+}
+
+.btn-remove-img {
+    -fx-background-color: -agri-card;
+    -fx-text-fill: #E53935;
+    -fx-font-size: 11px;
+    -fx-padding: 5 12 5 12;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-border-color: -agri-border;
+    -fx-border-radius: 6;
+}
+
+.btn-remove-img:hover {
+    -fx-background-color: #FFEBEE;
+    -fx-border-color: #E53935;
+}
+
+/* ---------- PRODUCT CARDS ---------- */
+.product-grid {
+    -fx-hgap: 16;
+    -fx-vgap: 16;
+    -fx-padding: 4 0 4 0;
+}
+
+.product-card {
+    -fx-background-color: -agri-card;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: -agri-border;
+    -fx-border-width: 1;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, -agri-shadow, 4, 0, 0, 2);
+    -fx-min-width: 185;
+    -fx-pref-width: 185;
+    -fx-max-width: 185;
+}
+
+.product-card:hover {
+    -fx-border-color: -agri-green-light;
+    -fx-effect: dropshadow(gaussian, rgba(76,175,80,0.2), 10, 0, 0, 3);
+}
+
+.product-card-selected {
+    -fx-border-color: -agri-green;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(46,125,50,0.3), 12, 0, 0, 3);
+}
+
+.product-card-image {
+    -fx-background-color: -agri-bg;
+    -fx-background-radius: 12 12 0 0;
+    -fx-min-height: 120;
+    -fx-pref-height: 120;
+    -fx-max-height: 120;
+    -fx-alignment: CENTER;
+}
+
+.product-card-image .image-placeholder-text {
+    -fx-font-size: 28px;
+    -fx-text-fill: -agri-text-muted;
+}
+
+.product-card-info {
+    -fx-padding: 10 12 6 12;
+    -fx-spacing: 4;
+}
+
+.product-card-name {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -agri-text;
+    -fx-wrap-text: false;
+}
+
+.product-card-price {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -agri-green;
+}
+
+/* Category color chips */
+.category-chip {
+    -fx-font-size: 10px;
+    -fx-text-fill: white;
+    -fx-background-radius: 4;
+    -fx-padding: 2 8 2 8;
+    -fx-font-weight: bold;
+}
+
+.category-fruits { -fx-background-color: #E91E63; }
+.category-vegetables { -fx-background-color: #4CAF50; }
+.category-grains { -fx-background-color: #FF9800; }
+.category-dairy { -fx-background-color: #2196F3; }
+.category-livestock { -fx-background-color: #795548; }
+.category-other { -fx-background-color: #9E9E9E; }
+
+/* Status badges */
+.status-badge {
+    -fx-font-size: 10px;
+    -fx-text-fill: white;
+    -fx-background-radius: 4;
+    -fx-padding: 2 8 2 8;
+    -fx-font-weight: bold;
+}
+
+.status-pending { -fx-background-color: #9E9E9E; }
+.status-approved { -fx-background-color: #4CAF50; }
+.status-rejected { -fx-background-color: #E53935; }
+.status-sold_out { -fx-background-color: #FF5722; }
+.status-confirmed { -fx-background-color: #FB8C00; }
+.status-processing { -fx-background-color: #FB8C00; }
+.status-shipped { -fx-background-color: #2196F3; }
+.status-delivered { -fx-background-color: #4CAF50; }
+.status-cancelled { -fx-background-color: #E53935; }
+
+/* Low stock warning badge */
+.low-stock-badge {
+    -fx-background-color: #FF9800;
+    -fx-text-fill: white;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 3;
+    -fx-padding: 1 6 1 6;
+}
+
+/* Card action bar */
+.card-actions {
+    -fx-padding: 4 8 8 8;
+    -fx-spacing: 4;
+    -fx-alignment: CENTER;
+    -fx-border-color: -agri-border;
+    -fx-border-width: 1 0 0 0;
+}
+
+.product-card-status {
+    -fx-font-size: 10px;
+    -fx-text-fill: -agri-text-muted;
+}
+
+/* ---------- ORDER CARDS ---------- */
+.order-card {
+    -fx-background-color: -agri-card;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: -agri-border;
+    -fx-border-width: 1;
+    -fx-padding: 14 18 14 18;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, -agri-shadow, 4, 0, 0, 1);
+}
+
+.order-card:hover {
+    -fx-border-color: -agri-green-light;
+    -fx-effect: dropshadow(gaussian, rgba(76,175,80,0.15), 8, 0, 0, 2);
+}
+
+.order-card-selected {
+    -fx-border-color: -agri-green;
+    -fx-border-width: 2;
+}
+
+/* ---------- EMPTY STATE ---------- */
+.empty-state {
+    -fx-alignment: CENTER;
+    -fx-padding: 60 20 60 20;
+    -fx-spacing: 12;
+}
+
+.empty-state-icon {
+    -fx-font-size: 48px;
+    -fx-text-fill: -agri-border;
+}
+
+.empty-state-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -agri-text-muted;
+}
+
+.empty-state-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: -agri-text-muted;
+}
+
+.empty-grid-label {
+    -fx-text-fill: -agri-text-muted;
+    -fx-font-size: 14px;
+    -fx-font-style: italic;
+    -fx-padding: 40 0 40 0;
+}
+
+/* ---------- TOAST NOTIFICATIONS ---------- */
+.toast {
+    -fx-background-radius: 8;
+    -fx-padding: 12 20 12 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 3);
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.toast-success {
+    -fx-background-color: #43A047;
+    -fx-text-fill: white;
+}
+
+.toast-error {
+    -fx-background-color: #E53935;
+    -fx-text-fill: white;
+}
+
+.toast-warning {
+    -fx-background-color: #FB8C00;
+    -fx-text-fill: white;
+}
+
+.toast-info {
+    -fx-background-color: #2196F3;
+    -fx-text-fill: white;
+}
+
+/* ---------- DRAWER ---------- */
+.drawer-backdrop {
+    -fx-background-color: rgba(0,0,0,0.18);
+}
+
+.drawer-panel {
+    -fx-background-color: -agri-card;
+    -fx-border-color: -agri-border;
+    -fx-border-width: 0 0 0 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 12, 0, -3, 0);
+    -fx-min-width: 370;
+    -fx-max-width: 370;
+    -fx-pref-width: 370;
+}
+
+.drawer-header {
+    -fx-padding: 16 20 12 20;
+    -fx-border-color: -agri-border;
+    -fx-border-width: 0 0 1 0;
+    -fx-background-color: -agri-card;
+}
+
+.drawer-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -agri-text;
+}
+
+.drawer-close {
+    -fx-background-color: transparent;
+    -fx-text-fill: -agri-text-muted;
+    -fx-font-size: 18px;
+    -fx-padding: 2 8 2 8;
+    -fx-cursor: hand;
+    -fx-background-radius: 6;
+}
+
+.drawer-close:hover {
+    -fx-background-color: -agri-green-bg;
+    -fx-text-fill: -agri-text;
+}
+
+.drawer-body {
+    -fx-padding: 16 20 16 20;
+    -fx-spacing: 12;
+}
+
+.drawer-section-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -agri-text-muted;
+    -fx-padding: 6 0 2 0;
+}
+
+.drawer-field-row {
+    -fx-spacing: 10;
+}
+
+.drawer-field-col {
+    -fx-spacing: 3;
+}
+
+.drawer-actions {
+    -fx-padding: 12 20 16 20;
+    -fx-spacing: 8;
+    -fx-alignment: CENTER-RIGHT;
+    -fx-border-color: -agri-border;
+    -fx-border-width: 1 0 0 0;
+    -fx-background-color: -agri-card;
+}
+
+.btn-link-danger {
+    -fx-background-color: transparent;
+    -fx-text-fill: #E53935;
+    -fx-font-size: 12px;
+    -fx-padding: 6 12 6 12;
+    -fx-cursor: hand;
+    -fx-background-radius: 6;
+}
+
+.btn-link-danger:hover {
+    -fx-background-color: #FFEBEE;
+}
+
+/* ---------- SCROLLBAR STYLING ---------- */
+.products-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.products-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical .thumb,
+.scroll-bar:horizontal .thumb {
+    -fx-background-color: #C5CAC5;
+    -fx-background-radius: 10;
+}
+
+.scroll-bar:vertical .thumb:hover,
+.scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: #9E9E9E;
+}
+
+.scroll-bar:vertical .track,
+.scroll-bar:horizontal .track {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical .increment-button,
+.scroll-bar:vertical .decrement-button,
+.scroll-bar:horizontal .increment-button,
+.scroll-bar:horizontal .decrement-button {
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical .increment-arrow,
+.scroll-bar:vertical .decrement-arrow,
+.scroll-bar:horizontal .increment-arrow,
+.scroll-bar:horizontal .decrement-arrow {
+    -fx-shape: "";
+    -fx-padding: 0;
+}
+
+/* ---------- TABLE (kept for compatibility) ---------- */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: -agri-border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -agri-green-bg;
+    -fx-background-radius: 6 6 0 0;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent -agri-border transparent;
+    -fx-padding: 8 12 8 12;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: -agri-green-dark;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.table-view .table-row-cell {
+    -fx-background-color: -agri-card;
+    -fx-border-color: transparent transparent -agri-border transparent;
+    -fx-padding: 0;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: -agri-green-bg;
+}
+
+.table-view .table-cell {
+    -fx-padding: 8 12 8 12;
+    -fx-text-fill: -agri-text;
+    -fx-font-size: 12.5px;
+}
+
+/* ---------- QUICK START GUIDE ---------- */
+.guide-step {
+    -fx-text-fill: -agri-text-muted;
+    -fx-font-size: 13px;
+    -fx-padding: 2 0 2 8;
+}
+
+/* ---------- DB STATUS ---------- */
+.status-connected {
+    -fx-text-fill: #4CAF50;
+    -fx-font-weight: bold;
+}
+
+.status-disconnected {
+    -fx-text-fill: #E53935;
+    -fx-font-weight: bold;
+}
+
+/* ---------- SURFACE (drawer / overlay panels) ---------- */
+.root {
+    -agri-surface: #FFFFFF;
+}
+.root.theme-dark {
+    -agri-surface: #16213e;
+}
+
+/* ---------- CATEGORY BADGES ---------- */
+.category-badge {
+    -fx-background-radius: 4;
+    -fx-padding: 2 8 2 8;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+.cat-fruits     { -fx-background-color: #E53935; }
+.cat-vegetables { -fx-background-color: #43A047; }
+.cat-grains     { -fx-background-color: #FB8C00; }
+.cat-dairy      { -fx-background-color: #039BE5; }
+.cat-livestock  { -fx-background-color: #8E24AA; }
+.cat-other      { -fx-background-color: #546E7A; }
+
+/* ---------- LOW STOCK BADGE ---------- */
+.badge-low-stock {
+    -fx-background-color: #FB8C00;
+    -fx-text-fill: white;
+    -fx-background-radius: 4;
+    -fx-padding: 1 6 1 6;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+/* ---------- ADDITIONAL STATUS BADGES ---------- */
+.status-sold_out   { -fx-background-color: #757575; }
+.status-confirmed  { -fx-background-color: #1E88E5; }
+.status-processing { -fx-background-color: #8E24AA; }
+.status-shipped    { -fx-background-color: #00ACC1; }
+.status-delivered  { -fx-background-color: #43A047; }
+.status-cancelled  { -fx-background-color: #E53935; }
+
+/* ================================================================
+   FEATURE: EXCHANGE RATE / CURRENCY TOGGLE
+   ================================================================ */
+
+.currency-toggle-group {
+    -fx-background-color: -agri-border;
+    -fx-background-radius: 6;
+    -fx-padding: 2;
+}
+
+.currency-btn-left {
+    -fx-background-color: transparent;
+    -fx-text-fill: -agri-text-muted;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 12 4 12;
+    -fx-background-radius: 4 0 0 4;
+    -fx-cursor: hand;
+}
+.currency-btn-right {
+    -fx-background-color: transparent;
+    -fx-text-fill: -agri-text-muted;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 12 4 12;
+    -fx-background-radius: 0 4 4 0;
+    -fx-cursor: hand;
+}
+.currency-btn-left:selected,
+.currency-btn-right:selected {
+    -fx-background-color: -agri-green;
+    -fx-text-fill: white;
+}
+.currency-btn-left:hover,
+.currency-btn-right:hover {
+    -fx-background-color: -agri-green-bg;
+}
+
+.rate-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: -agri-text-muted;
+    -fx-padding: 0 0 4 0;
+}
+
+/* ================================================================
+   FEATURE: NOTIFICATION BELL
+   ================================================================ */
+
+.bell-pane {
+    -fx-cursor: hand;
+}
+
+.bell-btn {
+    -fx-background-color: rgba(255,255,255,0.08);
+    -fx-text-fill: #AAAAAA;
+    -fx-font-size: 13px;
+    -fx-padding: 9 14 9 14;
+    -fx-background-radius: 8;
+    -fx-alignment: CENTER_LEFT;
+    -fx-cursor: hand;
+}
+.bell-btn:hover {
+    -fx-background-color: rgba(255,255,255,0.18);
+    -fx-text-fill: white;
+}
+
+.bell-badge {
+    -fx-background-color: #E53935;
+    -fx-text-fill: white;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-min-width: 17;
+    -fx-min-height: 17;
+    -fx-max-width: 17;
+    -fx-max-height: 17;
+    -fx-background-radius: 10;
+    -fx-alignment: CENTER;
+    /* position top-right of the StackPane */
+    -fx-translate-x: 14;
+    -fx-translate-y: -8;
+}
+
+/* ================================================================
+   FEATURE: ANALYTICS PAGE
+   ================================================================ */
+
+/* Period selector buttons */
+.period-btn {
+    -fx-background-color: -agri-border;
+    -fx-text-fill: -agri-text-muted;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 12 4 12;
+    -fx-background-radius: 5;
+    -fx-cursor: hand;
+}
+.period-btn:hover {
+    -fx-background-color: -agri-green-bg;
+    -fx-text-fill: -agri-green;
+}
+.period-btn-active {
+    -fx-background-color: -agri-green;
+    -fx-text-fill: white;
+}
+
+/* JavaFX chart dark-mode overrides (applied via CSS variables) */
+.chart-plot-background   { -fx-background-color: -agri-card; }
+.chart-background        { -fx-background-color: transparent; }
+.chart-content           { -fx-background-color: transparent; }
+.chart-legend            { -fx-background-color: transparent; }
+.chart-vertical-grid-lines   { -fx-stroke: -agri-border; }
+.chart-horizontal-grid-lines { -fx-stroke: -agri-border; }
+.chart-alternative-row-fill  { -fx-fill: transparent; -fx-stroke: transparent; }
+.chart-title             { -fx-text-fill: -agri-text; }
+.axis-label              { -fx-text-fill: -agri-text-muted; }
+.axis                    { -fx-tick-label-fill: -agri-text-muted; }
+
+/* Line chart series colour */
+.default-color0.chart-series-line { -fx-stroke: #4CAF50; -fx-stroke-width: 2.5px; }
+.default-color0.chart-line-symbol { -fx-background-color: #4CAF50, white; }
+
+/* Bar chart series colour */
+.default-color0.chart-bar { -fx-bar-fill: #4CAF50; }
+
+/* Pie chart slice colours */
+.default-color0.chart-pie { -fx-pie-color: #4CAF50; }
+.default-color1.chart-pie { -fx-pie-color: #2196F3; }
+.default-color2.chart-pie { -fx-pie-color: #FB8C00; }
+.default-color3.chart-pie { -fx-pie-color: #9C27B0; }
+.default-color4.chart-pie { -fx-pie-color: #00BCD4; }
+.default-color5.chart-pie { -fx-pie-color: #E53935; }
+
+/* ---------- WEATHER STRIP ---------- */
+.weather-strip {
+    -fx-text-fill: -agri-text-muted;
+    -fx-font-size: 12px;
+    -fx-padding: 4 10 4 10;
+    -fx-background-color: -agri-green-bg;
+    -fx-background-radius: 12;
+}

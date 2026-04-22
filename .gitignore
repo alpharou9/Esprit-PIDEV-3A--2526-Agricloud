@@ -11,3 +11,6 @@
 ###> symfony/asset-mapper ###
 /public/assets/
 ###< symfony/asset-mapper ###
+
+Agricloud.sql
+backup_before_import.sql

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="org.example.controller.DashboardController"
+      style="-fx-background-color: -agri-bg;">
+
+    <!-- ToggleGroup must be defined at root level so $currencyGroup resolves correctly -->
+    <fx:define>
+        <ToggleGroup fx:id="currencyGroup"/>
+    </fx:define>
+
+    <!-- Header -->
+    <VBox spacing="2" styleClass="page-header">
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="Dashboard" styleClass="page-title"/>
+                <Label text="Welcome back! Here's your farm overview." styleClass="page-subtitle"/>
+            </VBox>
+            <!-- Weather strip -->
+            <Label fx:id="weatherLabel" text="" styleClass="weather-strip"/>
+            <!-- Currency toggle -->
+            <HBox spacing="0" styleClass="currency-toggle-group" alignment="CENTER">
+                <ToggleButton fx:id="usdBtn" text="USD" toggleGroup="$currencyGroup"
+                              styleClass="currency-btn-left" selected="true"
+                              onAction="#onCurrencyToggle"/>
+                <ToggleButton fx:id="tndBtn" text="TND" toggleGroup="$currencyGroup"
+                              styleClass="currency-btn-right"
+                              onAction="#onCurrencyToggle"/>
+            </HBox>
+        </HBox>
+        <Label fx:id="rateLabel" text="" styleClass="rate-label"/>
+    </VBox>
+
+    <!-- Stats row -->
+    <HBox fx:id="statsRow" spacing="16">
+        <padding><Insets top="24" right="28" bottom="12" left="28"/></padding>
+
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="6">
+            <StackPane styleClass="stat-icon-circle" style="-fx-background-color: #4CAF50;">
+                <Label text="P" styleClass="stat-icon-letter"/>
+            </StackPane>
+            <Label fx:id="productCountLabel" text="--" styleClass="stat-value"/>
+            <Label text="Products" styleClass="stat-name"/>
+        </VBox>
+
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="6">
+            <StackPane styleClass="stat-icon-circle" style="-fx-background-color: #FB8C00;">
+                <Label text="O" styleClass="stat-icon-letter"/>
+            </StackPane>
+            <Label fx:id="orderCountLabel" text="--" styleClass="stat-value"/>
+            <Label text="Active Orders" styleClass="stat-name"/>
+        </VBox>
+
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="6">
+            <StackPane styleClass="stat-icon-circle" style="-fx-background-color: #2196F3;">
+                <Label text="R" styleClass="stat-icon-letter"/>
+            </StackPane>
+            <Label fx:id="revenueLabel" text="--" styleClass="stat-value"/>
+            <Label text="Revenue" styleClass="stat-name"/>
+        </VBox>
+
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="6">
+            <StackPane styleClass="stat-icon-circle" style="-fx-background-color: #8BC34A;">
+                <Label text="S" styleClass="stat-icon-letter"/>
+            </StackPane>
+            <Label fx:id="dbStatusLabel" text="Checking..." styleClass="stat-value"/>
+            <Label text="DB Status" styleClass="stat-name"/>
+        </VBox>
+    </HBox>
+
+    <!-- Low Stock Alerts -->
+    <VBox fx:id="alertsCard" spacing="10" styleClass="card">
+        <VBox.margin><Insets top="4" right="28" bottom="8" left="28"/></VBox.margin>
+        <Label text="Low Stock Alerts" styleClass="card-title"/>
+    </VBox>
+
+    <!-- Quick Start Guide -->
+    <VBox styleClass="card" spacing="10">
+        <VBox.margin><Insets top="4" right="28" bottom="20" left="28"/></VBox.margin>
+        <Label text="Quick Start Guide" styleClass="card-title"/>
+        <Label text="1. Go to Products to add your farm items (crops, dairy, livestock...)" styleClass="guide-step"/>
+        <Label text="2. Go to Orders to create and track customer orders" styleClass="guide-step"/>
+        <Label text="3. Use Settings to configure your preferences" styleClass="guide-step"/>
+    </VBox>
+
+</VBox>
