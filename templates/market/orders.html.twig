@@ -7,9 +7,9 @@
     <a href="{{ path('market_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-shop me-1"></i>Marketplace</a>
 </div>
 
-{% macro order_table(orders, title, icon, orderConversions) %}
+{% macro order_table(orderGroups, title, icon, groupConversions, orderGroupService) %}
 <h6 class="fw-semibold text-muted mb-2"><i class="bi bi-{{ icon }} me-1"></i>{{ title }}</h6>
-{% if orders is empty %}
+{% if orderGroups is empty %}
 <div class="text-muted small mb-4 p-3 bg-light rounded-3">No orders here.</div>
 {% else %}
 <div class="card border-0 shadow-sm mb-4">
@@ -28,14 +28,20 @@
                 </tr>
             </thead>
             <tbody>
-                {% for order in orders %}
+                {% for group in orderGroups %}
+                {% set order = group.representative %}
+                {% set groupStatusLabel = orderGroupService.getCombinedStatusLabel(group.orders) %}
+                {% set groupStatusColor = orderGroupService.getCombinedStatusColor(group.orders) %}
                 <tr>
-                    <td class="text-muted small">{{ order.id }}</td>
-                    <td class="fw-semibold">{{ order.product.name }}</td>
-                    <td>{{ order.quantity }}</td>
+                    <td class="text-muted small">#{{ order.id }}</td>
+                    <td>
+                        <div class="fw-semibold">{{ group.productSummary }}</div>
+                        <div class="text-muted small">{{ group.itemCount }} item{{ group.itemCount > 1 ? 's' : '' }} in this checkout</div>
+                    </td>
+                    <td>{{ group.quantityTotal }}</td>
                     <td class="text-success fw-bold">
-                        <div>{{ order.totalPrice }} TND</div>
-                        {% set convertedTotal = orderConversions[order.id].totalPrice ?? {} %}
+                        <div>{{ group.totalPrice|number_format(2) }} TND</div>
+                        {% set convertedTotal = groupConversions[group.key] ?? {} %}
                         {% if convertedTotal is not empty %}
                             <div class="text-muted small fw-normal">
                                 {% if convertedTotal.EUR is defined %}<span class="me-2">EUR {{ convertedTotal.EUR|number_format(2) }}</span>{% endif %}
@@ -45,7 +51,7 @@
                     </td>
                     <td>
                         <div class="d-flex flex-column gap-2" style="min-width: 170px;">
-                            <span class="badge bg-{{ order.statusColor }} {{ order.status == 'pending' ? 'text-dark' : '' }} align-self-start">{{ order.statusLabel }}</span>
+                            <span class="badge bg-{{ groupStatusColor }} {{ groupStatusColor == 'warning' ? 'text-dark' : '' }} align-self-start">{{ groupStatusLabel }}</span>
                             <div class="progress" style="height: 7px;">
                                 <div class="progress-bar bg-{{ order.status == 'cancelled' ? 'danger' : 'success' }}" role="progressbar" style="width: {{ order.statusProgressPercent }}%;"></div>
                             </div>
@@ -86,6 +92,6 @@
 {% endif %}
 {% endmacro %}
 
-{{ _self.order_table(myOrders, 'My Purchases', 'bag-check', orderConversions) }}
-{{ _self.order_table(mySales, is_granted('ROLE_ADMIN') ? 'All Orders' : 'My Sales', 'shop', orderConversions) }}
+{{ _self.order_table(myOrderGroups, 'My Purchases', 'bag-check', groupConversions, orderGroupService) }}
+{{ _self.order_table(mySaleGroups, is_granted('ROLE_ADMIN') ? 'All Orders' : 'My Sales', 'shop', groupConversions, orderGroupService) }}
 {% endblock %}

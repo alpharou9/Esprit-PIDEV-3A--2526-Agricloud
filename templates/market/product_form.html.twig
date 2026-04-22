@@ -306,6 +306,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const stockInput = document.getElementById(button.dataset.stockId);
     const descriptionInput = document.getElementById(button.dataset.descriptionId);
 
+    const setSelectValue = (select, value) => {
+        if (!select || typeof value !== 'string' || value.trim() === '') {
+            return false;
+        }
+
+        const normalizedValue = value.trim().toLowerCase();
+        const option = Array.from(select.options).find((item) => {
+            return item.value.toLowerCase() === normalizedValue
+                || item.text.trim().toLowerCase() === normalizedValue;
+        });
+
+        if (!option) {
+            return false;
+        }
+
+        select.value = option.value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+
+        return true;
+    };
+
     button.addEventListener('click', async () => {
         const name = nameInput?.value.trim() ?? '';
         const existingDescription = descriptionInput?.value.trim() ?? '';
@@ -362,24 +383,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (typeof data.name === 'string' && data.name.trim() !== '' && nameInput) {
                 nameInput.value = data.name.trim();
+                nameInput.dispatchEvent(new Event('input', { bubbles: true }));
             }
 
-            if (typeof data.category === 'string' && data.category !== '' && categoryInput) {
-                const hasCategory = Array.from(categoryInput.options).some(option => option.value === data.category);
-                if (hasCategory) {
-                    categoryInput.value = data.category;
-                }
-            }
-
-            if (typeof data.unit === 'string' && data.unit !== '' && unitInput) {
-                const hasUnit = Array.from(unitInput.options).some(option => option.value === data.unit);
-                if (hasUnit) {
-                    unitInput.value = data.unit;
-                }
-            }
+            setSelectValue(categoryInput, data.category);
+            setSelectValue(unitInput, data.unit);
 
             if (typeof data.description === 'string' && data.description.trim() !== '' && descriptionInput) {
                 descriptionInput.value = data.description.trim();
+                descriptionInput.dispatchEvent(new Event('input', { bubbles: true }));
             }
 
             status.textContent = 'AI draft generated successfully.';

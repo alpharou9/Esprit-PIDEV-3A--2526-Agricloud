@@ -33,6 +33,45 @@ class OrderRepository extends ServiceEntityRepository
         return $qb;
     }
 
+    /**
+     * Finds all order rows that belong to the same checkout as the given row.
+     *
+     * Stripe checkouts share a session id. Cash checkouts share the same customer,
+     * payment method, and creation timestamp because they are created together.
+     *
+     * @return Order[]
+     */
+    public function findCheckoutSiblings(Order $order): array
+    {
+        $qb = $this->createQueryBuilder('o')
+            ->leftJoin('o.product', 'p')->addSelect('p')
+            ->leftJoin('o.customer', 'c')->addSelect('c')
+            ->leftJoin('o.seller', 's')->addSelect('s')
+            ->orderBy('o.id', 'ASC');
+
+        if ($order->getStripeSessionId()) {
+            return $qb
+                ->where('o.stripeSessionId = :sessionId')
+                ->setParameter('sessionId', $order->getStripeSessionId())
+                ->getQuery()
+                ->getResult();
+        }
+
+        if ($order->getCreatedAt() === null) {
+            return [$order];
+        }
+
+        return $qb
+            ->where('o.customer = :customer')
+            ->andWhere('o.paymentMethod = :paymentMethod')
+            ->andWhere('o.createdAt = :createdAt')
+            ->setParameter('customer', $order->getCustomer())
+            ->setParameter('paymentMethod', $order->getPaymentMethod())
+            ->setParameter('createdAt', $order->getCreatedAt())
+            ->getQuery()
+            ->getResult();
+    }
+
     public function bestSellingProducts(int $limit = 5): array
     {
         return $this->createQueryBuilder('o')
