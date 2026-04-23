@@ -9,6 +9,7 @@
         "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ahmed-bhs/doctrine-doctor": "^1.1",
         "doctrine/dbal": "^3",
         "doctrine/doctrine-bundle": "^2.14",
         "doctrine/doctrine-migrations-bundle": "^3.4",
@@ -16,6 +17,7 @@
         "dompdf/dompdf": "^3.1",
         "knplabs/knp-paginator-bundle": "^6.8",
         "phpdocumentor/reflection-docblock": "^5.6",
+        "phpmyadmin/sql-parser": "^6.0",
         "phpstan/phpdoc-parser": "^2.1",
         "symfony/asset": "6.4.*",
         "symfony/asset-mapper": "6.4.*",
@@ -48,9 +50,7 @@
         "symfony/web-link": "6.4.*",
         "symfony/yaml": "6.4.*",
         "twig/extra-bundle": "^2.12|^3.0",
-        "twig/twig": "^2.12|^3.0",
-        "ahmed-bhs/doctrine-doctor": "dev-main",
-        "phpmyadmin/sql-parser": "^6.0"
+        "twig/twig": "^2.12|^3.0"
     },
     "config": {
         "allow-plugins": {
