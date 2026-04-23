@@ -12,7 +12,6 @@
         * { box-sizing: border-box; }
         body { font-family: 'Philosopher', sans-serif; margin: 0; padding: 0; min-height: 100vh; display: flex; }
 
-        /* ── Left panel ── */
         .auth-left {
             width: 42%;
             background:
@@ -59,7 +58,6 @@
         }
         .auth-step .step-text { color: rgba(255,255,255,.8); font-size: .9rem; padding-top: 5px; }
 
-        /* ── Right panel ── */
         .auth-right {
             width: 58%;
             background: #f8faf4;
@@ -114,11 +112,6 @@
             font-size: .78rem; color: #888; margin-top: 4px;
             padding-left: 2px;
         }
-        .password-hint {
-            background: #fff8e1; border-left: 3px solid #f59e0b;
-            border-radius: 0 8px 8px 0; padding: 9px 12px;
-            font-size: .8rem; color: #92400e; margin-top: 6px;
-        }
 
         .role-card { cursor: pointer; }
         .role-card-inner {
@@ -148,7 +141,6 @@
 </head>
 <body>
 
-{# ── Left panel ── #}
 <div class="auth-left">
     <a href="{{ path('home') }}" class="auth-brand">
         <i class="bi bi-tree-fill"></i>
@@ -176,7 +168,6 @@
     </div>
 </div>
 
-{# ── Right panel ── #}
 <div class="auth-right">
     <div class="auth-form-wrap">
         <h3>Create Account</h3>
@@ -190,7 +181,6 @@
 
         {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
 
-        {# Personal info #}
         <div class="field-group">
             <div class="field-group-label"><i class="bi bi-person-fill"></i> Personal Information</div>
 
@@ -225,7 +215,6 @@
             </div>
         </div>
 
-        {# Password #}
         <div class="field-group">
             <div class="field-group-label"><i class="bi bi-lock-fill"></i> Security</div>
 
@@ -240,7 +229,6 @@
             </div>
         </div>
 
-        {# Account type #}
         <div class="field-group">
             <div class="field-group-label"><i class="bi bi-people-fill"></i> I am registering as</div>
             <div class="d-flex gap-3 mb-2">

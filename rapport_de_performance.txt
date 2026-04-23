@@ -1,0 +1,475 @@
+PERFORMANCE AND QUALITY REPORT
+PIDEV WEB Sprint Follow-Up
+
+Project: AgriCloud Marketplace
+Team context: Group project
+Date: 23/04/2026
+Framework: Symfony 6.4
+Language: PHP 8.3
+
+==================================================
+1. PURPOSE OF THIS REPORT
+==================================================
+
+This report summarizes the follow-up work prepared for the PIDEV WEB sprint session.
+The goal of this work was not to add unnecessary new features, but to improve the
+quality, stability, and presentation-readiness of the existing application.
+
+The work focused on four areas:
+
+1. Unit tests
+2. Static analysis with PHPStan
+3. Runtime and database analysis with Doctrine Doctor
+4. Added value through a small AI improvement
+
+The report also includes guidance for the before/after screenshots required for the
+performance and optimization sheet.
+
+==================================================
+2. PROJECT CONTEXT
+==================================================
+
+The project is a Symfony web application centered on an agricultural marketplace.
+It already includes several functional modules, especially:
+
+- marketplace and product browsing
+- product details page
+- shopping cart
+- checkout flow
+- order management
+- review system
+- AI-assisted product drafting
+- chatbot and recipe assistant
+- payment and email-related integrations
+
+Because this is a university project, the chosen approach was to keep every change
+simple, safe, and easy to explain during presentation.
+
+==================================================
+3. WORK STRATEGY
+==================================================
+
+The implementation order followed the highest-impact and lowest-risk principle.
+
+The steps were organized as follows:
+
+1. Add a few useful unit tests for real business rules
+2. Add PHPStan and reduce the most relevant code-quality issues
+3. Enable Doctrine Doctor and fix only the most useful low-risk optimization points
+4. Improve one existing AI feature instead of adding a large new feature
+5. Prepare clear evidence for the sprint report
+
+This order reduced the chance of breaking working features while still improving
+technical quality in a measurable way.
+
+==================================================
+4. UNIT TESTS
+==================================================
+
+4.1 Objective
+
+The objective of the unit tests was to verify small but important business rules
+already present in the application.
+
+Instead of writing many artificial tests, only a few useful tests were added.
+This makes the work easier to justify in class and keeps maintenance simple.
+
+4.2 Business rules covered
+
+The following business rules were tested:
+
+- a product price must be strictly greater than zero
+- a product quantity cannot be negative
+- an invalid order status transition must be rejected
+- cancelling and reopening an order must keep inventory and cancellation data consistent
+
+4.3 Test files added
+
+The following test files were added:
+
+- tests\Entity\ProductValidationTest.php
+- tests\Service\OrderStatusServiceTest.php
+
+4.4 Summary of the tests
+
+ProductValidationTest verifies that:
+- a product with price 0 is rejected by validation
+- a product with a negative quantity is rejected by validation
+
+OrderStatusServiceTest verifies that:
+- an order cannot jump from pending directly to shipped
+- when a confirmed order is cancelled, the product stock is restored
+- when the cancelled order is reopened, the stock is corrected again
+- cancellation metadata is cleared correctly when the order is reopened
+
+4.5 Command used
+
+vendor\bin\phpunit tests
+
+4.6 Result
+
+Observed result:
+OK (26 tests, 50 assertions)
+
+This confirms that the tested business rules are working correctly and that the
+existing code remains stable after the follow-up changes.
+
+4.7 Screenshot to include in the report
+
+Take a screenshot of:
+- the terminal after running the phpunit command
+- the final success line showing the number of tests and assertions
+
+Suggested caption:
+"Unit test execution result after adding business-rule tests."
+
+==================================================
+5. STATIC ANALYSIS WITH PHPSTAN
+==================================================
+
+5.1 Objective
+
+PHPStan was added to improve reliability and detect typing and logic issues early.
+The analysis was configured at level 5, which is strict enough to be meaningful
+for a university sprint report, while still realistic for an existing Symfony project.
+
+5.2 Configuration
+
+PHPStan was added as a development dependency and configured to analyze the src folder.
+
+Main configuration choices:
+- level 5
+- target directory: src
+- memory limit adjusted for analysis
+
+5.3 Command used
+
+vendor\bin\phpstan analyse --memory-limit=1G --error-format=table
+
+5.4 Before state
+
+Before correction, PHPStan reported:
+- 50 errors
+
+The most relevant issues included:
+- missing or imprecise types
+- controller logic relying on loosely typed authenticated users
+- possible null access
+- redundant conditions
+- imprecise repository typing in fixtures and services
+- weaker typing in some entity and service methods
+
+5.5 Corrections applied
+
+Only safe and useful corrections were made.
+The goal was not to refactor the whole project, but to remove the issues that had
+the best quality impact without risking regressions.
+
+Main corrections:
+
+- Added a typed base controller helper for authenticated users
+  This avoids repeating weakly typed getUser() handling in controllers.
+
+- Updated several controllers to use a properly typed authenticated user
+  This reduced null/type ambiguity in real application flows.
+
+- Improved typing in fixtures
+  Repository results were clarified to avoid analysis errors and unclear assumptions.
+
+- Simplified redundant conditions in services
+  This made the code easier to understand and reduced noise in static analysis.
+
+- Improved typing in the Order entity
+  Some nullable or loosely defined values were made clearer where safe.
+
+5.6 After state
+
+After correction, PHPStan reported:
+- 0 errors
+
+This is a strong measurable improvement and can be used as a clear before/after
+indicator in the sprint report.
+
+5.7 Screenshot to include in the report
+
+Take two screenshots:
+
+- before:
+  terminal showing PHPStan errors
+
+- after:
+  terminal showing "No errors"
+
+Suggested captions:
+- "PHPStan analysis before corrections."
+- "PHPStan analysis after corrections."
+
+==================================================
+6. DOCTRINE DOCTOR ANALYSIS
+==================================================
+
+6.1 Objective
+
+Doctrine Doctor was added to analyze Doctrine ORM usage at runtime through the Symfony
+profiler. Unlike static analysis, this tool helps inspect the real behavior of the
+application during page execution.
+
+The goal was to review the most important marketplace pages and identify practical,
+low-risk optimizations.
+
+6.2 Pages reviewed
+
+The following pages were selected because they are core to the user journey:
+
+- marketplace
+- product details
+- cart
+- checkout
+- orders
+
+6.3 What was checked
+
+The analysis focused on:
+
+- N+1 query risks
+- lazy-loading patterns
+- slow or heavy queries
+- relation integrity/configuration concerns
+- profiler stability and configuration issues
+
+6.4 Main findings
+
+The most relevant findings were:
+
+- the cart page had a realistic risk of extra lazy-loading for seller information
+  because the Twig template accesses product and seller data
+
+- Doctrine tooling visibility was limited by an overly restrictive schema filter
+  which could hide useful tables from analysis
+
+- local environment stability was affected by a cache/profiler collision between
+  two local copies of the same project
+
+6.5 Optimizations applied
+
+Only the highest-impact and lowest-risk changes were made.
+
+Optimization 1: eager loading in the cart repository
+
+The cart repository was updated to eager-load the product seller together with the
+cart items. This reduces the risk of lazy-loaded extra queries during template rendering.
+
+Why it matters:
+- better runtime behavior on the cart page
+- lower risk of N+1 patterns
+- no functional change in business logic
+
+Optimization 2: Doctrine schema filter cleanup
+
+The Doctrine schema filter was broadened so the relevant project tables are included
+correctly for development analysis tools.
+
+Why it matters:
+- cleaner analysis tooling
+- fewer hidden tables in diagnostics
+- more reliable development observations
+
+Optimization 3: Symfony cache isolation per local project copy
+
+Both local copies of the project were using the same temp cache folder.
+This created collisions in:
+- compiled containers
+- profiler files
+- development cache artifacts
+
+A project-specific temp cache and log path was introduced in Kernel.php.
+
+Why it matters:
+- prevents collisions between local copies
+- fixes unstable profiler behavior
+- avoids misleading runtime class-loading errors
+- improves development reliability on Windows/OneDrive setups
+
+6.6 Result
+
+After these changes:
+- the profiler environment became more stable
+- Doctrine Doctor configuration loaded correctly
+- the cart page query pattern became safer
+- runtime debugging became more trustworthy
+
+6.7 Screenshot to include in the report
+
+Take screenshots of:
+
+- the Symfony profiler bar with Doctrine Doctor visible
+- Doctrine Doctor panel on marketplace
+- Doctrine Doctor panel on cart
+- Doctrine Doctor panel on checkout or orders
+
+Suggested captions:
+- "Doctrine Doctor visible in the Symfony profiler."
+- "Doctrine Doctor analysis on the cart page after optimization."
+
+==================================================
+7. ADDED VALUE / AI IMPROVEMENT
+==================================================
+
+7.1 Objective
+
+The sprint required some added value, especially AI-related improvement.
+Instead of creating a completely new AI feature, a small improvement was applied
+to an existing one.
+
+This choice was better because:
+- it kept the project stable
+- it improved a feature already used in the application
+- it remained easy to explain during presentation
+
+7.2 Existing AI feature improved
+
+The AI product description generation feature was reviewed and polished.
+
+7.3 Improvement applied
+
+The generated product descriptions are now:
+- cleaned more carefully
+- deduplicated if repeated sentences appear
+- limited to a maximum of 2 or 3 sentences
+
+7.4 Why this is useful
+
+This improvement gives better output quality without changing the existing user flow.
+The product form remains the same, but the generated result is more professional
+and easier to use directly.
+
+Practical benefit:
+- cleaner product descriptions
+- better readability
+- better presentation quality for demos
+
+7.5 Screenshot to include in the report
+
+Take a screenshot of:
+- the product creation form
+- the AI-generated description already filled in
+
+Suggested caption:
+"Improved AI-generated product description with cleaner, shorter output."
+
+==================================================
+8. PERFORMANCE / QUALITY OBSERVATIONS
+==================================================
+
+8.1 Before
+
+Before the follow-up work:
+
+- no focused business-rule tests had been added for the selected cases
+- PHPStan reported 50 issues
+- controller typing around authenticated users was weaker
+- cart rendering had a lazy-loading risk
+- Doctrine analysis visibility was not ideal
+- local copies of the project could interfere with each other through shared temp cache
+- AI product drafting could produce repetitive text
+
+8.2 After
+
+After the follow-up work:
+
+- useful unit tests were added and executed successfully
+- PHPStan was reduced from 50 issues to 0
+- controller typing and service safety improved
+- the cart repository became safer for runtime rendering
+- Doctrine Doctor was enabled and usable for profiler-based analysis
+- local development became more stable because cache directories were isolated
+- AI-generated product descriptions became cleaner and more presentation-ready
+
+8.3 General impact
+
+This work improved:
+- code quality
+- maintainability
+- developer confidence
+- runtime debugging reliability
+- demo quality during presentation
+
+It did this without adding heavy refactoring or unnecessary new modules.
+
+==================================================
+9. EXACT SCREENSHOTS TO TAKE
+==================================================
+
+To complete the sprint report, the following screenshots are recommended.
+
+A. Unit tests
+- terminal with: vendor\bin\phpunit tests
+- final success result
+
+B. PHPStan before
+- terminal showing the list of PHPStan errors before correction
+
+C. PHPStan after
+- terminal showing successful analysis with no errors
+
+D. Doctrine Doctor
+- Symfony profiler bar showing Doctrine Doctor
+- Doctrine Doctor page for marketplace
+- Doctrine Doctor page for cart
+- Doctrine Doctor page for checkout or orders
+
+E. AI improvement
+- product creation form with generated AI description
+
+F. Response time / memory observations
+- Symfony profiler overview for marketplace
+- Symfony profiler overview for cart
+- Symfony profiler overview for orders
+
+For response time and memory, use the profiler summary boxes and compare at least:
+- one page before the improvement if available
+- the same page after the improvement
+
+==================================================
+10. EXAMPLE OBSERVATION SENTENCES FOR THE REPORT
+==================================================
+
+The following sentences can be reused directly in the written report:
+
+- "PHPStan analysis was introduced at level 5 and reduced from 50 issues to 0."
+- "A small set of business-rule unit tests was added to validate product and order behavior."
+- "Doctrine Doctor was enabled to inspect runtime Doctrine behavior through the Symfony profiler."
+- "The cart repository was optimized with eager loading to reduce lazy-loading risk in the user interface."
+- "The local Symfony cache strategy was improved to avoid collisions between multiple project copies."
+- "The existing AI product drafting feature was improved by producing shorter and less repetitive descriptions."
+
+==================================================
+11. CONCLUSION
+==================================================
+
+The follow-up work successfully strengthened the technical quality of the project
+without introducing unnecessary complexity.
+
+The final result is more suitable for sprint presentation because it now includes:
+
+- verifiable unit tests
+- measurable static-analysis improvement
+- profiler-based Doctrine analysis
+- a small but concrete AI enhancement
+- clearer evidence for the optimization report
+
+This makes the application easier to explain, easier to justify technically,
+and more stable for demonstration in class.
+
+==================================================
+12. SHORT PRESENTATION SUMMARY
+==================================================
+
+If a short oral summary is needed, the work can be presented like this:
+
+"For the sprint follow-up, we focused on polishing and validating the existing project.
+We added business-rule unit tests, introduced PHPStan and fixed the most relevant issues,
+enabled Doctrine Doctor to analyze runtime database behavior, and improved an existing AI
+feature by making generated product descriptions cleaner and shorter. The result is a more
+stable, cleaner, and more presentation-ready Symfony application."
+

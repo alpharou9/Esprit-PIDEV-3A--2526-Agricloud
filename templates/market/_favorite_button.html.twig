@@ -1,0 +1,12 @@
+<form method="post" action="{{ path('favorite_toggle', {id: product.id}) }}" class="favorite-toggle-form">
+    <input type="hidden" name="_token" value="{{ csrf_token('favorite_toggle_' ~ product.id) }}">
+    <input type="hidden" name="redirect_route" value="{{ redirectRoute|default('product_show') }}">
+    <button
+        type="submit"
+        class="{{ buttonClass|default('favorite-toggle-btn') }} {{ isFavorited ? 'is-active' : '' }}"
+        aria-label="{{ isFavorited ? 'Remove from favorites' : 'Add to favorites' }}"
+        title="{{ isFavorited ? 'Remove from favorites' : 'Add to favorites' }}"
+    >
+        <i class="bi {{ isFavorited ? 'bi-heart-fill' : 'bi-heart' }}"></i>
+    </button>
+</form>

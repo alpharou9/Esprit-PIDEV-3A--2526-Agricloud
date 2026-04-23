@@ -12,7 +12,6 @@
         * { box-sizing: border-box; }
         body { font-family: 'Philosopher', sans-serif; margin: 0; padding: 0; height: 100vh; display: flex; }
 
-        /* ── Left panel ── */
         .auth-left {
             width: 55%;
             background:
@@ -59,7 +58,6 @@
         }
         .auth-feature span { color: rgba(255,255,255,.8); font-size: .92rem; }
 
-        /* ── Right panel ── */
         .auth-right {
             width: 45%;
             background: #f8faf4;
@@ -122,7 +120,6 @@
 </head>
 <body>
 
-{# ── Left panel ── #}
 <div class="auth-left">
     <a href="{{ path('home') }}" class="auth-brand">
         <i class="bi bi-tree-fill"></i>
@@ -150,7 +147,6 @@
     </div>
 </div>
 
-{# ── Right panel ── #}
 <div class="auth-right">
     <div class="auth-form-wrap">
         <h3>Sign In</h3>
@@ -214,7 +210,6 @@
     </div>
 </div>
 
-{# ── Face Login Modal ── #}
 <div id="faceLoginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
     <div style="background:#fff;border-radius:20px;padding:32px;width:460px;max-width:95vw;text-align:center;position:relative">
         <button onclick="closeFaceLogin()" style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#999">&times;</button>

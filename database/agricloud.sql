@@ -173,6 +173,40 @@ INSERT INTO `products` (`id`, `user_id`, `farm_id`, `name`, `description`, `pric
 (2, 6, NULL, '3sal', '3sal',  15.00, 2, 'dabouza', 'Honey',   NULL, 'approved', 0, '2026-02-05 22:37:38', 3, '2026-02-05 23:37:18', '2026-03-03 08:52:18');
 
 -- --------------------------------------------------------
+-- Table: reviews
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `reviews`;
+CREATE TABLE IF NOT EXISTS `reviews` (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `rating` int NOT NULL,
+  `comment` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_review_user_product` (`product_id`,`user_id`),
+  KEY `IDX_6970EB0FF347EFB` (`product_id`),
+  KEY `IDX_6970EB0A76ED395` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+-- Table: favorites
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `favorites`;
+CREATE TABLE IF NOT EXISTS `favorites` (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `created_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_favorite_user_product` (`user_id`,`product_id`),
+  KEY `IDX_EF7EA433A76ED395` (`user_id`),
+  KEY `IDX_EF7EA4334584665A` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 -- Table: orders
 -- --------------------------------------------------------
 
@@ -417,6 +451,14 @@ ALTER TABLE `products`
   ADD CONSTRAINT `products_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `products_ibfk_2` FOREIGN KEY (`farm_id`) REFERENCES `farms` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `products_ibfk_3` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `reviews`
+  ADD CONSTRAINT `FK_6970EB0FF347EFB` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `FK_6970EB0A76ED395` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `favorites`
+  ADD CONSTRAINT `FK_EF7EA433A76ED395` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `FK_EF7EA4334584665A` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
 
 ALTER TABLE `orders`
   ADD CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,

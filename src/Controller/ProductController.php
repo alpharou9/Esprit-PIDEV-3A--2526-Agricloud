@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Product;
 use App\Entity\Review;
 use App\Form\ProductType;
+use App\Repository\FavoriteRepository;
 use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
 use App\Repository\ReviewRepository;
@@ -28,7 +29,8 @@ class ProductController extends AbstractController
         Request $request,
         ProductRepository $repo,
         PaginatorInterface $paginator,
-        ReviewRepository $reviewRepository
+        ReviewRepository $reviewRepository,
+        FavoriteRepository $favoriteRepository
     ): Response
     {
         $q        = $request->query->get('q', '');
@@ -42,6 +44,12 @@ class ProductController extends AbstractController
         );
 
         $productReviewStats = $reviewRepository->findStatsForProducts($pagination->getItems());
+        $favoriteProductIds = [];
+        $currentUser = $this->getUser();
+
+        if ($currentUser instanceof \App\Entity\User) {
+            $favoriteProductIds = $favoriteRepository->findFavoriteProductIdsForUser($currentUser, $pagination->getItems());
+        }
 
         return $this->render('market/index.html.twig', [
             'pagination' => $pagination,
@@ -49,6 +57,7 @@ class ProductController extends AbstractController
             'category'   => $category,
             'sort'       => $sort,
             'productReviewStats' => $productReviewStats,
+            'favoriteProductIds' => $favoriteProductIds,
         ]);
     }
 
@@ -100,7 +109,8 @@ class ProductController extends AbstractController
         EntityManagerInterface $em,
         CurrencyConverterService $currencyConverter,
         ReviewRepository $reviewRepository,
-        OrderRepository $orderRepository
+        OrderRepository $orderRepository,
+        FavoriteRepository $favoriteRepository
     ): Response
     {
         $product->setViews(($product->getViews() ?? 0) + 1);
@@ -115,6 +125,9 @@ class ProductController extends AbstractController
         $reviewStats = $reviewRepository->findStatsForProduct($product);
         $currentUser = $this->getUser();
         $currentCustomer = $currentUser instanceof \App\Entity\User ? $currentUser : null;
+        $isFavorited = $currentCustomer instanceof \App\Entity\User
+            ? $favoriteRepository->isFavoritedByUser($currentCustomer, $product)
+            : false;
 
         $canReview = $currentCustomer !== null
             && $currentCustomer !== $product->getUser()
@@ -127,6 +140,7 @@ class ProductController extends AbstractController
             'reviews' => $reviews,
             'reviewStats' => $reviewStats,
             'canReview' => $canReview,
+            'isFavorited' => $isFavorited,
         ]);
     }
 
