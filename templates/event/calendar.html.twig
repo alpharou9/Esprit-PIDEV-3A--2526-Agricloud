@@ -1,0 +1,96 @@
+{% extends 'base.html.twig' %}
+{% block title %}Event Calendar - AgriCloud{% endblock %}
+
+{% block stylesheets %}
+<style>
+.calendar-shell{background:#fff;border:none;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,.08);overflow:hidden}
+.calendar-head{padding:22px 24px;background:linear-gradient(135deg,#163020,#198754);color:#fff}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.calendar-weekday{padding:14px 10px;text-align:center;font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:#f1f6ef;color:#48654e;border-bottom:1px solid #e6eee2}
+.calendar-cell{min-height:150px;padding:12px;border-right:1px solid #eef3eb;border-bottom:1px solid #eef3eb;background:#fff}
+.calendar-cell:nth-child(7n){border-right:none}
+.calendar-cell.muted{background:#f8faf7;color:#97a397}
+.calendar-day{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.calendar-date{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#163020;background:#eef6eb}
+.calendar-cell.muted .calendar-date{background:#f1f3ef;color:#9aa59b}
+.calendar-events{display:flex;flex-direction:column;gap:8px}
+.calendar-event{display:block;padding:9px 10px;border-radius:14px;text-decoration:none;color:#163020;background:#f6fbf3;border:1px solid #e1eed8;transition:transform .15s ease,box-shadow .15s ease}
+.calendar-event:hover{transform:translateY(-1px);box-shadow:0 8px 16px rgba(22,48,32,.08);color:#163020}
+.calendar-event-title{font-size:.9rem;font-weight:700;line-height:1.25}
+.calendar-event-meta{font-size:.76rem;color:#5f6f61;margin-top:4px}
+.calendar-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;font-size:.72rem;font-weight:700;margin-top:8px}
+.calendar-dot{width:8px;height:8px;border-radius:50%}
+.calendar-empty{padding:48px 20px;text-align:center;color:#788778}
+@media (max-width: 991px){
+    .calendar-grid{grid-template-columns:1fr}
+    .calendar-weekday{display:none}
+    .calendar-cell{border-right:none;min-height:auto}
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h5 class="fw-bold mb-1"><i class="bi bi-calendar-week me-2"></i>Event Calendar</h5>
+        <div class="text-muted small">All events displayed by month</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ path('event_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-grid me-1"></i>Event List</a>
+    </div>
+</div>
+
+<div class="calendar-shell">
+    <div class="calendar-head d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <a href="{{ path('event_calendar', {month: previousMonth}) }}" class="btn btn-light btn-sm"><i class="bi bi-chevron-left me-1"></i>Previous</a>
+        <div class="text-center">
+            <div class="small text-uppercase" style="letter-spacing:.2em;opacity:.8;">Monthly view</div>
+            <h3 class="mb-0">{{ calendarMonth|date('F Y') }}</h3>
+        </div>
+        <a href="{{ path('event_calendar', {month: nextMonth}) }}" class="btn btn-light btn-sm">Next<i class="bi bi-chevron-right ms-1"></i></a>
+    </div>
+
+    <div class="calendar-grid">
+        {% for weekday in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}
+            <div class="calendar-weekday">{{ weekday }}</div>
+        {% endfor %}
+
+        {% for week in calendarWeeks %}
+            {% for day in week %}
+                <div class="calendar-cell {{ day.isCurrentMonth ? '' : 'muted' }}">
+                    <div class="calendar-day">
+                        <div class="calendar-date">{{ day.date|date('d') }}</div>
+                        <div class="small">{{ day.date|date('M') }}</div>
+                    </div>
+
+                    {% if day.events is empty %}
+                        <div class="text-muted small">No events</div>
+                    {% else %}
+                        <div class="calendar-events">
+                            {% for event in day.events %}
+                                {% set availability = {
+                                    open: {label:'Open registration', color:'#198754', background:'#eaf7ef'},
+                                    available: {label:'Many spots left', color:'#198754', background:'#eaf7ef'},
+                                    filling: {label:'Filling up', color:'#d97706', background:'#fff4df'},
+                                    almost_full: {label:'Almost full', color:'#c0392b', background:'#fdeeed'},
+                                    full: {label:'Full', color:'#c0392b', background:'#fdeeed'}
+                                }[event.capacity and event.confirmedCount >= event.capacity ? 'full' : (event.capacity and event.confirmedCount / event.capacity >= 0.85 ? 'almost_full' : (event.capacity and event.confirmedCount / event.capacity >= 0.5 ? 'filling' : (event.capacity ? 'available' : 'open')))] %}
+                                <a href="{{ path('event_show', {id: event.id}) }}" class="calendar-event">
+                                    <div class="calendar-event-title">{{ event.title }}</div>
+                                    <div class="calendar-event-meta">
+                                        <i class="bi bi-clock me-1"></i>{{ event.eventDate ? event.eventDate|date('H:i') : '--:--' }}<br>
+                                        <i class="bi bi-geo-alt me-1"></i>{{ event.location }}
+                                    </div>
+                                    <span class="calendar-badge" style="background:{{ availability.background }};color:{{ availability.color }};">
+                                        <span class="calendar-dot" style="background:{{ availability.color }};"></span>{{ availability.label }}
+                                    </span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
