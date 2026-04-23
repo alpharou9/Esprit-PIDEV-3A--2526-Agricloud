@@ -3,7 +3,6 @@
 
 {% block stylesheets %}
 <style>
-/* ── Card ──────────────────────────────────────────────────── */
 .post-card {
     border-radius: 14px;
     border: none;
@@ -15,38 +14,98 @@
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(0,0,0,.12);
 }
-.post-img {
-    height: 180px;
-    object-fit: cover;
-    width: 100%;
-}
+.post-img { height: 180px; object-fit: cover; width: 100%; }
 .post-img-placeholder {
     height: 180px;
     background: linear-gradient(135deg, #d1e7dd, #a3cfbb);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem; color: #198754;
+}
+.cat-pill {
+    cursor: pointer; border-radius: 20px; padding: 4px 14px;
+    font-size: .8rem; border: 1px solid #dee2e6; background: #fff;
+    transition: all .15s; text-decoration: none; color: #495057; white-space: nowrap;
+}
+.cat-pill:hover, .cat-pill.active { background: #198754; color: #fff; border-color: #198754; }
+
+/* ── Global translate bar ───────────────────────────────────── */
+.global-translate-bar {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 8px 14px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-    color: #198754;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
 }
-
-/* ── Category pills ─────────────────────────────────────────── */
-.cat-pill {
-    cursor: pointer;
-    border-radius: 20px;
-    padding: 4px 14px;
-    font-size: .8rem;
-    border: 1px solid #dee2e6;
-    background: #fff;
-    transition: all .15s;
+.chatbot-card {
+    border: 1px solid #d9efe0;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #f8fffb 0%, #ffffff 100%);
+    box-shadow: 0 8px 24px rgba(0,0,0,.05);
+    width: min(380px, calc(100vw - 32px));
+}
+.chatbot-log {
+    max-height: 280px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.chat-line {
+    border-radius: 14px;
+    padding: 10px 12px;
+    font-size: .9rem;
+}
+.chat-line.user { background: #198754; color: #fff; margin-left: auto; max-width: 85%; }
+.chat-line.bot { background: #eef8f1; color: #214b2b; max-width: 100%; }
+.chat-suggestion {
+    display: block;
+    border: 1px solid #e8efe9;
+    border-radius: 12px;
+    padding: 10px 12px;
     text-decoration: none;
-    color: #495057;
-    white-space: nowrap;
+    color: inherit;
+    background: #fff;
 }
-.cat-pill:hover, .cat-pill.active {
-    background: #198754;
+.chat-suggestion:hover { border-color: #198754; color: inherit; }
+.chatbot-fab {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    width: 62px;
+    height: 62px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #198754 0%, #0d9488 100%);
     color: #fff;
-    border-color: #198754;
+    box-shadow: 0 14px 28px rgba(25, 135, 84, .28);
+    z-index: 1050;
+    font-size: 1.45rem;
+}
+.chatbot-floating-panel {
+    position: fixed;
+    right: 22px;
+    bottom: 96px;
+    z-index: 1050;
+}
+@media (max-width: 575.98px) {
+    .chatbot-fab {
+        right: 16px;
+        bottom: 16px;
+        width: 58px;
+        height: 58px;
+    }
+    .chatbot-floating-panel {
+        right: 16px;
+        left: 16px;
+        bottom: 86px;
+    }
+    .chatbot-card {
+        width: 100%;
+    }
 }
 </style>
 {% endblock %}
@@ -86,14 +145,11 @@
             </button>
             {% endif %}
         </div>
-
-        <select name="sort" class="form-select form-select-sm" style="width:auto"
-                onchange="this.form.submit()">
+        <select name="sort" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
             <option value="newest"  {{ sort == 'newest'  ? 'selected' : '' }}>Newest first</option>
             <option value="oldest"  {{ sort == 'oldest'  ? 'selected' : '' }}>Oldest first</option>
             <option value="popular" {{ sort == 'popular' ? 'selected' : '' }}>Most viewed</option>
         </select>
-
         <button class="btn btn-outline-secondary btn-sm">Search</button>
         {% if q or category %}
         <a href="{{ path('blog_index') }}" class="btn btn-outline-danger btn-sm">
@@ -104,15 +160,80 @@
 </form>
 
 {# ── Category filter pills ─────────────────────────────────── #}
-<div class="d-flex gap-2 flex-wrap mb-4">
+<div class="d-flex gap-2 flex-wrap mb-3">
     <a href="{{ path('blog_index', {q: q, sort: sort}) }}"
        class="cat-pill {{ category == '' ? 'active' : '' }}">All</a>
-    {% set allCats = ['News','Farming Guide','Tips & Tricks','Technology','Market','Other'] %}
-    {% for cat in allCats %}
+    {% for cat in ['News','Farming Guide','Tips & Tricks','Technology','Market','Other'] %}
         <a href="{{ path('blog_index', {q: q, sort: sort, category: cat}) }}"
            class="cat-pill {{ category == cat ? 'active' : '' }}">{{ cat }}</a>
     {% endfor %}
 </div>
+
+{# ── Global translate bar ──────────────────────────────────── #}
+<div class="global-translate-bar">
+    <i class="bi bi-translate text-success"></i>
+    <span class="small fw-semibold text-success">Translate all excerpts</span>
+    <select class="form-select form-select-sm" id="global-lang" style="max-width:180px">
+        <option value="">— Pick a language —</option>
+        <option value="ar">Arabic</option>
+        <option value="zh">Chinese</option>
+        <option value="nl">Dutch</option>
+        <option value="fr">French</option>
+        <option value="de">German</option>
+        <option value="hi">Hindi</option>
+        <option value="id">Indonesian</option>
+        <option value="it">Italian</option>
+        <option value="ja">Japanese</option>
+        <option value="ko">Korean</option>
+        <option value="pl">Polish</option>
+        <option value="pt">Portuguese</option>
+        <option value="ru">Russian</option>
+        <option value="es">Spanish</option>
+        <option value="sv">Swedish</option>
+        <option value="tr">Turkish</option>
+        <option value="uk">Ukrainian</option>
+        <option value="vi">Vietnamese</option>
+    </select>
+    <button class="btn btn-success btn-sm" onclick="translateAll()">
+        <i class="bi bi-play-fill me-1"></i>Translate All
+    </button>
+    <button class="btn btn-outline-secondary btn-sm d-none" id="restore-all-btn" onclick="restoreAll()">
+        <i class="bi bi-arrow-counterclockwise me-1"></i>Restore All
+    </button>
+    <span class="text-danger small d-none" id="global-error"></span>
+</div>
+
+<div class="chatbot-floating-panel d-none" id="blog-chat-panel">
+<div class="chatbot-card p-3">
+    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3">
+        <div>
+            <h6 class="fw-bold mb-1"><i class="bi bi-robot me-2 text-success"></i>Blog Assistant</h6>
+            <div class="small text-muted">Ask about topics covered in the blog and I’ll point you to the best posts.</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge rounded-pill text-bg-light">Blog powered</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleBlogAssistant(false)">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    </div>
+    <div id="blog-chat-log" class="chatbot-log mb-3">
+        <div class="chat-line bot">
+            Ask something like "how do I improve soil fertility?" or "show me posts about market prices".
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <input type="text" class="form-control" id="blog-chat-input" placeholder="Ask the blog assistant...">
+        <button class="btn btn-success" id="blog-chat-send" type="button" onclick="askBlogAssistant()">
+            <i class="bi bi-send me-1"></i>Ask
+        </button>
+    </div>
+</div>
+</div>
+
+<button type="button" class="chatbot-fab" id="blog-chat-fab" onclick="toggleBlogAssistant()" aria-label="Open blog assistant">
+    <i class="bi bi-chat-dots-fill"></i>
+</button>
 
 {# ── Results ───────────────────────────────────────────────── #}
 {% if pagination.totalItemCount == 0 %}
@@ -134,35 +255,29 @@
     {% if category %} in <strong>{{ category }}</strong>{% endif %}
 </p>
 
-<div class="row g-3">
+<div class="row g-3" id="posts-grid">
     {% for post in pagination %}
     <div class="col-md-4">
         <div class="card post-card h-100">
-            {# Cover image #}
             {% if post.image %}
                 <img src="{{ asset('uploads/posts/' ~ post.image) }}"
                      class="post-img" alt="{{ post.title|e('html_attr') }}">
             {% else %}
-                <div class="post-img-placeholder">
-                    <i class="bi bi-journal-text"></i>
-                </div>
+                <div class="post-img-placeholder"><i class="bi bi-journal-text"></i></div>
             {% endif %}
 
             <div class="card-body d-flex flex-column">
-                {# Title + category #}
                 <div class="d-flex justify-content-between align-items-start mb-1">
-                    <h6 class="fw-bold mb-0 flex-grow-1 me-2 lh-sm">{{ post.title }}</h6>
+                    <h6 class="fw-bold mb-0 flex-grow-1 me-2 lh-sm post-title">{{ post.title }}</h6>
                     {% if post.category %}
                         <span class="badge bg-light text-dark border small text-nowrap">{{ post.category }}</span>
                     {% endif %}
                 </div>
 
-                {# Excerpt / content preview #}
-                <p class="text-muted small mb-2 flex-grow-1">
+                <p class="text-muted small mb-2 flex-grow-1 post-excerpt">
                     {{ (post.excerpt ?? post.content)|slice(0, 110) }}{% if (post.excerpt ?? post.content)|length > 110 %}…{% endif %}
                 </p>
 
-                {# Tags #}
                 {% if post.tags %}
                 <div class="mb-2">
                     {% for tag in post.tags|slice(0, 4) %}
@@ -171,7 +286,6 @@
                 </div>
                 {% endif %}
 
-                {# Meta footer #}
                 <div class="mt-auto pt-1">
                     <div class="d-flex justify-content-between text-muted small">
                         <span><i class="bi bi-person me-1"></i>{{ post.user.name }}</span>
@@ -184,23 +298,200 @@
                 </div>
             </div>
 
-            <div class="card-footer bg-white border-0 pb-3">
+            <div class="card-footer bg-white border-0 pb-3 d-flex gap-2">
                 <a href="{{ path('blog_show', {slug: post.slug}) }}"
-                   class="btn btn-success btn-sm w-100">
+                   class="btn btn-success btn-sm flex-grow-1">
                     <i class="bi bi-book me-1"></i>Read Post
                 </a>
+                <button class="btn btn-outline-success btn-sm translate-card-btn"
+                        title="Translate this card"
+                        onclick="translateCard(this)">
+                    <i class="bi bi-translate"></i>
+                </button>
             </div>
         </div>
     </div>
     {% endfor %}
 </div>
 
-{# ── Pagination ────────────────────────────────────────────── #}
 {% if pagination.pageCount > 1 %}
 <div class="d-flex justify-content-center mt-4">
     {{ knp_pagination_render(pagination) }}
 </div>
 {% endif %}
 
-{% endif %}{# end results #}
+{% endif %}
+{% endblock %}
+
+{% block javascripts %}
+<script>
+
+const cardOriginals = new Map();
+
+async function callTranslate(text, targetLang) {
+    const url = 'https://api.mymemory.translated.net/get?q='
+        + encodeURIComponent(text) + '&langpair=en|' + targetLang;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Translation service error (' + res.status + ')');
+    const data = await res.json();
+    if (data.responseStatus !== 200) throw new Error(data.responseDetails || 'Translation failed');
+    return data.responseData.translatedText;
+}
+
+async function recordTranslationUsage(language, context) {
+    try {
+        await fetch('{{ path('blog_api_translation_track') }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ language, context })
+        });
+    } catch (error) {
+        console.debug('Translation tracking skipped:', error);
+    }
+}
+
+// Translate a single card
+async function translateCard(btn) {
+    const lang = document.getElementById('global-lang').value;
+    if (!lang) { alert('Pick a language in the translate bar above first.'); return; }
+
+    const card = btn.closest('.card');
+    const titleEl   = card.querySelector('.post-title');
+    const excerptEl = card.querySelector('.post-excerpt');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    try {
+        if (!cardOriginals.has(card)) {
+            cardOriginals.set(card, { title: titleEl.innerText, excerpt: excerptEl.innerText });
+        }
+        const orig = cardOriginals.get(card);
+        const [title, excerpt] = await Promise.all([
+            callTranslate(orig.title, lang),
+            callTranslate(orig.excerpt, lang)
+        ]);
+        titleEl.innerText   = title;
+        excerptEl.innerText = excerpt;
+        await recordTranslationUsage(lang, 'listing');
+        btn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i>';
+        btn.title = 'Restore original';
+        btn.onclick = function() { restoreCard(btn); };
+    } catch(e) {
+        alert('Translation failed: ' + e.message);
+        btn.innerHTML = '<i class="bi bi-translate"></i>';
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function restoreCard(btn) {
+    const card = btn.closest('.card');
+    const orig = cardOriginals.get(card);
+    if (orig) {
+        card.querySelector('.post-title').innerText   = orig.title;
+        card.querySelector('.post-excerpt').innerText = orig.excerpt;
+    }
+    btn.innerHTML = '<i class="bi bi-translate"></i>';
+    btn.title = 'Translate this card';
+    btn.onclick = function() { translateCard(btn); };
+    btn.disabled = false;
+}
+
+// Translate ALL cards at once
+async function translateAll() {
+    const lang = document.getElementById('global-lang').value;
+    if (!lang) { alert('Please select a language first.'); return; }
+
+    const error = document.getElementById('global-error');
+    error.classList.add('d-none');
+
+    const btns = document.querySelectorAll('.translate-card-btn');
+    btns.forEach(b => { b.disabled = true; b.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; });
+
+    try {
+        await Promise.all([...btns].map(b => translateCard(b)));
+        document.getElementById('restore-all-btn').classList.remove('d-none');
+    } catch(e) {
+        error.textContent = e.message;
+        error.classList.remove('d-none');
+    }
+}
+
+function restoreAll() {
+    document.querySelectorAll('.translate-card-btn').forEach(b => {
+        const card = b.closest('.card');
+        if (cardOriginals.has(card)) restoreCard(b);
+    });
+    document.getElementById('restore-all-btn').classList.add('d-none');
+}
+
+function appendChatLine(kind, html) {
+    const log = document.getElementById('blog-chat-log');
+    if (!log) return;
+    const line = document.createElement('div');
+    line.className = 'chat-line ' + kind;
+    line.innerHTML = html;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+}
+
+function toggleBlogAssistant(forceOpen = null) {
+    const panel = document.getElementById('blog-chat-panel');
+    const fab = document.getElementById('blog-chat-fab');
+    if (!panel || !fab) return;
+
+    const shouldOpen = forceOpen === null ? panel.classList.contains('d-none') : forceOpen;
+    panel.classList.toggle('d-none', !shouldOpen);
+    fab.classList.toggle('d-none', shouldOpen);
+
+    if (shouldOpen) {
+        document.getElementById('blog-chat-input')?.focus();
+    }
+}
+
+async function askBlogAssistant() {
+    const input = document.getElementById('blog-chat-input');
+    const btn = document.getElementById('blog-chat-send');
+    const message = input.value.trim();
+    if (!message) return;
+
+    appendChatLine('user', message);
+    input.value = '';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Thinking';
+
+    try {
+        const response = await fetch('{{ path('blog_api_chat') }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message})
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Blog assistant could not respond right now.');
+        }
+
+        let html = '<div>' + data.reply + '</div>';
+        if (Array.isArray(data.items) && data.items.length) {
+            html += '<div class="mt-3 d-flex flex-column gap-2">';
+            html += data.items.map(item => `<a class="chat-suggestion" href="${item.url}"><div class="fw-semibold">${item.title}</div><div class="small text-muted">${item.category || 'General'} | ${item.views} views</div><div class="small mt-1">${item.excerpt || ''}</div></a>`).join('');
+            html += '</div>';
+        }
+        appendChatLine('bot', html);
+    } catch (error) {
+        appendChatLine('bot', error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send me-1"></i>Ask';
+    }
+}
+
+document.getElementById('blog-chat-input')?.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        askBlogAssistant();
+    }
+});
+</script>
 {% endblock %}

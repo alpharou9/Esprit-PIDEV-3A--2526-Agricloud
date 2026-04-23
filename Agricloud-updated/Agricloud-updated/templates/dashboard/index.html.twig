@@ -1,11 +1,11 @@
-{% extends 'base.html.twig' %}
+﻿{% extends 'base.html.twig' %}
 
-{% block title %}Dashboard — AgriCloud{% endblock %}
+{% block title %}Dashboard â€” AgriCloud{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 
 {% block stylesheets %}
 <style>
-    /* ── Hero banner ── */
+    /* â”€â”€ Hero banner â”€â”€ */
     .dash-hero {
         border-radius: 20px; overflow: hidden; position: relative;
         background: linear-gradient(135deg, rgba(20,50,5,.82) 0%, rgba(60,110,10,.65) 100%),
@@ -18,13 +18,13 @@
     .dash-hero p  { font-size: 1rem; color: rgba(255,255,255,.8); margin: 0; }
     .dash-hero .hero-date { font-size: .85rem; color: rgba(255,255,255,.6); margin-top: 6px; }
 
-    /* ── Section heading ── */
+    /* â”€â”€ Section heading â”€â”€ */
     .section-heading {
         font-size: .7rem; font-weight: 700; text-transform: uppercase;
         letter-spacing: 2px; color: #77b81e; margin-bottom: 14px;
     }
 
-    /* ── Quick-action cards (regular user) ── */
+    /* â”€â”€ Quick-action cards (regular user) â”€â”€ */
     .qa-card {
         border: none; border-radius: 16px;
         box-shadow: 0 4px 20px rgba(0,0,0,.07);
@@ -43,7 +43,7 @@
     .qa-card h6 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
     .qa-card p  { font-size: .85rem; color: #888; margin: 0; }
 
-    /* ── Stat cards (admin) ── */
+    /* â”€â”€ Stat cards (admin) â”€â”€ */
     .stat-card {
         border: none; border-radius: 16px;
         box-shadow: 0 4px 20px rgba(0,0,0,.07);
@@ -61,7 +61,7 @@
     .stat-label  { font-size: .82rem; color: #888; margin-top: 2px; }
     .stat-bar { height: 4px; border-radius: 0; }
 
-    /* ── Chart cards ── */
+    /* â”€â”€ Chart cards â”€â”€ */
     .chart-card {
         border: none; border-radius: 16px;
         box-shadow: 0 4px 20px rgba(0,0,0,.07);
@@ -69,28 +69,40 @@
     }
     .chart-card h6 { font-weight: 700; font-size: .95rem; margin-bottom: 16px; }
 
-    /* ── Recent user rows ── */
-    .recent-avatar {
+    /* â”€â”€ Recent user rows â”€â”€ */
+.recent-avatar {
         width: 36px; height: 36px; border-radius: 50%;
         background: #e8f5d0; color: #77b81e;
         font-weight: 700; font-size: .85rem;
         display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .mini-bar {
+        height: 8px;
+        border-radius: 999px;
+        background: #eef3ef;
+        overflow: hidden;
+    }
+    .mini-bar span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #0d9488, #77b81e);
     }
 </style>
 {% endblock %}
 
 {% block body %}
 
-{# ── Hero ── #}
+{# â”€â”€ Hero â”€â”€ #}
 <div class="dash-hero">
-    <h2>Welcome back, {{ app.user.name }} 👋</h2>
+    <h2>Welcome back, {{ app.user.name }} ðŸ‘‹</h2>
     <p>Here's what's happening on your AgriCloud platform today.</p>
     <div class="hero-date"><i class="bi bi-calendar3 me-1"></i>{{ "now"|date("l, d F Y") }}</div>
 </div>
 
 {% if is_granted('ROLE_ADMIN') %}
 
-{# ── Admin stat cards ── #}
+{# â”€â”€ Admin stat cards â”€â”€ #}
 <p class="section-heading">Overview</p>
 <div class="row g-3 mb-4">
 
@@ -163,7 +175,7 @@
     </div>
 </div>
 
-{# ── Charts + Recent users ── #}
+{# â”€â”€ Charts + Recent users â”€â”€ #}
 <p class="section-heading">Analytics</p>
 <div class="row g-3 mb-4">
     <div class="col-md-4">
@@ -212,7 +224,141 @@
     </div>
 </div>
 
-{# ── Quick actions (admin) ── #}
+{# â”€â”€ Quick actions (admin) â”€â”€ #}
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0"><i class="bi bi-journal-richtext me-2" style="color:#0d9488"></i>Blog Pulse</h6>
+                <a href="{{ path('blog_my_posts') }}" class="btn btn-sm" style="background:#e8f8f5;color:#0d9488;font-size:.75rem;border-radius:8px">Open blog</a>
+            </div>
+            <div class="row g-3 align-items-stretch">
+                <div class="col-md-4">
+                    <div class="p-3 rounded-4 h-100" style="background:#f6fbf7;border:1px solid #edf4ef;">
+                        <div class="small text-muted mb-1">Published Posts</div>
+                        <div class="stat-number" style="font-size:1.9rem">{{ publishedPostCount }}</div>
+                        <div class="small text-muted">{{ postCount }} total posts on the platform</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 rounded-4 h-100" style="background:#fffbf2;border:1px solid #f6edd7;">
+                        <div class="small text-muted mb-1">Comments Awaiting Review</div>
+                        <div class="stat-number" style="font-size:1.9rem">{{ pendingCommentCount }}</div>
+                        <div class="small text-muted">{{ commentCount }} comments across all posts</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 rounded-4 h-100" style="background:#f8f8ff;border:1px solid #ededfb;">
+                        <div class="small fw-semibold mb-2">Top Posts</div>
+                        <div class="d-flex flex-column gap-2">
+                            {% for post in topPosts %}
+                                <div class="d-flex justify-content-between gap-2">
+                                    <div class="small text-truncate" style="max-width:75%">{{ post.title }}</div>
+                                    <span class="badge rounded-pill" style="background:#e8f8f5;color:#0d9488">{{ post.views }} views</span>
+                                </div>
+                            {% else %}
+                                <div class="small text-muted">No published posts yet.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <h6 class="mb-0"><i class="bi bi-translate me-2" style="color:#0d6efd"></i>Translation Pulse</h6>
+                <div class="small text-muted">
+                    {% if translationSnapshot.lastTranslatedAt %}
+                        Last activity {{ translationSnapshot.lastTranslatedAt|date('d M Y, H:i') }}
+                    {% else %}
+                        Waiting for translation activity
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row g-3 align-items-stretch">
+                <div class="col-md-3">
+                    <div class="p-3 rounded-4 h-100" style="background:#f3f8ff;border:1px solid #dce8fb;">
+                        <div class="small text-muted mb-1">Most Used Language</div>
+                        <div class="stat-number" style="font-size:1.7rem">{{ translationSnapshot.topLanguageLabel }}</div>
+                        <div class="small text-muted">{{ translationSnapshot.topLanguageCount }} translation actions</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 rounded-4 h-100" style="background:#f6fbf7;border:1px solid #edf4ef;">
+                        <div class="small text-muted mb-1">Total Translation Actions</div>
+                        <div class="stat-number" style="font-size:1.7rem">{{ translationSnapshot.totalTranslations }}</div>
+                        <div class="small text-muted">Across blog posts, cards, and comments</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 rounded-4 h-100" style="background:#fff9f1;border:1px solid #f6ead6;">
+                        <div class="small text-muted mb-1">Languages Reached</div>
+                        <div class="stat-number" style="font-size:1.7rem">{{ translationSnapshot.uniqueLanguages }}</div>
+                        <div class="small text-muted">Distinct target languages chosen</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 rounded-4 h-100" style="background:#f8f8ff;border:1px solid #ededfb;">
+                        <div class="small fw-semibold mb-2">Where Translation Happens</div>
+                        <div class="d-flex flex-column gap-2">
+                            {% for item in translationSnapshot.contextItems %}
+                                <div class="d-flex justify-content-between gap-2 small">
+                                    <span>{{ item.label }}</span>
+                                    <span class="text-muted">{{ item.count }}</span>
+                                </div>
+                            {% else %}
+                                <div class="small text-muted">No tracked translation activity yet.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+                <div class="col-md-7">
+                    <div class="p-3 rounded-4 h-100" style="background:#fbfcfd;border:1px solid #eef1f4;">
+                        <div class="small fw-semibold mb-3">Top Translation Languages</div>
+                        <div class="d-flex flex-column gap-3">
+                            {% for item in translationSnapshot.languageItems %}
+                                <div>
+                                    <div class="d-flex justify-content-between align-items-center small mb-1">
+                                        <span>{{ item.label }}</span>
+                                        <span class="text-muted">{{ item.count }} uses • {{ item.share }}%</span>
+                                    </div>
+                                    <div class="mini-bar"><span style="width:{{ item.share }}%"></span></div>
+                                </div>
+                            {% else %}
+                                <div class="small text-muted">Translate a few blog items and your top languages will appear here.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="p-3 rounded-4 h-100" style="background:#fbfcfd;border:1px solid #eef1f4;">
+                        <div class="small fw-semibold mb-3">Recent Translation Activity</div>
+                        <div class="d-flex flex-column gap-2">
+                            {% for event in translationSnapshot.history %}
+                                <div class="d-flex justify-content-between align-items-center small">
+                                    <div>
+                                        <span class="fw-semibold">{{ event.language|upper }}</span>
+                                        <span class="text-muted">for {{ event.context }}</span>
+                                    </div>
+                                    <span class="text-muted">{{ event.at|date('d M H:i') }}</span>
+                                </div>
+                            {% else %}
+                                <div class="small text-muted">No translation activity recorded yet.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <p class="section-heading">Quick Actions</p>
 <div class="row g-3">
     <div class="col-md-3">
@@ -247,7 +393,7 @@
 
 {% else %}
 
-{# ── Regular user quick-access cards ── #}
+{# â”€â”€ Regular user quick-access cards â”€â”€ #}
 <p class="section-heading">Quick Access</p>
 <div class="row g-3 mb-4">
 
@@ -301,7 +447,7 @@
 
 </div>
 
-{# ── More shortcuts ── #}
+{# â”€â”€ More shortcuts â”€â”€ #}
 <p class="section-heading">Your Activity</p>
 <div class="row g-3">
     <div class="col-sm-6 col-lg-3">
@@ -388,3 +534,4 @@ new Chart(document.getElementById('roleChart'), {
 </script>
 {% endif %}
 {% endblock %}
+

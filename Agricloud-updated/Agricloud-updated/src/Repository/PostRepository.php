@@ -129,4 +129,114 @@ class PostRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleColumnResult();
     }
+
+    public function findChatbotMatches(string $query, int $limit = 3): array
+    {
+        $terms = $this->expandChatbotTerms($query);
+
+        $posts = $this->createQueryBuilder('p')
+            ->where('p.status = :status')
+            ->setParameter('status', 'published')
+            ->orderBy('p.views', 'DESC')
+            ->setMaxResults(24)
+            ->getQuery()
+            ->getResult();
+
+        if (!$terms) {
+            return array_slice($posts, 0, $limit);
+        }
+
+        $scored = [];
+        foreach ($posts as $post) {
+            $haystack = mb_strtolower(trim(implode(' ', array_filter([
+                $post->getTitle(),
+                $post->getExcerpt(),
+                $post->getContent(),
+                $post->getCategory(),
+                implode(' ', $post->getTags() ?? []),
+            ]))));
+
+            $score = 0;
+            foreach ($terms as $term) {
+                if (str_contains($haystack, $term)) {
+                    $score += 1;
+                }
+                if (str_contains(mb_strtolower($post->getTitle()), $term)) {
+                    $score += 2;
+                }
+                if ($post->getCategory() && str_contains(mb_strtolower($post->getCategory()), $term)) {
+                    $score += 2;
+                }
+                foreach ($post->getTags() ?? [] as $tag) {
+                    if (str_contains(mb_strtolower($tag), $term)) {
+                        $score += 2;
+                    }
+                }
+            }
+
+            if ($score > 0) {
+                $scored[] = ['post' => $post, 'score' => $score];
+            }
+        }
+
+        usort($scored, static function (array $left, array $right): int {
+            return $right['score'] <=> $left['score'];
+        });
+
+        return array_map(static fn (array $item) => $item['post'], array_slice($scored, 0, $limit));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function expandChatbotTerms(string $query): array
+    {
+        $query = mb_strtolower(trim($query));
+        $baseTerms = array_values(array_filter(array_unique(preg_split('/\s+/', $query) ?: []), static function (string $term): bool {
+            return mb_strlen($term) >= 3;
+        }));
+
+        $aliases = [
+            'plant' => ['plants', 'crop', 'crops', 'farming', 'farm', 'garden', 'gardens', 'soil'],
+            'plants' => ['plant', 'crop', 'crops', 'farming', 'farm', 'garden', 'gardens', 'soil'],
+            'soil' => ['fertility', 'fertilizer', 'compost', 'ground', 'nutrients'],
+            'fertilizer' => ['soil', 'compost', 'nutrients', 'manure'],
+            'water' => ['irrigation', 'watering', 'moisture'],
+            'irrigation' => ['water', 'watering', 'moisture'],
+            'pest' => ['pests', 'disease', 'insects', 'protection'],
+            'pests' => ['pest', 'disease', 'insects', 'protection'],
+            'market' => ['price', 'prices', 'selling', 'sales'],
+            'prices' => ['market', 'price', 'selling', 'sales'],
+            'weather' => ['climate', 'rain', 'season'],
+            'technology' => ['tech', 'innovation', 'tools'],
+            'farmer' => ['farming', 'farm', 'crop', 'agriculture'],
+            'farming' => ['farmer', 'farm', 'crop', 'agriculture', 'plants'],
+            'garden' => ['gardening', 'plants', 'soil', 'crop'],
+            'gardens' => ['garden', 'plants', 'soil', 'crop'],
+        ];
+
+        $expanded = $baseTerms;
+        foreach ($baseTerms as $term) {
+            $singular = rtrim($term, 's');
+            if ($singular !== '' && !in_array($singular, $expanded, true)) {
+                $expanded[] = $singular;
+            }
+            if (isset($aliases[$term])) {
+                foreach ($aliases[$term] as $alias) {
+                    if (!in_array($alias, $expanded, true)) {
+                        $expanded[] = $alias;
+                    }
+                }
+            }
+            if ($singular !== $term && isset($aliases[$singular])) {
+                foreach ($aliases[$singular] as $alias) {
+                    if (!in_array($alias, $expanded, true)) {
+                        $expanded[] = $alias;
+                    }
+                }
+            }
+        }
+
+        return $expanded;
+    }
 }
