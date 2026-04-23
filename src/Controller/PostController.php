@@ -11,6 +11,7 @@ use App\Repository\PostRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -263,6 +264,52 @@ class PostController extends AbstractController
 
         $this->addFlash('success', 'Comment submitted and awaiting moderation.');
         return $this->redirectToRoute('blog_show', ['slug' => $post->getSlug()]);
+    }
+
+    // ── Blog chatbot ──────────────────────────────────────────────
+    #[Route('/chatbot', name: 'blog_chatbot', methods: ['POST'])]
+    public function chatbot(Request $request): JsonResponse
+    {
+        $message = trim((string) $request->request->get('message', ''));
+        if ($message === '') {
+            return $this->json(['reply' => 'Please enter a message.']);
+        }
+
+        $token = $_ENV['HUGGINGFACE_API_TOKEN'] ?? '';
+        if ($token === '') {
+            return $this->json(['reply' => 'Chatbot is not configured yet (missing API token).']);
+        }
+
+        $prompt = '<s>[INST] You are AgriBot, a helpful assistant for farmers and agricultural topics. Answer concisely. '
+            . $message . ' [/INST]';
+
+        $payload = json_encode([
+            'inputs'     => $prompt,
+            'parameters' => ['max_new_tokens' => 300, 'temperature' => 0.6, 'return_full_text' => false],
+        ]);
+
+        $ch = curl_init('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_HTTPHEADER     => ['Authorization: Bearer ' . $token, 'Content-Type: application/json'],
+            CURLOPT_TIMEOUT        => 30,
+        ]);
+        $raw  = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($raw === false || $code !== 200) {
+            return $this->json(['reply' => 'Sorry, the chatbot is temporarily unavailable.']);
+        }
+
+        $data  = json_decode($raw, true);
+        $reply = $data[0]['generated_text'] ?? '';
+        $reply = preg_replace('/\[\/INST\].*$/s', '', $reply);
+        $reply = trim($reply) ?: 'I could not generate a response. Please try again.';
+
+        return $this->json(['reply' => $reply]);
     }
 
     // ── Show post (slug — must be LAST) ───────────────────────────

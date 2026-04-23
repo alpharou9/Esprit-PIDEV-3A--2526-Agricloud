@@ -37,29 +37,30 @@
             <div class="form-text">Required · City, region or address</div>
         </div>
 
-        <div class="row g-3">
-            <div class="col-md-4">
-                <div class="mb-3">
-                    {{ form_label(form.area) }}
-                    {{ form_widget(form.area) }}
-                    {{ form_errors(form.area) }}
-                    <div class="form-text">Optional · Positive number · Max 999,999 ha</div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="mb-3">
+        <div class="mb-3">
+            {{ form_label(form.area) }}
+            {{ form_widget(form.area) }}
+            {{ form_errors(form.area) }}
+            <div class="form-text">Optional · Positive number · Max 999,999 ha</div>
+        </div>
+
+        {# Map coordinate picker #}
+        <div class="mb-3">
+            <label class="form-label fw-semibold"><i class="bi bi-geo-alt me-1"></i>Coordinates — click the map to set</label>
+            <div id="farm-map" class="rounded-3 border mb-2" style="height:260px"></div>
+            <button type="button" id="btn-geolocate" class="btn btn-outline-secondary btn-sm mb-2">
+                <i class="bi bi-crosshair me-1"></i>Use my location
+            </button>
+            <div class="row g-2">
+                <div class="col-md-6">
                     {{ form_label(form.latitude) }}
-                    {{ form_widget(form.latitude) }}
+                    {{ form_widget(form.latitude, {attr: {id: 'farm_latitude', step: 'any', placeholder: 'e.g. 36.8065'}}) }}
                     {{ form_errors(form.latitude) }}
-                    <div class="form-text">Optional · Between -90 and 90</div>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="mb-3">
+                <div class="col-md-6">
                     {{ form_label(form.longitude) }}
-                    {{ form_widget(form.longitude) }}
+                    {{ form_widget(form.longitude, {attr: {id: 'farm_longitude', step: 'any', placeholder: 'e.g. 10.1815'}}) }}
                     {{ form_errors(form.longitude) }}
-                    <div class="form-text">Optional · Between -180 and 180</div>
                 </div>
             </div>
         </div>
@@ -91,4 +92,56 @@
         {{ form_end(form) }}
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+    var latInput = document.getElementById('farm_latitude');
+    var lngInput = document.getElementById('farm_longitude');
+    var initLat = parseFloat(latInput.value) || 36.8;
+    var initLng = parseFloat(lngInput.value) || 10.18;
+
+    var map = L.map('farm-map').setView([initLat, initLng], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    var marker = null;
+
+    function setMarker(lat, lng) {
+        lat = parseFloat(lat.toFixed(6));
+        lng = parseFloat(lng.toFixed(6));
+        latInput.value = lat;
+        lngInput.value = lng;
+        if (marker) { marker.setLatLng([lat, lng]); }
+        else { marker = L.marker([lat, lng]).addTo(map); }
+    }
+
+    if (latInput.value && lngInput.value) {
+        setMarker(initLat, initLng);
+    }
+
+    map.on('click', function (e) { setMarker(e.latlng.lat, e.latlng.lng); });
+
+    [latInput, lngInput].forEach(function (inp) {
+        inp.addEventListener('change', function () {
+            var lat = parseFloat(latInput.value);
+            var lng = parseFloat(lngInput.value);
+            if (!isNaN(lat) && !isNaN(lng)) { setMarker(lat, lng); map.setView([lat, lng], 10); }
+        });
+    });
+
+    document.getElementById('btn-geolocate').addEventListener('click', function () {
+        if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+        navigator.geolocation.getCurrentPosition(function (pos) {
+            setMarker(pos.coords.latitude, pos.coords.longitude);
+            map.setView([pos.coords.latitude, pos.coords.longitude], 12);
+        }, function () { alert('Could not get your location.'); });
+    });
+})();
+</script>
 {% endblock %}

@@ -82,6 +82,21 @@
                 </form>
             </div>
         </div>
+
+        {# Weather widget #}
+        {% if farm.latitude and farm.longitude %}
+        <div class="card border-0 shadow-sm rounded-4 p-3 mt-3" id="weather-card">
+            <h6 class="fw-semibold mb-2"><i class="bi bi-cloud-sun me-1"></i>Current Weather</h6>
+            <div id="weather-body" class="text-muted small">Loading…</div>
+        </div>
+        {% endif %}
+
+        {# Mini map #}
+        {% if farm.latitude and farm.longitude %}
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mt-3">
+            <div id="mini-map" style="height:200px"></div>
+        </div>
+        {% endif %}
     </div>
 
     {# Right: fields #}
@@ -136,4 +151,50 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+{% if farm.latitude and farm.longitude %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+    var lat = {{ farm.latitude }};
+    var lng = {{ farm.longitude }};
+
+    // Mini map
+    var map = L.map('mini-map', {zoomControl: false, dragging: false, scrollWheelZoom: false}).setView([lat, lng], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+    L.marker([lat, lng]).addTo(map).bindPopup('{{ farm.name|e('js') }}').openPopup();
+
+    // Weather via Open-Meteo (no API key required)
+    var weatherCodes = {
+        0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
+        45:'Fog',48:'Icy fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',
+        61:'Slight rain',63:'Rain',65:'Heavy rain',71:'Slight snow',73:'Snow',75:'Heavy snow',
+        80:'Rain showers',81:'Rain showers',82:'Heavy showers',85:'Snow showers',86:'Heavy snow showers',
+        95:'Thunderstorm',96:'Thunderstorm w/ hail',99:'Thunderstorm w/ heavy hail'
+    };
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lng + '&current_weather=true&wind_speed_unit=kmh')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            var w = data.current_weather;
+            var desc = weatherCodes[w.weathercode] || 'Unknown';
+            var icon = w.weathercode === 0 ? 'bi-sun' : w.weathercode <= 3 ? 'bi-cloud-sun' : w.weathercode <= 65 ? 'bi-cloud-rain' : w.weathercode <= 75 ? 'bi-snow' : 'bi-cloud-lightning';
+            document.getElementById('weather-body').innerHTML =
+                '<div class="d-flex align-items-center gap-3">' +
+                '<i class="bi ' + icon + '" style="font-size:2rem;color:#198754"></i>' +
+                '<div>' +
+                '<div class="fw-bold" style="font-size:1.4rem">' + w.temperature + ' °C</div>' +
+                '<div>' + desc + '</div>' +
+                '<div class="text-muted" style="font-size:.8rem"><i class="bi bi-wind me-1"></i>' + w.windspeed + ' km/h</div>' +
+                '</div></div>';
+        })
+        .catch(function(){ document.getElementById('weather-body').innerHTML = '<span class="text-muted">Weather unavailable.</span>'; });
+})();
+</script>
+{% endif %}
 {% endblock %}

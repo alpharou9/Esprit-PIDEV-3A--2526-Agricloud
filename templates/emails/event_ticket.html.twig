@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Event Ticket — {{ event.title }}</title>
+<style>
+  body { margin:0; padding:0; background:#f4f6f9; font-family: Arial, sans-serif; }
+  .wrap { max-width:560px; margin:32px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.08); }
+  .header { background:linear-gradient(135deg,#198754,#20c997); padding:36px 32px; text-align:center; color:#fff; }
+  .header h1 { margin:0 0 4px; font-size:22px; }
+  .header p { margin:0; opacity:.85; font-size:14px; }
+  .body { padding:28px 32px; }
+  .ticket-box { border:2px dashed #198754; border-radius:12px; padding:20px 24px; margin-bottom:24px; }
+  .ticket-box h2 { margin:0 0 12px; font-size:18px; color:#198754; }
+  .detail { display:flex; gap:10px; margin-bottom:8px; font-size:14px; color:#444; }
+  .detail strong { min-width:90px; color:#222; }
+  .qr-wrap { text-align:center; margin:20px 0 8px; }
+  .qr-wrap img { border-radius:8px; border:1px solid #dee2e6; }
+  .qr-note { text-align:center; font-size:12px; color:#888; margin-bottom:20px; }
+  .footer { background:#f8f9fa; padding:18px 32px; text-align:center; font-size:12px; color:#aaa; border-top:1px solid #e9ecef; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>🌿 AgriCloud</h1>
+    <p>Your event ticket is confirmed!</p>
+  </div>
+  <div class="body">
+    <p style="font-size:15px;color:#333">Hi <strong>{{ user.name }}</strong>,</p>
+    <p style="font-size:14px;color:#555">You are registered for the following event. Please present the QR code at the entrance.</p>
+
+    <div class="ticket-box">
+      <h2>{{ event.title }}</h2>
+      <div class="detail"><strong>Date:</strong> {{ event.eventDate ? event.eventDate|date('d M Y, H:i') : '—' }}</div>
+      <div class="detail"><strong>Location:</strong> {{ event.location }}</div>
+      <div class="detail"><strong>Category:</strong> {{ event.category|capitalize }}</div>
+      <div class="detail"><strong>Ticket #:</strong> #{{ participation.id }}</div>
+      <div class="detail"><strong>Status:</strong> {{ participation.status|capitalize }}</div>
+    </div>
+
+    <div class="qr-wrap">
+      {% set qrData = 'AGRICLOUD-TICKET|' ~ participation.id ~ '|' ~ event.title ~ '|' ~ (event.eventDate ? event.eventDate|date('Y-m-d') : '') ~ '|' ~ user.email %}
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ qrData|url_encode }}" alt="QR Code" width="180" height="180">
+    </div>
+    <p class="qr-note">Scan this QR code at the venue to check in</p>
+
+    <p style="font-size:13px;color:#888;margin-top:24px">
+      If you can no longer attend, please cancel your registration from your account.<br>
+      Questions? Contact us at <a href="mailto:support@agricloud.tn" style="color:#198754">support@agricloud.tn</a>
+    </p>
+  </div>
+  <div class="footer">
+    © {{ "now"|date("Y") }} AgriCloud · This is an automated email, please do not reply.
+  </div>
+</div>
+</body>
+</html>
