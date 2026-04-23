@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="org.example.controller.OrderController"
+           fx:id="rootStack">
+
+    <VBox style="-fx-background-color: transparent;">
+
+        <!-- Page header -->
+        <VBox spacing="2" styleClass="page-header">
+            <Label text="Orders" styleClass="page-title"/>
+            <Label text="Browse products and manage orders" styleClass="page-subtitle"/>
+        </VBox>
+
+        <!-- ═══ Tab pane (fills remaining height) ═══ -->
+        <TabPane fx:id="tabPane" VBox.vgrow="ALWAYS" tabClosingPolicy="UNAVAILABLE">
+
+            <!-- ─────────────────────────────────────────────────────────────
+                 TAB 1 – New Order  (hidden for ADMIN via controller)
+                 ───────────────────────────────────────────────────────────── -->
+            <Tab fx:id="newOrderTab" text="New Order">
+                <HBox spacing="12" style="-fx-padding: 12;">
+
+                    <!-- ── Left panel: Product catalog ── -->
+                    <VBox spacing="8" HBox.hgrow="ALWAYS">
+                        <Label text="Available Products"
+                               style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+
+                        <!-- Search bar -->
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <TextField fx:id="searchField" promptText="Search products…"
+                                       HBox.hgrow="ALWAYS" onAction="#onSearchProducts"/>
+                            <Button text="Search" onAction="#onSearchProducts"
+                                    styleClass="btn-secondary"/>
+                        </HBox>
+
+                        <!-- Product cards -->
+                        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" hbarPolicy="NEVER"
+                                    style="-fx-background: transparent; -fx-background-color: transparent;">
+                            <FlowPane fx:id="productGrid" hgap="10" vgap="10" prefWrapLength="500">
+                                <padding><Insets top="4" right="4" bottom="4" left="4"/></padding>
+                            </FlowPane>
+                        </ScrollPane>
+
+                        <!-- Product pagination -->
+                        <HBox spacing="10" alignment="CENTER">
+                            <Button fx:id="prevProductBtn" text="&lt; Prev"
+                                    onAction="#onPrevProductPage" styleClass="btn-secondary"/>
+                            <Label fx:id="productPageLabel" text="Page 1 / 1"
+                                   style="-fx-font-size: 12px; -fx-text-fill: #555;"/>
+                            <Button fx:id="nextProductBtn" text="Next &gt;"
+                                    onAction="#onNextProductPage" styleClass="btn-secondary"/>
+                        </HBox>
+                    </VBox>
+
+                    <!-- ── Right panel: Cart ── -->
+                    <VBox spacing="8" prefWidth="390" minWidth="340">
+                        <Label text="Order Cart"
+                               style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+
+                        <!-- Cart table -->
+                        <TableView fx:id="cartTable" VBox.vgrow="ALWAYS" prefHeight="260"
+                                   style="-fx-border-color: #E0E0E0; -fx-border-radius: 6;"/>
+
+                        <!-- Total row -->
+                        <HBox spacing="12" alignment="CENTER_RIGHT">
+                            <Label text="Total:" style="-fx-font-size: 13px;"/>
+                            <VBox alignment="CENTER_RIGHT" spacing="1">
+                                <Label fx:id="totalLabel" text="\$0.00" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #2E7D32;"/>
+                                <Label fx:id="totalTndLabel" text="" style="-fx-font-size: 11px; -fx-text-fill: -agri-text-muted;"/>
+                            </VBox>
+                        </HBox>
+
+                        <!-- Order info: Notes & Delivery Date -->
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label text="Notes:" style="-fx-font-size: 12px; -fx-min-width: 90;"/>
+                            <TextArea fx:id="notesField"
+                                      promptText="Optional notes for this order…"
+                                      prefRowCount="2"
+                                      wrapText="true"
+                                      HBox.hgrow="ALWAYS"
+                                      style="-fx-font-size: 12px;"/>
+                        </HBox>
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label text="Delivery Date:" style="-fx-font-size: 12px; -fx-min-width: 90;"/>
+                            <DatePicker fx:id="deliveryDatePicker"
+                                        promptText="Pick a date"
+                                        HBox.hgrow="ALWAYS"/>
+                        </HBox>
+
+                        <!-- SMS opt-in -->
+                        <VBox spacing="6"
+                              style="-fx-background-color: #F1F8E9; -fx-background-radius: 6; -fx-padding: 10; -fx-border-color: #C5E1A5; -fx-border-radius: 6; -fx-border-width: 1;">
+                            <CheckBox fx:id="smsCheckBox"
+                                      text="📱 Receive SMS confirmation"
+                                      onAction="#onSmsToggle"
+                                      style="-fx-font-size: 12px; -fx-font-weight: bold;"/>
+                            <HBox spacing="6" alignment="CENTER_LEFT">
+                                <Label text="Phone:"
+                                       style="-fx-font-size: 11px; -fx-text-fill: #555;"/>
+                                <TextField fx:id="phoneField"
+                                           promptText="+213 555 123 456"
+                                           disable="true"
+                                           HBox.hgrow="ALWAYS"
+                                           style="-fx-font-size: 12px;"/>
+                            </HBox>
+                            <Label text="SMS will be sent after your order is confirmed."
+                                   style="-fx-font-size: 10px; -fx-text-fill: #888;"/>
+                        </VBox>
+
+                        <Label fx:id="orderFormError" text="" wrapText="true"
+                               style="-fx-text-fill: #F44336; -fx-font-size: 11px;"/>
+
+                        <HBox spacing="8">
+                            <Button text="Clear Cart" onAction="#onClearCart"
+                                    styleClass="btn-secondary"
+                                    HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                            <Button text="Place Order" onAction="#onPlaceOrder"
+                                    styleClass="btn-primary"
+                                    HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        </HBox>
+                    </VBox>
+
+                </HBox>
+            </Tab>
+
+            <!-- ─────────────────────────────────────────────────────────────
+                 TAB 2 – Manage Orders
+                 ───────────────────────────────────────────────────────────── -->
+            <Tab text="Manage Orders">
+                <VBox spacing="8" style="-fx-padding: 12;" VBox.vgrow="ALWAYS">
+
+                    <!-- Orders table -->
+                    <TableView fx:id="ordersTable" VBox.vgrow="ALWAYS" prefHeight="300"/>
+
+                    <!-- Order pagination -->
+                    <HBox spacing="10" alignment="CENTER">
+                        <Button fx:id="prevOrderBtn" text="&lt; Prev"
+                                onAction="#onPrevOrderPage" styleClass="btn-secondary"/>
+                        <Label fx:id="orderPageLabel" text="Page 1 / 1"
+                               style="-fx-font-size: 12px; -fx-text-fill: #555;"/>
+                        <Button fx:id="nextOrderBtn" text="Next &gt;"
+                                onAction="#onNextOrderPage" styleClass="btn-secondary"/>
+                    </HBox>
+
+                    <!-- Detail rows for the selected order -->
+                    <Label text="Order Details"
+                           style="-fx-font-weight: bold; -fx-font-size: 13px;"/>
+                    <TableView fx:id="detailsTable" prefHeight="200"/>
+
+                    <!-- Export -->
+                    <HBox alignment="CENTER_RIGHT">
+                        <Button text="Export PDF" onAction="#onExportPdf"
+                                styleClass="btn-secondary"/>
+                    </HBox>
+
+                </VBox>
+            </Tab>
+
+        </TabPane>
+    </VBox>
+</StackPane>

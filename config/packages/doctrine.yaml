@@ -8,7 +8,7 @@ doctrine:
             enum: string
         # Only validate/manage tables that have mapped entities.
         # Each module member adds their tables to this list when they create their entities.
-        schema_filter: '/^(users|roles)$/'
+        schema_filter: '/^(users|roles|products|orders)$/'
 
     orm:
         auto_generate_proxy_classes: true

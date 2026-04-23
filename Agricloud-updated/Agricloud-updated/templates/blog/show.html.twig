@@ -1,0 +1,641 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ post.title }} - AgriCloud{% endblock %}
+
+{% block stylesheets %}
+<style>
+.blog-hero { position: relative; width: 100%; height: 380px; background: linear-gradient(135deg, #1a3c2e 0%, #198754 100%); border-radius: 18px; overflow: hidden; margin-bottom: 2rem; display: flex; align-items: flex-end; }
+.blog-hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .55; }
+.blog-hero-overlay { position: relative; z-index: 2; padding: 2rem; width: 100%; background: linear-gradient(to top, rgba(0,0,0,.7) 0%, transparent 100%); }
+.blog-hero-title { font-size: 2rem; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: .5rem; text-shadow: 0 2px 8px rgba(0,0,0,.4); }
+.blog-hero-meta { color: rgba(255,255,255,.85); font-size: .88rem; }
+.blog-title-plain { font-size: 2rem; font-weight: 800; line-height: 1.25; color: #1a1a1a; margin-bottom: .75rem; }
+.post-body { font-size: 1.08rem; line-height: 1.9; color: #2d2d2d; white-space: pre-wrap; }
+.translate-bar { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.translate-bar select { max-width: 170px; }
+.translated-badge { font-size: .72rem; background: #198754; color: #fff; border-radius: 20px; padding: 3px 10px; font-weight: 600; }
+.comment-avatar { width: 40px; height: 40px; border-radius: 50%; background: #198754; color: #fff; display: flex; align-items: center; justify-content: center; font-size: .9rem; font-weight: 700; flex-shrink: 0; }
+.reply-avatar { width: 32px; height: 32px; border-radius: 50%; background: #6c757d; color: #fff; display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; flex-shrink: 0; }
+.comment-box { background: #fff; border: 1px solid #e9ecef; border-radius: 12px; padding: 14px 16px; transition: box-shadow .15s; }
+.comment-box:hover { box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.reply-box { background: #f8f9fa; border-radius: 10px; padding: 10px 14px; margin-top: 8px; }
+.sidebar-card { border: none; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+.author-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #198754, #0d6efd); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 700; flex-shrink: 0; }
+.moderation-box { border-radius: 12px; padding: 10px 12px; margin-top: 12px; font-size: .88rem; }
+.related-link { display: block; text-decoration: none; color: inherit; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+.related-link:last-child { border-bottom: none; padding-bottom: 0; }
+.related-link strong { display: block; line-height: 1.35; }
+.related-meta { color: #6c757d; font-size: .78rem; margin-top: 4px; }
+.chatbot-card {
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.07);
+    background: linear-gradient(180deg, #f8fffb 0%, #ffffff 100%);
+    width: min(360px, calc(100vw - 32px));
+}
+.chatbot-log {
+    max-height: 240px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.chat-line {
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: .88rem;
+}
+.chat-line.user { background: #198754; color: #fff; margin-left: auto; max-width: 90%; }
+.chat-line.bot { background: #eef8f1; color: #214b2b; }
+.chat-suggestion {
+    display: block;
+    border: 1px solid #e8efe9;
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-decoration: none;
+    color: inherit;
+    background: #fff;
+}
+.chat-suggestion:hover { border-color: #198754; color: inherit; }
+.chatbot-fab {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    width: 62px;
+    height: 62px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #198754 0%, #0d9488 100%);
+    color: #fff;
+    box-shadow: 0 14px 28px rgba(25, 135, 84, .28);
+    z-index: 1050;
+    font-size: 1.45rem;
+}
+.chatbot-floating-panel {
+    position: fixed;
+    right: 22px;
+    bottom: 96px;
+    z-index: 1050;
+}
+@media (max-width: 575.98px) {
+    .chatbot-fab {
+        right: 16px;
+        bottom: 16px;
+        width: 58px;
+        height: 58px;
+    }
+    .chatbot-floating-panel {
+        right: 16px;
+        left: 16px;
+        bottom: 86px;
+    }
+    .chatbot-card {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex align-items-center gap-2 mb-3">
+    <a href="{{ path('blog_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <nav class="small text-muted">
+        <a href="{{ path('blog_index') }}" class="text-decoration-none text-muted">Blog</a>
+        <span class="mx-1">/</span>
+        <span>{{ post.title|slice(0,50) }}{% if post.title|length > 50 %}...{% endif %}</span>
+    </nav>
+</div>
+
+<div class="row g-4">
+<div class="col-lg-8">
+    {% if post.image %}
+    <div class="blog-hero">
+        <img src="{{ asset('uploads/posts/' ~ post.image) }}" alt="{{ post.title|e('html_attr') }}">
+        <div class="blog-hero-overlay">
+            <div class="d-flex gap-2 mb-2 flex-wrap">
+                {% if post.category %}<span class="badge bg-white text-success fw-semibold">{{ post.category }}</span>{% endif %}
+                {% if post.status != 'published' %}<span class="badge bg-warning text-dark">{{ post.status|capitalize }}</span>{% endif %}
+            </div>
+            <div class="blog-hero-title">{{ post.title }}</div>
+            <div class="blog-hero-meta d-flex gap-3 flex-wrap">
+                <span><i class="bi bi-person me-1"></i>{{ post.user.name }}</span>
+                <span><i class="bi bi-calendar me-1"></i>{{ post.publishedAt ? post.publishedAt|date('d M Y') : post.createdAt|date('d M Y') }}</span>
+                <span><i class="bi bi-eye me-1"></i>{{ post.views }} views</span>
+                <span><i class="bi bi-chat me-1"></i>{{ approvedComments|length }} comments</span>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="mb-4">
+        <div class="d-flex gap-2 mb-2 flex-wrap">
+            {% if post.category %}<a href="{{ path('blog_index', {category: post.category}) }}" class="badge bg-success text-white text-decoration-none">{{ post.category }}</a>{% endif %}
+            {% if post.status != 'published' %}<span class="badge {{ post.status == 'draft' ? 'bg-secondary' : 'bg-warning text-dark' }}">{{ post.status|capitalize }}</span>{% endif %}
+        </div>
+        <h1 class="blog-title-plain">{{ post.title }}</h1>
+        <div class="d-flex flex-wrap gap-3 text-muted small">
+            <span><i class="bi bi-person me-1"></i>By <strong>{{ post.user.name }}</strong></span>
+            <span><i class="bi bi-calendar me-1"></i>{{ post.publishedAt ? post.publishedAt|date('d M Y') : post.createdAt|date('d M Y') }}</span>
+            {% if post.updatedAt and post.updatedAt != post.createdAt %}<span class="fst-italic"><i class="bi bi-pencil me-1"></i>Updated {{ post.updatedAt|date('d M Y') }}</span>{% endif %}
+            <span><i class="bi bi-eye me-1"></i>{{ post.views }} views</span>
+            <span><i class="bi bi-chat me-1"></i>{{ approvedComments|length }} comments</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="translate-bar">
+        <i class="bi bi-translate text-success fs-5"></i>
+        <span class="small fw-semibold text-success me-1">Translate</span>
+        <select class="form-select form-select-sm" id="post-lang-select" style="max-width:170px">
+            <option value="">- Language -</option><option value="ar">Arabic</option><option value="zh">Chinese</option><option value="nl">Dutch</option><option value="fr">French</option><option value="de">German</option><option value="hi">Hindi</option><option value="id">Indonesian</option><option value="it">Italian</option><option value="ja">Japanese</option><option value="ko">Korean</option><option value="pl">Polish</option><option value="pt">Portuguese</option><option value="ru">Russian</option><option value="es">Spanish</option><option value="sv">Swedish</option><option value="tr">Turkish</option><option value="uk">Ukrainian</option><option value="vi">Vietnamese</option>
+        </select>
+        <button class="btn btn-success btn-sm" id="post-translate-btn" onclick="translatePost()"><i class="bi bi-play-fill me-1"></i>Translate Post</button>
+        <button class="btn btn-outline-primary btn-sm" id="post-audio-btn" onclick="playPostAudio()"><i class="bi bi-volume-up me-1"></i>Listen to Post</button>
+        <button class="btn btn-outline-secondary btn-sm d-none" id="post-restore-btn" onclick="restorePost()"><i class="bi bi-arrow-counterclockwise me-1"></i>Original</button>
+        <audio id="post-audio-player" class="w-100 d-none mt-2" controls></audio>
+        <span class="translated-badge d-none" id="post-translated-badge">Translated</span>
+        <span class="text-danger small d-none" id="post-translate-error"></span>
+    </div>
+
+    <div class="post-body mb-4" id="post-content">{{ post.content }}</div>
+
+    {% if post.tags %}
+    <div class="mb-4 pt-2 border-top">{% for tag in post.tags %}<a href="{{ path('blog_index', {q: tag}) }}" class="badge bg-light text-muted border me-1 text-decoration-none fs-6 fw-normal">#{{ tag }}</a>{% endfor %}</div>
+    {% endif %}
+
+    {% if post.user == app.user or is_granted('ROLE_ADMIN') %}
+    <div class="d-flex gap-2 mb-4">
+        <a href="{{ path('blog_edit', {id: post.id}) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
+        <form method="post" action="{{ path('blog_delete', {id: post.id}) }}" onsubmit="return confirm('Permanently delete this post and all its comments?')">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete_post_' ~ post.id) }}">
+            <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash me-1"></i>Delete</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <hr class="my-4">
+    <h5 class="fw-bold mb-4"><i class="bi bi-chat-dots me-2 text-success"></i>Comments <span class="badge bg-success ms-1" style="font-size:.75rem">{{ approvedComments|length }}</span></h5>
+
+    {% if approvedComments is empty %}
+    <div class="text-center text-muted py-4"><i class="bi bi-chat" style="font-size:2.5rem;opacity:.2"></i><p class="mt-2 small">No comments yet. Be the first!</p></div>
+    {% else %}
+    <div class="d-flex flex-column gap-3 mb-4">
+    {% for comment in approvedComments %}
+    <div class="d-flex gap-3" id="comment-{{ comment.id }}">
+        <div class="comment-avatar">{{ comment.user.name|slice(0,1)|upper }}</div>
+        <div class="flex-grow-1">
+            <div class="comment-box">
+                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+                    <div><strong class="small">{{ comment.user.name }}</strong><span class="text-muted ms-2" style="font-size:.75rem">{{ comment.createdAt ? comment.createdAt|date('d M Y, H:i') : '' }}</span></div>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-outline-success btn-sm py-0 px-2" style="font-size:.72rem" title="Translate" onclick="translateComment({{ comment.id }}, this)"><i class="bi bi-translate"></i></button>
+                        {% if is_granted('ROLE_ADMIN') %}
+                        <form method="post" action="{{ path('comment_delete', {id: comment.id}) }}" onsubmit="return confirm('Delete this comment?')"><input type="hidden" name="_token" value="{{ csrf_token('delete_comment_' ~ comment.id) }}"><button class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size:.72rem"><i class="bi bi-trash"></i></button></form>
+                        {% endif %}
+                    </div>
+                </div>
+                <p class="mb-0 small" id="comment-text-{{ comment.id }}">{{ comment.content }}</p>
+            </div>
+            {% for reply in comment.replies %}
+            {% if reply.status == 'approved' %}
+            <div class="d-flex gap-2 mt-2 ms-2"><div class="reply-avatar">{{ reply.user.name|slice(0,1)|upper }}</div><div class="flex-grow-1"><div class="reply-box"><div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1"><div><strong class="small">{{ reply.user.name }}</strong><span class="text-muted ms-2" style="font-size:.72rem">{{ reply.createdAt ? reply.createdAt|date('d M Y') : '' }}</span></div><div class="d-flex gap-1"><button class="btn btn-outline-success btn-sm py-0 px-2" style="font-size:.65rem" onclick="translateComment({{ reply.id }}, this)"><i class="bi bi-translate"></i></button>{% if is_granted('ROLE_ADMIN') %}<form method="post" action="{{ path('comment_delete', {id: reply.id}) }}" onsubmit="return confirm('Delete?')"><input type="hidden" name="_token" value="{{ csrf_token('delete_comment_' ~ reply.id) }}"><button class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size:.65rem"><i class="bi bi-trash"></i></button></form>{% endif %}</div></div><p class="mb-0 small" id="comment-text-{{ reply.id }}">{{ reply.content }}</p></div></div></div>
+            {% endif %}
+            {% endfor %}
+            {% if post.status == 'published' %}
+            <button class="btn btn-link btn-sm p-0 text-muted mt-2 text-decoration-none small" data-bs-toggle="collapse" data-bs-target="#reply-{{ comment.id }}"><i class="bi bi-reply me-1"></i>Reply</button>
+            <div class="collapse mt-2" id="reply-{{ comment.id }}"><form method="post" action="{{ path('blog_comment_add', {id: post.id}) }}" class="d-flex gap-2"><input type="hidden" name="parent_id" value="{{ comment.id }}"><textarea name="comment[content]" class="form-control form-control-sm" rows="2" placeholder="Write a reply..." required></textarea><button class="btn btn-success btn-sm align-self-end">Post</button></form></div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if post.status == 'published' %}
+    <div class="card border-0 rounded-4 p-4" style="background:#f8fffe;border:1px solid #d1fae5 !important">
+        <h6 class="fw-bold mb-3"><i class="bi bi-pencil-square me-2 text-success"></i>Leave a Comment</h6>
+        {{ form_start(commentForm, {attr: {id: 'comment-form'}}) }}
+        {{ form_widget(commentForm.content, {attr: {class: 'form-control', rows: 4, placeholder: 'Write a comment...'}}) }}
+        {{ form_errors(commentForm.content) }}
+        <div id="comment-moderation-result" class="moderation-box bg-light d-none"></div>
+        <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+            <span class="text-muted small" id="comment-moderation-hint"><i class="bi bi-info-circle me-1"></i>Comments are checked automatically before posting.</span>
+            <button type="submit" class="btn btn-success btn-sm px-4" id="comment-submit-btn"><i class="bi bi-send me-1"></i>Submit</button>
+        </div>
+        {{ form_end(commentForm) }}
+    </div>
+    {% elseif post.status == 'draft' %}
+    <div class="alert alert-secondary small"><i class="bi bi-lock me-1"></i>Comments are disabled on draft posts.</div>
+    {% endif %}
+</div>
+
+<div class="col-lg-4">
+    <div class="position-sticky" style="top:1rem">
+        <div class="card sidebar-card p-3 mb-3"><div class="d-flex gap-3 align-items-center mb-3"><div class="author-avatar">{{ post.user.name|slice(0,1)|upper }}</div><div><div class="fw-bold">{{ post.user.name }}</div><div class="text-muted small">Author</div></div></div><hr class="my-2"><ul class="list-unstyled small text-muted mb-0"><li class="mb-2"><i class="bi bi-calendar me-2"></i>{{ post.createdAt ? post.createdAt|date('d M Y') : '-' }}</li>{% if post.publishedAt %}<li class="mb-2"><i class="bi bi-send me-2 text-success"></i>Published {{ post.publishedAt|date('d M Y') }}</li>{% endif %}<li class="mb-2"><i class="bi bi-eye me-2"></i>{{ post.views }} views</li><li class="mb-2"><i class="bi bi-chat me-2"></i>{{ approvedComments|length }} comments</li>{% if post.category %}<li class="mb-2"><i class="bi bi-tag me-2"></i>{{ post.category }}</li>{% endif %}</ul></div>
+
+        {% if post.tags %}<div class="card sidebar-card p-3 mb-3"><h6 class="fw-semibold mb-2 small text-uppercase text-muted">Tags</h6>{% for tag in post.tags %}<a href="{{ path('blog_index', {q: tag}) }}" class="badge bg-light text-muted border me-1 mb-1 text-decoration-none">#{{ tag }}</a>{% endfor %}</div>{% endif %}
+
+        <div class="card sidebar-card p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2"><h6 class="fw-semibold mb-0 small text-uppercase text-muted">Related Posts</h6><span class="badge bg-light text-success border">Live</span></div>
+            <div id="related-posts-list" class="small text-muted">Loading recommendations...</div>
+        </div>
+
+        <div class="chatbot-floating-panel d-none" id="blog-chat-panel">
+        <div class="chatbot-card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-semibold mb-0 small text-uppercase text-muted">Blog Assistant</h6>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-light text-success border">Ask</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleBlogAssistant(false)">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="blog-chat-log" class="chatbot-log mb-3">
+                <div class="chat-line bot">Ask about this article or any farming topic covered in the blog.</div>
+            </div>
+            <div class="d-flex gap-2">
+                <input type="text" class="form-control form-control-sm" id="blog-chat-input" placeholder="Ask a question...">
+                <button class="btn btn-success btn-sm" id="blog-chat-send" type="button" onclick="askBlogAssistant()"><i class="bi bi-send"></i></button>
+            </div>
+        </div>
+        </div>
+
+        {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('blog_admin_comments') }}" class="btn btn-outline-secondary btn-sm w-100"><i class="bi bi-chat-dots me-1"></i>Moderate Comments</a>{% endif %}
+    </div>
+</div>
+</div>
+
+<button type="button" class="chatbot-fab" id="blog-chat-fab" onclick="toggleBlogAssistant()" aria-label="Open blog assistant">
+    <i class="bi bi-chat-dots-fill"></i>
+</button>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+const originals = {};
+const originalPostTitle = {{ post.title|json_encode|raw }};
+async function parseApiPayload(response, fallbackMessage) {
+    const text = await response.text();
+    let data = {};
+
+    try {
+        data = text ? JSON.parse(text) : {};
+    } catch (error) {
+        if (!response.ok) {
+            throw new Error(fallbackMessage);
+        }
+
+        throw new Error('The server returned an invalid response.');
+    }
+
+    if (!response.ok) {
+        throw new Error(data.error || fallbackMessage);
+    }
+
+    return data;
+}
+
+async function callTranslate(text, targetLang) {
+    const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|' + targetLang;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Translation service error (' + res.status + ')');
+    const data = await res.json();
+    if (data.responseStatus !== 200) throw new Error(data.responseDetails || 'Translation failed');
+    return data.responseData.translatedText;
+}
+async function recordTranslationUsage(language, context) {
+    try {
+        await fetch('{{ path('blog_api_translation_track') }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ language, context })
+        });
+    } catch (error) {
+        console.debug('Translation tracking skipped:', error);
+    }
+}
+async function translatePost() {
+    const lang = document.getElementById('post-lang-select').value;
+    if (!lang) { alert('Please select a language first.'); return; }
+    const btn = document.getElementById('post-translate-btn');
+    const content = document.getElementById('post-content');
+    const badge = document.getElementById('post-translated-badge');
+    const error = document.getElementById('post-translate-error');
+    const restore = document.getElementById('post-restore-btn');
+    error.classList.add('d-none');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Translating';
+    try {
+        if (!originals.post) originals.post = content.innerText;
+        content.innerText = await callTranslate(originals.post, lang);
+        await recordTranslationUsage(lang, 'post');
+        badge.classList.remove('d-none');
+        restore.classList.remove('d-none');
+    } catch (e) {
+        error.textContent = e.message;
+        error.classList.remove('d-none');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-play-fill me-1"></i>Translate Post';
+    }
+}
+function restorePost() {
+    if (originals.post) {
+        document.getElementById('post-content').innerText = originals.post;
+        document.getElementById('post-translated-badge').classList.add('d-none');
+        document.getElementById('post-restore-btn').classList.add('d-none');
+        document.getElementById('post-lang-select').value = '';
+    }
+}
+async function playPostAudio() {
+    const btn = document.getElementById('post-audio-btn');
+    const player = document.getElementById('post-audio-player');
+    const content = document.getElementById('post-content');
+    const selectedLanguage = document.getElementById('post-lang-select').value || 'en';
+    const isTranslated = !document.getElementById('post-translated-badge').classList.contains('d-none');
+    const audioTitle = isTranslated ? await callTranslate(originalPostTitle, selectedLanguage).catch(() => originalPostTitle) : originalPostTitle;
+    const audioContent = content ? content.innerText.trim() : '';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Preparing';
+    try {
+        const response = await fetch('{{ path('blog_api_audio', {id: post.id}) }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                title: audioTitle,
+                content: audioContent,
+                language: isTranslated ? selectedLanguage : 'en'
+            })
+        });
+        if (!response.ok) {
+            await parseApiPayload(response, 'Audio could not be generated right now.');
+        }
+        const blob = await response.blob();
+        player.src = URL.createObjectURL(blob);
+        player.classList.remove('d-none');
+        await player.play();
+    } catch (error) {
+        alert(error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-volume-up me-1"></i>Listen to Post';
+    }
+}
+async function translateComment(id, btn) {
+    const lang = document.getElementById('post-lang-select').value;
+    if (!lang) { alert('Select a language in the translate bar above first.'); return; }
+    const el = document.getElementById('comment-text-' + id);
+    if (!el) return;
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    try {
+        if (!originals['c' + id]) originals['c' + id] = el.innerText;
+        el.innerText = await callTranslate(originals['c' + id], lang);
+        await recordTranslationUsage(lang, 'comment');
+        btn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i>';
+        btn.title = 'Restore original';
+        btn.onclick = function() { restoreComment(id, btn, originalHtml); };
+    } catch (e) {
+        alert('Translation failed: ' + e.message);
+        btn.innerHTML = originalHtml;
+    } finally {
+        btn.disabled = false;
+    }
+}
+function restoreComment(id, btn, originalHtml) {
+    if (originals['c' + id]) {
+        document.getElementById('comment-text-' + id).innerText = originals['c' + id];
+        btn.innerHTML = originalHtml;
+        btn.title = 'Translate';
+        btn.onclick = function() { translateComment(id, btn); };
+    }
+}
+let commentModerationTimer = null;
+let latestModerationRequest = 0;
+let commentModerationState = 'idle';
+let allowCommentSubmit = false;
+
+function setCommentSubmitState(disabled, label, buttonClass = 'btn-success') {
+    const submitBtn = document.getElementById('comment-submit-btn');
+    if (!submitBtn) return;
+    submitBtn.disabled = disabled;
+    submitBtn.className = 'btn btn-sm px-4 ' + buttonClass;
+    submitBtn.innerHTML = '<i class="bi bi-send me-1"></i>' + label;
+}
+
+function renderModerationState(data, textLength = 0) {
+    const textarea = document.getElementById('{{ commentForm.content.vars.id }}');
+    const box = document.getElementById('comment-moderation-result');
+    const hint = document.getElementById('comment-moderation-hint');
+    if (!box || !hint || !textarea) return;
+
+    if (!textLength) {
+        commentModerationState = 'idle';
+        box.className = 'moderation-box bg-light d-none';
+        box.innerHTML = '';
+        hint.innerHTML = '<i class="bi bi-info-circle me-1"></i>Comments are checked automatically before posting.';
+        setCommentSubmitState(false, 'Submit', 'btn-success');
+        return;
+    }
+
+    const variants = { approve: 'alert alert-success', pending: 'alert alert-warning', reject: 'alert alert-danger' };
+    box.className = 'moderation-box ' + (variants[data.action] || 'alert alert-secondary');
+    box.innerHTML = '<strong>' + (data.label || 'review') + '</strong> - ' + (data.reason || 'Checked.') + '<div class="small mt-1">Provider: ' + (data.provider || 'api') + ' | Score: ' + Number(data.score || 0).toFixed(2) + '</div>';
+    box.classList.remove('d-none');
+
+    if (data.action === 'reject') {
+        commentModerationState = 'reject';
+        hint.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>This comment is blocked and cannot be posted.';
+        setCommentSubmitState(true, 'Blocked', 'btn-danger');
+        return;
+    }
+
+    if (data.action === 'pending') {
+        commentModerationState = 'pending';
+        hint.innerHTML = '<i class="bi bi-clock-history me-1"></i>This comment is flagged for manual review before it appears.';
+        setCommentSubmitState(false, 'Submit', 'btn-warning');
+        return;
+    }
+
+    commentModerationState = 'approve';
+    hint.innerHTML = '<i class="bi bi-check-circle me-1"></i>This comment looks okay and will still be reviewed before appearing.';
+    setCommentSubmitState(false, 'Submit', 'btn-success');
+}
+
+async function checkCommentModeration(autoTriggered = false) {
+    const textarea = document.getElementById('{{ commentForm.content.vars.id }}');
+    const box = document.getElementById('comment-moderation-result');
+    const text = textarea.value.trim();
+
+    if (!text) {
+        renderModerationState({}, 0);
+        return { action: 'idle' };
+    }
+
+    if (autoTriggered) {
+        box.className = 'moderation-box alert alert-secondary';
+        box.innerHTML = '<strong>checking</strong> - Reviewing this comment automatically...';
+        box.classList.remove('d-none');
+        setCommentSubmitState(true, 'Checking...', 'btn-secondary');
+    }
+
+    const requestId = ++latestModerationRequest;
+
+    try {
+        const response = await fetch('{{ path('blog_api_moderate_comment') }}', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({text}) });
+        const data = await parseApiPayload(response, 'Moderation could not be completed right now.');
+        if (requestId !== latestModerationRequest) {
+            return data;
+        }
+        renderModerationState(data, text.length);
+        return data;
+    } catch (error) {
+        if (requestId !== latestModerationRequest) {
+            return { action: 'stale' };
+        }
+        commentModerationState = 'error';
+        box.className = 'moderation-box alert alert-secondary';
+        box.innerHTML = '<strong>review unavailable</strong> - ' + error.message;
+        box.classList.remove('d-none');
+        document.getElementById('comment-moderation-hint').innerHTML = '<i class="bi bi-info-circle me-1"></i>We could not verify this comment automatically, but the server will still review it on submit.';
+        setCommentSubmitState(false, 'Submit', 'btn-outline-secondary');
+        return { action: 'error', error: error.message };
+    }
+}
+
+function scheduleCommentModeration() {
+    const textarea = document.getElementById('{{ commentForm.content.vars.id }}');
+    if (!textarea) return;
+
+    const text = textarea.value.trim();
+    clearTimeout(commentModerationTimer);
+
+    if (!text) {
+        renderModerationState({}, 0);
+        return;
+    }
+
+    commentModerationTimer = window.setTimeout(() => {
+        checkCommentModeration(true);
+    }, 450);
+}
+
+function setupAutomaticCommentModeration() {
+    const textarea = document.getElementById('{{ commentForm.content.vars.id }}');
+    const form = document.getElementById('comment-form');
+    if (!textarea || !form) return;
+
+    textarea.addEventListener('input', scheduleCommentModeration);
+    textarea.addEventListener('blur', () => {
+        if (textarea.value.trim()) {
+            clearTimeout(commentModerationTimer);
+            checkCommentModeration(true);
+        }
+    });
+
+    form.addEventListener('submit', async function(event) {
+        if (allowCommentSubmit) {
+            allowCommentSubmit = false;
+            return;
+        }
+
+        const text = textarea.value.trim();
+        if (!text) {
+            return;
+        }
+
+        event.preventDefault();
+        clearTimeout(commentModerationTimer);
+        const result = await checkCommentModeration(true);
+        if (result.action === 'reject') {
+            return;
+        }
+
+        allowCommentSubmit = true;
+        form.requestSubmit();
+    });
+}
+async function loadRelatedPosts() {
+    const container = document.getElementById('related-posts-list');
+    if (!container) return;
+    try {
+        const response = await fetch('{{ path('blog_api_related', {id: post.id}) }}');
+        const data = await parseApiPayload(response, 'Related posts could not be loaded right now.');
+        const items = Array.isArray(data.items) ? data.items : [];
+        if (!items.length) {
+            container.innerHTML = '<div class="text-muted">No related posts yet.</div>';
+            return;
+        }
+        container.innerHTML = items.map(item => `<a class="related-link" href="${item.url}"><strong>${item.title}</strong><div class="related-meta">${item.category || 'General'} | ${item.views} views</div><div class="related-meta">${item.excerpt || ''}</div></a>`).join('');
+    } catch (error) {
+        container.innerHTML = '<div class="text-danger">Could not load related posts.</div>';
+    }
+}
+function appendChatLine(kind, html) {
+    const log = document.getElementById('blog-chat-log');
+    if (!log) return;
+    const line = document.createElement('div');
+    line.className = 'chat-line ' + kind;
+    line.innerHTML = html;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+}
+
+function toggleBlogAssistant(forceOpen = null) {
+    const panel = document.getElementById('blog-chat-panel');
+    const fab = document.getElementById('blog-chat-fab');
+    if (!panel || !fab) return;
+
+    const shouldOpen = forceOpen === null ? panel.classList.contains('d-none') : forceOpen;
+    panel.classList.toggle('d-none', !shouldOpen);
+    fab.classList.toggle('d-none', shouldOpen);
+
+    if (shouldOpen) {
+        document.getElementById('blog-chat-input')?.focus();
+    }
+}
+
+async function askBlogAssistant() {
+    const input = document.getElementById('blog-chat-input');
+    const btn = document.getElementById('blog-chat-send');
+    const message = input.value.trim();
+    if (!message) return;
+
+    appendChatLine('user', message);
+    input.value = '';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    try {
+        const response = await fetch('{{ path('blog_api_chat') }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message})
+        });
+        const data = await parseApiPayload(response, 'Blog assistant could not respond right now.');
+        let html = '<div>' + data.reply + '</div>';
+        if (Array.isArray(data.items) && data.items.length) {
+            html += '<div class="mt-3 d-flex flex-column gap-2">';
+            html += data.items.map(item => `<a class="chat-suggestion" href="${item.url}"><div class="fw-semibold">${item.title}</div><div class="small text-muted">${item.category || 'General'} | ${item.views} views</div><div class="small mt-1">${item.excerpt || ''}</div></a>`).join('');
+            html += '</div>';
+        }
+        appendChatLine('bot', html);
+    } catch (error) {
+        appendChatLine('bot', error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send"></i>';
+    }
+}
+document.addEventListener('DOMContentLoaded', function() {
+    loadRelatedPosts();
+    setupAutomaticCommentModeration();
+    document.getElementById('blog-chat-input')?.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            askBlogAssistant();
+        }
+    });
+});
+</script>
+{% endblock %}

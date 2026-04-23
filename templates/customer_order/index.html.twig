@@ -1,0 +1,64 @@
+{% extends 'front_base.html.twig' %}
+
+{% block title %}My Orders - AgriCloud{% endblock %}
+
+{% block maincontainer %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">My Orders</h2>
+        <p class="text-muted mb-0">Only your own orders are visible here.</p>
+    </div>
+    <a href="{{ path('market_index') }}" class="btn btn-outline-success">
+        <i class="bi bi-arrow-left me-1"></i>Back to market
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body">
+        {% if orders is empty %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-receipt fs-1 d-block mb-3"></i>
+                You do not have any orders yet.
+            </div>
+        {% else %}
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Product</th>
+                            <th>Seller</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for order in orders %}
+                        <tr>
+                            <td>#{{ order.id }}</td>
+                            <td>
+                                <div class="fw-semibold">{{ order.product ? order.product.name : 'N/A' }}</div>
+                                <div class="text-muted small">{{ order.quantity }} x {{ order.unitPrice|number_format(2, '.', ' ') }}</div>
+                            </td>
+                            <td>{{ order.seller ? order.seller.name : 'N/A' }}</td>
+                            <td>{{ order.totalPrice|number_format(2, '.', ' ') }}</td>
+                            <td>
+                                <span class="badge text-bg-{{ order.status == 'delivered' ? 'success' : (order.status == 'pending' ? 'warning' : (order.status == 'cancelled' ? 'danger' : 'primary')) }}">
+                                    {{ order.status }}
+                                </span>
+                            </td>
+                            <td>{{ order.createdAt ? order.createdAt|date('Y-m-d H:i') : '-' }}</td>
+                            <td class="text-end">
+                                <a href="{{ path('customer_order_show', {id: order.id}) }}" class="btn btn-sm btn-outline-success">Details</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

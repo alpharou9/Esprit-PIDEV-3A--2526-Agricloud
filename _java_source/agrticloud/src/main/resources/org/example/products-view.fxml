@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="org.example.controller.ProductController"
+           fx:id="rootStack">
+
+    <VBox style="-fx-background-color: transparent;">
+        <!-- Page header -->
+        <VBox spacing="2" styleClass="page-header">
+            <Label text="Products" styleClass="page-title"/>
+            <Label text="Manage your farm products inventory" styleClass="page-subtitle"/>
+        </VBox>
+
+        <VBox styleClass="page-body" VBox.vgrow="ALWAYS">
+            <VBox spacing="16" VBox.vgrow="ALWAYS">
+                <padding><Insets top="4" right="4" bottom="4" left="4"/></padding>
+
+                <!-- Top bar -->
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <padding><Insets bottom="8"/></padding>
+                    <TextField fx:id="searchField" promptText="Search products..."
+                               styleClass="search-field" prefWidth="180" HBox.hgrow="ALWAYS"/>
+                    <ComboBox fx:id="filterCategoryCombo" styleClass="filter-combo"/>
+                    <ComboBox fx:id="filterStatusCombo" styleClass="filter-combo"/>
+                    <ComboBox fx:id="sortCombo" styleClass="filter-combo"/>
+                    <Button text="+ Add Product" styleClass="btn-primary"
+                            onAction="#onAddProduct"/>
+                </HBox>
+
+                <!-- Product icon grid -->
+                <ScrollPane fx:id="gridScroll" VBox.vgrow="ALWAYS"
+                            fitToWidth="true" hbarPolicy="NEVER"
+                            style="-fx-background: transparent; -fx-background-color: transparent;">
+                    <FlowPane fx:id="productGrid" hgap="14" vgap="14">
+                        <padding><Insets top="4" right="4" bottom="8" left="4"/></padding>
+                    </FlowPane>
+                </ScrollPane>
+
+            </VBox>
+        </VBox>
+    </VBox>
+</StackPane>

@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+{% block title %}Edit {{ farm.name }} — AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ path('farm_show', {id: farm.id}) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h5 class="fw-bold mb-0">Edit Farm — {{ farm.name }}</h5>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4" style="max-width:680px">
+    <div class="card-body p-4">
+        {{ form_start(form, {attr: {enctype: 'multipart/form-data'}}) }}
+
+        <div class="row g-3">
+            <div class="col-md-8">
+                <div class="mb-3">
+                    {{ form_label(form.name) }}
+                    {{ form_widget(form.name) }}
+                    {{ form_errors(form.name) }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form_label(form.farmType) }}
+                    {{ form_widget(form.farmType) }}
+                    {{ form_errors(form.farmType) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            {{ form_label(form.location) }}
+            {{ form_widget(form.location) }}
+            {{ form_errors(form.location) }}
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form_label(form.area) }}
+                    {{ form_widget(form.area) }}
+                    {{ form_errors(form.area) }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form_label(form.latitude) }}
+                    {{ form_widget(form.latitude) }}
+                    {{ form_errors(form.latitude) }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form_label(form.longitude) }}
+                    {{ form_widget(form.longitude) }}
+                    {{ form_errors(form.longitude) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            {{ form_label(form.description) }}
+            {{ form_widget(form.description) }}
+            {{ form_errors(form.description) }}
+        </div>
+
+        <div class="mb-4">
+            {{ form_label(form.imageFile) }}
+            {% if farm.image %}
+                <div class="mb-2">
+                    <img src="{{ asset('uploads/farms/' ~ farm.image) }}" class="rounded-3" style="height:80px;object-fit:cover" alt="Current image">
+                    <div class="form-text">Upload a new image to replace the current one.</div>
+                </div>
+            {% endif %}
+            {{ form_widget(form.imageFile) }}
+            {{ form_errors(form.imageFile) }}
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-1"></i> Save Changes
+        </button>
+        <a href="{{ path('farm_show', {id: farm.id}) }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

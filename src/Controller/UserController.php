@@ -6,7 +6,6 @@ use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,18 +18,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class UserController extends AbstractController
 {
     #[Route('', name: 'user_index', methods: ['GET'])]
-    public function index(Request $request, UserRepository $repo, PaginatorInterface $paginator): Response
+    public function index(Request $request, UserRepository $repo): Response
     {
-        $q          = $request->query->get('q', '');
-        $pagination = $paginator->paginate(
-            $repo->listQueryBuilder($q ?: null),
-            $request->query->getInt('page', 1),
-            10
-        );
+        $q     = $request->query->get('q', '');
+        $users = $q ? $repo->search($q) : $repo->findAll();
 
         return $this->render('user/index.html.twig', [
-            'pagination' => $pagination,
-            'q'          => $q,
+            'users' => $users,
+            'q'     => $q,
         ]);
     }
 
@@ -56,12 +51,6 @@ class UserController extends AbstractController
         }
 
         return $this->render('user/new.html.twig', ['form' => $form]);
-    }
-
-    #[Route('/{id}', name: 'user_show', methods: ['GET'])]
-    public function show(User $user): Response
-    {
-        return $this->render('user/show.html.twig', ['user' => $user]);
     }
 
     #[Route('/{id}/edit', name: 'user_edit', methods: ['GET', 'POST'])]

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}AgriCloud{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        .sidebar { min-height: calc(100vh - 56px); background: #f8f9fa; border-right: 1px solid #dee2e6; }
+        .sidebar a { color: #495057; text-decoration: none; padding: 6px 12px; border-radius: 6px; display: block; }
+        .sidebar a:hover, .sidebar a.active { background: #198754; color: #fff; }
+        .sidebar .nav-section { font-size: .75rem; font-weight: 600; text-transform: uppercase; color: #6c757d; padding: 8px 12px 4px; }
+    </style>
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-success px-3" style="height:56px">
+    <a class="navbar-brand fw-bold" href="{{ path('dashboard') }}">
+        <i class="bi bi-tree-fill me-1"></i> AgriCloud
+    </a>
+    <div class="d-flex align-items-center gap-3">
+        <span class="text-white small">{{ app.user.name ?? 'Guest' }}</span>
+        <a href="{{ path('app_logout') }}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-box-arrow-right me-1"></i>Logout
+        </a>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <nav class="col-md-2 sidebar py-3">
+            <a href="{{ path('dashboard') }}" class="{{ app.request.attributes.get('_route') == 'dashboard' ? 'active' : '' }}">
+                <i class="bi bi-speedometer2 me-1"></i> Dashboard
+            </a>
+
+            {% if is_granted('ROLE_ADMIN') %}
+                <div class="nav-section mt-3">Administration</div>
+                <a href="{{ path('user_index') }}" class="{{ app.request.attributes.get('_route') starts with 'user_' ? 'active' : '' }}">
+                    <i class="bi bi-people me-1"></i> Users
+                </a>
+                <a href="{{ path('role_index') }}" class="{{ app.request.attributes.get('_route') starts with 'role_' ? 'active' : '' }}">
+                    <i class="bi bi-shield-check me-1"></i> Roles
+                </a>
+            {% endif %}
+        </nav>
+
+        <main class="col-md-10 py-4">
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle me-1"></i> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-1"></i> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            {% block body %}{% endblock %}
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block javascripts %}{% endblock %}
+</body>
+</html>

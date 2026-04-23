@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="org.example.controller.AnalyticsController"
+      style="-fx-background-color: -agri-bg;">
+
+    <!-- Header -->
+    <VBox spacing="2" styleClass="page-header">
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="Analytics" styleClass="page-title"/>
+                <Label text="Revenue trends, top products, and stock overview" styleClass="page-subtitle"/>
+            </VBox>
+            <!-- Period selector -->
+            <HBox fx:id="periodBox" spacing="4" alignment="CENTER">
+                <Button fx:id="btn7d"  text="7d"  styleClass="period-btn,period-btn-active" onAction="#onPeriod7"/>
+                <Button fx:id="btn14d" text="14d" styleClass="period-btn"                   onAction="#onPeriod14"/>
+                <Button fx:id="btn30d" text="30d" styleClass="period-btn"                   onAction="#onPeriod30"/>
+            </HBox>
+        </HBox>
+    </VBox>
+
+    <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" hbarPolicy="NEVER"
+                style="-fx-background: transparent; -fx-background-color: transparent;">
+        <VBox spacing="16">
+            <padding><Insets top="12" right="28" bottom="28" left="28"/></padding>
+
+            <!-- KPI cards row -->
+            <HBox fx:id="kpiRow" spacing="16">
+                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="5">
+                    <StackPane styleClass="stat-icon-circle" style="-fx-background-color: #4CAF50;">
+                        <Label text="O" styleClass="stat-icon-letter"/>
+                    </StackPane>
+                    <Label fx:id="kpiOrdersMonth" text="--" styleClass="stat-value"/>
+                    <Label text="Orders (month)" styleClass="stat-name"/>
+                </VBox>
+                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="5">
+                    <StackPane styleClass="stat-icon-circle" style="-fx-background-color: #2196F3;">
+                        <Label text="R" styleClass="stat-icon-letter"/>
+                    </StackPane>
+                    <Label fx:id="kpiRevenueMonth" text="--" styleClass="stat-value"/>
+                    <Label text="Revenue (month)" styleClass="stat-name"/>
+                </VBox>
+                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="5">
+                    <StackPane styleClass="stat-icon-circle" style="-fx-background-color: #FB8C00;">
+                        <Label text="Ø" styleClass="stat-icon-letter"/>
+                    </StackPane>
+                    <Label fx:id="kpiAvgOrder" text="--" styleClass="stat-value"/>
+                    <Label text="Avg Order Value" styleClass="stat-name"/>
+                </VBox>
+                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" spacing="5">
+                    <StackPane styleClass="stat-icon-circle" style="-fx-background-color: #9C27B0;">
+                        <Label text="S" styleClass="stat-icon-letter"/>
+                    </StackPane>
+                    <Label fx:id="kpiStockValue" text="--" styleClass="stat-value"/>
+                    <Label text="Stock Value" styleClass="stat-name"/>
+                </VBox>
+            </HBox>
+
+            <!-- Revenue line chart -->
+            <VBox styleClass="card" spacing="8">
+                <Label text="Revenue Over Time" styleClass="card-title"/>
+                <StackPane>
+                    <LineChart fx:id="revenueChart" prefHeight="240" animated="false"
+                               style="-fx-background-color: transparent;">
+                        <xAxis><CategoryAxis fx:id="revenueXAxis" label="Date"/></xAxis>
+                        <yAxis><NumberAxis  fx:id="revenueYAxis" label="Revenue ($)"/></yAxis>
+                    </LineChart>
+                    <ProgressIndicator fx:id="revenueSpinner" maxWidth="40" maxHeight="40" visible="false"/>
+                </StackPane>
+            </VBox>
+
+            <!-- Best sellers + Stock pie side by side -->
+            <HBox spacing="16">
+                <VBox styleClass="card" spacing="8" HBox.hgrow="ALWAYS">
+                    <Label text="Best-Selling Products" styleClass="card-title"/>
+                    <StackPane>
+                        <BarChart fx:id="bestSellerChart" prefHeight="260" animated="false"
+                                  style="-fx-background-color: transparent;" legendVisible="false">
+                            <xAxis><CategoryAxis fx:id="sellerXAxis" label="Product" tickLabelRotation="30"/></xAxis>
+                            <yAxis><NumberAxis  fx:id="sellerYAxis" label="Qty Sold"/></yAxis>
+                        </BarChart>
+                        <ProgressIndicator fx:id="sellerSpinner" maxWidth="40" maxHeight="40" visible="false"/>
+                    </StackPane>
+                </VBox>
+
+                <VBox styleClass="card" spacing="8" HBox.hgrow="ALWAYS">
+                    <Label text="Stock Value by Category" styleClass="card-title"/>
+                    <StackPane>
+                        <PieChart fx:id="stockPieChart" prefHeight="260" animated="false"
+                                  labelsVisible="true" style="-fx-background-color: transparent;"/>
+                        <ProgressIndicator fx:id="pieSpinner" maxWidth="40" maxHeight="40" visible="false"/>
+                    </StackPane>
+                </VBox>
+            </HBox>
+
+            <!-- Top 5 products table -->
+            <VBox styleClass="card" spacing="8">
+                <Label text="Top 5 Products by Revenue" styleClass="card-title"/>
+                <TableView fx:id="top5Table" prefHeight="190" style="-fx-border-color: transparent;"/>
+            </VBox>
+
+        </VBox>
+    </ScrollPane>
+</VBox>

@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Welcome to Agricloud{% endblock %}
+
+{% block body %}
+<div class="container text-center mt-5">
+    <h1 class="mb-4">Welcome to <span style="color: #2c3e50;">Agricloud</span></h1>
+    <p class="lead">Please select your role to access the platform</p>
+    
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-4">
+            <div class="card shadow-sm p-4 border-primary">
+                <h3>Admin</h3>
+                <p>Validate new farms and manage the global database.</p>
+<a href="{{ path('app_admin_farm_index') }}" class="btn btn-outline-primary">Enter as Admin</a>            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm p-4 border-success">
+                <h3>Farmer</h3>
+                <p>Register your farms, manage fields, and track your work.</p>
+<a href="{{ path('app_farmer_farm_index') }}" class="btn btn-outline-success">Enter as Farmer</a>            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
