@@ -10,7 +10,10 @@ use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
@@ -22,10 +25,11 @@ class FarmController extends AbstractController
     public function index(Request $request, FarmRepository $repo, PaginatorInterface $paginator): Response
     {
         $q     = $request->query->get('q', '');
+        $sort  = $request->query->get('sort', 'newest');
         $owner = $this->isGranted('ROLE_ADMIN') ? null : $this->getUser();
 
         $pagination = $paginator->paginate(
-            $repo->listQueryBuilder($q ?: null, $owner),
+            $repo->listQueryBuilder($q ?: null, $owner, $sort),
             $request->query->getInt('page', 1),
             9
         );
@@ -33,6 +37,7 @@ class FarmController extends AbstractController
         return $this->render('farm/index.html.twig', [
             'pagination' => $pagination,
             'q'          => $q,
+            'sort'       => $sort,
         ]);
     }
 
@@ -134,7 +139,7 @@ class FarmController extends AbstractController
 
     #[Route('/{id}/approve', name: 'farm_approve', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function approve(Farm $farm, Request $request, EntityManagerInterface $em): Response
+    public function approve(Farm $farm, Request $request, EntityManagerInterface $em, MailerInterface $mailer): Response
     {
         if (!$this->isCsrfTokenValid('approve_farm_' . $farm->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Invalid CSRF token.');
@@ -146,13 +151,14 @@ class FarmController extends AbstractController
         $farm->setApprovedBy($this->getUser());
         $em->flush();
 
+        $this->sendFarmStatusEmail($mailer, $farm, 'approved');
         $this->addFlash('success', 'Farm approved.');
         return $this->redirectToRoute('farm_show', ['id' => $farm->getId()]);
     }
 
     #[Route('/{id}/reject', name: 'farm_reject', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function reject(Farm $farm, Request $request, EntityManagerInterface $em): Response
+    public function reject(Farm $farm, Request $request, EntityManagerInterface $em, MailerInterface $mailer): Response
     {
         if (!$this->isCsrfTokenValid('reject_farm_' . $farm->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Invalid CSRF token.');
@@ -164,7 +170,25 @@ class FarmController extends AbstractController
         $farm->setApprovedBy(null);
         $em->flush();
 
+        $this->sendFarmStatusEmail($mailer, $farm, 'rejected');
         $this->addFlash('success', 'Farm rejected.');
         return $this->redirectToRoute('farm_show', ['id' => $farm->getId()]);
+    }
+
+    private function sendFarmStatusEmail(MailerInterface $mailer, Farm $farm, string $status): void
+    {
+        try {
+            $html = $this->renderView('emails/farm_status.html.twig', [
+                'farm'     => $farm,
+                'user'     => $farm->getUser(),
+                'status'   => $status,
+                'farm_url' => $this->generateUrl('farm_show', ['id' => $farm->getId()], UrlGeneratorInterface::ABSOLUTE_URL),
+            ]);
+            $mailer->send((new Email())
+                ->from('noreply@agricloud.tn')
+                ->to($farm->getUser()->getEmail())
+                ->subject('Your farm "' . $farm->getName() . '" has been ' . $status)
+                ->html($html));
+        } catch (\Throwable) {}
     }
 }

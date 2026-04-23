@@ -68,6 +68,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(name: 'face_enrolled_at', type: 'datetime', nullable: true)]
     private ?\DateTimeInterface $faceEnrolledAt = null;
 
+    #[ORM\Column(name: 'reset_token', length: 100, nullable: true)]
+    private ?string $resetToken = null;
+
+    #[ORM\Column(name: 'reset_token_expires_at', type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $resetTokenExpiresAt = null;
+
     #[ORM\ManyToOne(targetEntity: Role::class)]
     #[ORM\JoinColumn(name: 'role_id', referencedColumnName: 'id', nullable: true)]
     private ?Role $role = null;
@@ -142,4 +148,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getPlainPassword(): ?string { return $this->plainPassword; }
     public function setPlainPassword(?string $plainPassword): static { $this->plainPassword = $plainPassword; return $this; }
+
+    public function getResetToken(): ?string { return $this->resetToken; }
+    public function setResetToken(?string $v): static { $this->resetToken = $v; return $this; }
+
+    public function getResetTokenExpiresAt(): ?\DateTimeInterface { return $this->resetTokenExpiresAt; }
+    public function setResetTokenExpiresAt(?\DateTimeInterface $v): static { $this->resetTokenExpiresAt = $v; return $this; }
 }

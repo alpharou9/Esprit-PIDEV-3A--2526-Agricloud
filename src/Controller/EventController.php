@@ -250,6 +250,29 @@ class EventController extends AbstractController
         return $this->redirectToRoute('event_participants', ['id' => $participation->getEvent()->getId()]);
     }
 
+    // ── iCal download ─────────────────────────────────────────────
+    #[Route('/{id}/ical', name: 'event_ical', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function ical(Event $event): Response
+    {
+        $fmt = fn(\DateTimeInterface $dt) => $dt->format('Ymd\THis\Z');
+        $now = $fmt(new \DateTime('UTC'));
+        $dtstart = $event->getEventDate() ? $fmt(\DateTime::createFromInterface($event->getEventDate())->setTimezone(new \DateTimeZone('UTC'))) : $now;
+        $dtend   = $event->getEndDate()   ? $fmt(\DateTime::createFromInterface($event->getEndDate())->setTimezone(new \DateTimeZone('UTC'))) : $dtstart;
+        $summary = addcslashes($event->getTitle(), ',;\\');
+        $location = addcslashes($event->getLocation(), ',;\\');
+        $desc    = addcslashes(substr(strip_tags($event->getDescription()), 0, 500), ',;\\');
+        $uid     = 'event-' . $event->getId() . '@agricloud.tn';
+
+        $ical = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//AgriCloud//EN\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\n"
+            . "BEGIN:VEVENT\r\nUID:{$uid}\r\nDTSTAMP:{$now}\r\nDTSTART:{$dtstart}\r\nDTEND:{$dtend}\r\n"
+            . "SUMMARY:{$summary}\r\nLOCATION:{$location}\r\nDESCRIPTION:{$desc}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+        return new Response($ical, 200, [
+            'Content-Type'        => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="event-' . $event->getId() . '.ics"',
+        ]);
+    }
+
     // ── Send ticket email ─────────────────────────────────────────
     private function sendTicketEmail(MailerInterface $mailer, Participation $participation): void
     {

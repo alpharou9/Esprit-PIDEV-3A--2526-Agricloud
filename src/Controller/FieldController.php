@@ -34,6 +34,18 @@ class FieldController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            if ($farm->getArea() !== null) {
+                $usedArea = array_sum(array_map(fn($f) => (float)$f->getArea(), $farm->getFields()->toArray()));
+                $newTotal = $usedArea + (float)$field->getArea();
+                if ($newTotal > (float)$farm->getArea()) {
+                    $this->addFlash('error', sprintf(
+                        'Field area exceeds farm capacity. Farm: %.2f ha, already used: %.2f ha, available: %.2f ha.',
+                        (float)$farm->getArea(), $usedArea, max(0, (float)$farm->getArea() - $usedArea)
+                    ));
+                    return $this->render('field/new.html.twig', ['form' => $form, 'farm' => $farm]);
+                }
+            }
+
             $field->setCreatedAt(new \DateTime());
             $em->persist($field);
             $em->flush();

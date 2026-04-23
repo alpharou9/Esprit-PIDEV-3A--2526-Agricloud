@@ -83,13 +83,57 @@
             </ul>
         </div>
 
+        {# iCal + Google Maps links #}
+        <div class="d-flex gap-2 mb-3">
+            <a href="{{ path('event_ical', {id: event.id}) }}" class="btn btn-outline-success btn-sm flex-fill">
+                <i class="bi bi-calendar-plus me-1"></i>Add to Calendar
+            </a>
+            <a href="https://www.google.com/maps/search/?api=1&query={{ event.location|url_encode }}" target="_blank" class="btn btn-outline-secondary btn-sm flex-fill">
+                <i class="bi bi-map me-1"></i>Maps
+            </a>
+        </div>
+
         {% if event.latitude and event.longitude %}
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-3">
             <iframe
                 src="https://maps.google.com/maps?q={{ event.latitude }},{{ event.longitude }}&z=14&output=embed"
                 width="100%" height="220" style="border:0" allowfullscreen loading="lazy"></iframe>
         </div>
         {% endif %}
+
+        {# AI Recommendation widget #}
+        <div class="card border-0 shadow-sm rounded-4 p-3">
+            <h6 class="fw-semibold mb-2"><i class="bi bi-stars me-1"></i>Ask AgriBot about this event</h6>
+            <input id="ai-question" type="text" class="form-control form-control-sm mb-2" placeholder="e.g. What should I bring?">
+            <button class="btn btn-outline-success btn-sm w-100" onclick="askAI()">
+                <i class="bi bi-send me-1"></i>Ask
+            </button>
+            <div id="ai-answer" class="d-none mt-2 small p-2 bg-light rounded-3" style="line-height:1.6"></div>
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+function askAI() {
+    var q = document.getElementById('ai-question').value.trim();
+    if (!q) return;
+    var btn = event.target || document.querySelector('[onclick="askAI()"]');
+    var ansDiv = document.getElementById('ai-answer');
+    ansDiv.classList.remove('d-none');
+    ansDiv.textContent = 'Thinking…';
+
+    var context = 'Event: {{ event.title|e('js') }}. Location: {{ event.location|e('js') }}. Date: {{ event.eventDate ? event.eventDate|date('d M Y') : 'TBD' }}. Category: {{ event.category|e('js') }}.';
+    var form = new FormData();
+    form.append('message', context + ' Question: ' + q);
+
+    fetch('{{ path('blog_chatbot') }}', { method: 'POST', body: form })
+        .then(function(r){ return r.json(); })
+        .then(function(data){ ansDiv.textContent = data.reply || 'No response.'; })
+        .catch(function(){ ansDiv.textContent = 'Error contacting AI.'; });
+}
+document.getElementById('ai-question').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); askAI(); } });
+</script>
 {% endblock %}

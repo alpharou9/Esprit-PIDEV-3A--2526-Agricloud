@@ -18,11 +18,11 @@ class FarmRepository extends ServiceEntityRepository
         parent::__construct($registry, Farm::class);
     }
 
-    public function listQueryBuilder(?string $query = null, ?User $owner = null): QueryBuilder
+    public function listQueryBuilder(?string $query = null, ?User $owner = null, string $sort = 'newest'): QueryBuilder
     {
         $qb = $this->createQueryBuilder('f')
             ->leftJoin('f.user', 'u')->addSelect('u')
-            ->orderBy('f.createdAt', 'DESC');
+            ->leftJoin('f.fields', 'fl');
 
         if ($owner) {
             $qb->andWhere('f.user = :owner')->setParameter('owner', $owner);
@@ -32,6 +32,14 @@ class FarmRepository extends ServiceEntityRepository
             $qb->andWhere('f.name LIKE :q OR f.location LIKE :q')
                ->setParameter('q', '%' . $query . '%');
         }
+
+        match ($sort) {
+            'fields_desc' => $qb->groupBy('f.id')->orderBy('COUNT(fl.id)', 'DESC'),
+            'fields_asc'  => $qb->groupBy('f.id')->orderBy('COUNT(fl.id)', 'ASC'),
+            'area_desc'   => $qb->orderBy('f.area', 'DESC'),
+            'area_asc'    => $qb->orderBy('f.area', 'ASC'),
+            default       => $qb->orderBy('f.createdAt', 'DESC'),
+        };
 
         return $qb;
     }

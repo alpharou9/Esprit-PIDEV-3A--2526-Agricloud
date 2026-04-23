@@ -177,7 +177,10 @@
             </div>
 
             <div class="mb-4">
-                <label for="password" class="form-label">Password</label>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label for="password" class="form-label mb-0">Password</label>
+                    <a href="{{ path('forgot_password') }}" class="text-muted" style="font-size:.82rem">Forgot password?</a>
+                </div>
                 <div class="input-icon">
                     <i class="bi bi-lock"></i>
                     <input type="password" id="password" name="_password" class="form-control"

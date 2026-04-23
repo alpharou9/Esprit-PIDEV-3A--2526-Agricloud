@@ -30,8 +30,22 @@
             <span><i class="bi bi-calendar me-1"></i>{{ post.publishedAt ? post.publishedAt|date('d M Y') : post.createdAt|date('d M Y') }}</span>
         </div>
 
+        {# Read mode toolbar #}
+        <div class="d-flex gap-2 mb-2 align-items-center flex-wrap">
+            <button id="btn-tts" class="btn btn-outline-success btn-sm" onclick="toggleTTS()">
+                <i class="bi bi-volume-up me-1"></i>Read Aloud
+            </button>
+            <button id="btn-summary" class="btn btn-outline-primary btn-sm" onclick="generateSummary()">
+                <i class="bi bi-stars me-1"></i>AI Summary
+            </button>
+        </div>
+        <div id="summary-box" class="d-none alert alert-success small mb-3">
+            <strong><i class="bi bi-stars me-1"></i>Summary:</strong>
+            <span id="summary-text"></span>
+        </div>
+
         {# Content #}
-        <div class="mb-4" style="line-height:1.8;white-space:pre-wrap">{{ post.content }}</div>
+        <div id="post-content" class="mb-4" style="line-height:1.8;white-space:pre-wrap">{{ post.content }}</div>
 
         {# Tags #}
         {% if post.tags %}
@@ -202,6 +216,55 @@
 {% block javascripts %}
 {{ parent() }}
 <script>
+// ── Text-to-Speech ────────────────────────────────────────────
+var ttsUtterance = null;
+var ttsSpeaking  = false;
+function toggleTTS() {
+    var btn = document.getElementById('btn-tts');
+    if (ttsSpeaking) {
+        window.speechSynthesis.cancel();
+        ttsSpeaking = false;
+        btn.innerHTML = '<i class="bi bi-volume-up me-1"></i>Read Aloud';
+        return;
+    }
+    var text = document.getElementById('post-content').innerText;
+    ttsUtterance = new SpeechSynthesisUtterance(text);
+    ttsUtterance.lang = 'en-US';
+    ttsUtterance.rate = 0.95;
+    ttsUtterance.onend = function() { ttsSpeaking = false; btn.innerHTML = '<i class="bi bi-volume-up me-1"></i>Read Aloud'; };
+    window.speechSynthesis.speak(ttsUtterance);
+    ttsSpeaking = true;
+    btn.innerHTML = '<i class="bi bi-stop-circle me-1"></i>Stop Reading';
+}
+
+// ── AI Summary ────────────────────────────────────────────────
+function generateSummary() {
+    var btn = document.getElementById('btn-summary');
+    var box = document.getElementById('summary-box');
+    var txt = document.getElementById('summary-text');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass me-1"></i>Generating…';
+    box.classList.remove('d-none');
+    txt.textContent = 'Generating summary…';
+
+    var content = document.getElementById('post-content').innerText.slice(0, 800);
+    var form = new FormData();
+    form.append('message', 'Summarize this article in 3 short sentences: ' + content);
+
+    fetch('{{ path('blog_chatbot') }}', { method: 'POST', body: form })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            txt.textContent = data.reply || 'Could not generate summary.';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-stars me-1"></i>AI Summary';
+        })
+        .catch(function(){
+            txt.textContent = 'Summary unavailable.';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-stars me-1"></i>AI Summary';
+        });
+}
+
 // ── Translator ────────────────────────────────────────────────
 (function () {
     var originalText = {{ post.content|json_encode|raw }};
