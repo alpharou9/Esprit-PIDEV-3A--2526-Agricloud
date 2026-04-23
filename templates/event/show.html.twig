@@ -2,6 +2,22 @@
 {% block title %}{{ event.title }} — AgriCloud{% endblock %}
 
 {% block body %}
+{% set confirmed = event.confirmedCount %}
+{% set capacity = event.capacity %}
+{% if capacity %}
+    {% set ratio = confirmed / capacity %}
+    {% if confirmed >= capacity %}
+        {% set availability = {label:'Full', color:'#c0392b', background:'#fdeeed'} %}
+    {% elseif ratio < 0.5 %}
+        {% set availability = {label:'Many spots left', color:'#198754', background:'#eaf7ef'} %}
+    {% elseif ratio < 0.85 %}
+        {% set availability = {label:'Filling up', color:'#d97706', background:'#fff4df'} %}
+    {% else %}
+        {% set availability = {label:'Almost full', color:'#c0392b', background:'#fdeeed'} %}
+    {% endif %}
+{% else %}
+    {% set availability = {label:'Open registration', color:'#198754', background:'#eaf7ef'} %}
+{% endif %}
 <div class="d-flex align-items-center gap-2 mb-4">
     <a href="{{ path('event_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
     <h5 class="fw-bold mb-0">{{ event.title }}</h5>
@@ -20,6 +36,9 @@
         <div class="d-flex gap-2 flex-wrap mb-3">
             {% set sc = {upcoming:'success',ongoing:'primary',completed:'secondary',cancelled:'danger'} %}
             <span class="badge bg-{{ sc[event.status] ?? 'secondary' }}">{{ event.status|capitalize }}</span>
+            <span class="badge border" style="background:{{ availability.background }};color:{{ availability.color }};border-color:{{ availability.color }}33 !important;">
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{{ availability.color }};margin-right:6px;"></span>{{ availability.label }}
+            </span>
             {% if event.category %}<span class="badge bg-light text-dark border">{{ event.category }}</span>{% endif %}
             <span class="text-muted small"><i class="bi bi-people me-1"></i>{{ event.confirmedCount }} registered{% if event.capacity %} / {{ event.capacity }} capacity{% endif %}</span>
         </div>

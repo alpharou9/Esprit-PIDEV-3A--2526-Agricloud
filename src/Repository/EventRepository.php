@@ -61,4 +61,34 @@ class EventRepository extends ServiceEntityRepository
         }
         return $qb;
     }
+
+    /**
+     * @return Event[]
+     */
+    public function findBetweenDates(\DateTimeInterface $start, \DateTimeInterface $end): array
+    {
+        return $this->createQueryBuilder('e')
+            ->leftJoin('e.user', 'u')->addSelect('u')
+            ->andWhere('e.eventDate >= :start')
+            ->andWhere('e.eventDate < :end')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->orderBy('e.eventDate', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Event[]
+     */
+    public function findRecommendationCandidates(): array
+    {
+        return $this->createQueryBuilder('e')
+            ->leftJoin('e.user', 'u')->addSelect('u')
+            ->andWhere('e.status IN (:statuses)')
+            ->setParameter('statuses', ['upcoming', 'ongoing'])
+            ->orderBy('e.eventDate', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

@@ -9,6 +9,8 @@
 .event-img-placeholder{height:175px;background:linear-gradient(135deg,#d1e7dd,#a3cfbb);display:flex;align-items:center;justify-content:center;font-size:3rem;color:#198754}
 .category-pill{cursor:pointer;border-radius:20px;padding:4px 14px;font-size:.8rem;border:1px solid #dee2e6;background:#fff;transition:all .15s;text-decoration:none;color:#495057}
 .category-pill:hover,.category-pill.active{background:#198754;color:#fff;border-color:#198754}
+.availability-pill{display:inline-flex;align-items:center;gap:.4rem;padding:4px 10px;border-radius:999px;font-size:.75rem;font-weight:600}
+.availability-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 </style>
 {% endblock %}
 
@@ -16,6 +18,8 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="fw-bold mb-0"><i class="bi bi-calendar-event me-2"></i>Events</h5>
     <div class="d-flex gap-2">
+        <a href="{{ path('event_recommendations') }}" class="btn btn-outline-warning btn-sm"><i class="bi bi-stars me-1"></i>Recommendations</a>
+        <a href="{{ path('event_calendar') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-calendar-week me-1"></i>Calendar</a>
         <a href="{{ path('event_my_registrations') }}" class="btn btn-outline-success btn-sm"><i class="bi bi-ticket-perforated me-1"></i>My Registrations</a>
         <a href="{{ path('event_my') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-calendar3 me-1"></i>My Events</a>
         <a href="{{ path('event_new') }}" class="btn btn-success btn-sm"><i class="bi bi-plus-lg me-1"></i>Create Event</a>
@@ -60,6 +64,29 @@
                 <div class="event-img-placeholder"><i class="bi bi-calendar-event"></i></div>
             {% endif %}
             <div class="card-body d-flex flex-column">
+                {% set confirmed = event.confirmedCount %}
+                {% set capacity = event.capacity %}
+                {% if capacity %}
+                    {% set ratio = confirmed / capacity %}
+                    {% if confirmed >= capacity %}
+                        {% set availability = {label:'Full', color:'#c0392b', background:'#fdeeed'} %}
+                    {% elseif ratio < 0.5 %}
+                        {% set availability = {label:'Many spots left', color:'#198754', background:'#eaf7ef'} %}
+                    {% elseif ratio < 0.85 %}
+                        {% set availability = {label:'Filling up', color:'#d97706', background:'#fff4df'} %}
+                    {% else %}
+                        {% set availability = {label:'Almost full', color:'#c0392b', background:'#fdeeed'} %}
+                    {% endif %}
+                {% else %}
+                    {% set availability = {label:'Open registration', color:'#198754', background:'#eaf7ef'} %}
+                {% endif %}
+
+                <div class="mb-2">
+                    <span class="availability-pill" style="background:{{ availability.background }};color:{{ availability.color }};">
+                        <span class="availability-dot" style="background:{{ availability.color }};"></span>
+                        {{ availability.label }}
+                    </span>
+                </div>
                 <div class="d-flex justify-content-between align-items-start mb-1">
                     <h6 class="fw-bold mb-0 flex-grow-1 me-2">{{ event.title }}</h6>
                     {% set sc = {upcoming:'success',ongoing:'primary',completed:'secondary',cancelled:'danger'} %}
