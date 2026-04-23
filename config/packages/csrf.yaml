@@ -1,0 +1,6 @@
+# Symfony 6.4 keeps CSRF config simpler than Symfony 7 here.
+framework:
+    form:
+        csrf_protection: true
+
+    csrf_protection: true

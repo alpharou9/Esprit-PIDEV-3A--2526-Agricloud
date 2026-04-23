@@ -12,43 +12,48 @@
 
 <div class="card border-0 shadow-sm" style="max-width:600px">
     <div class="card-body p-4">
-        {{ form_start(form) }}
+        {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
 
         <div class="mb-3">
             {{ form_label(form.name) }}
             {{ form_widget(form.name) }}
             {{ form_errors(form.name) }}
+            <div class="form-text">Letters, spaces, hyphens and apostrophes only · 2–100 characters</div>
         </div>
 
         <div class="mb-3">
             {{ form_label(form.email) }}
             {{ form_widget(form.email) }}
             {{ form_errors(form.email) }}
+            <div class="form-text">Valid email address · Max 150 characters · Must be unique</div>
         </div>
 
         <div class="mb-3">
             {{ form_label(form.phone) }}
             {{ form_widget(form.phone) }}
             {{ form_errors(form.phone) }}
+            <div class="form-text">Optional · 8–20 digits, may start with +</div>
         </div>
 
         <div class="mb-3">
             {{ form_label(form.role) }}
             {{ form_widget(form.role) }}
             {{ form_errors(form.role) }}
+            <div class="form-text">Select a role for this user</div>
         </div>
 
         <div class="mb-3">
             {{ form_label(form.status) }}
             {{ form_widget(form.status) }}
             {{ form_errors(form.status) }}
+            <div class="form-text">Blocked users cannot log in</div>
         </div>
 
         <div class="mb-4">
             {{ form_label(form.plainPassword) }}
             {{ form_widget(form.plainPassword) }}
             {{ form_errors(form.plainPassword) }}
-            <div class="form-text">Leave blank to keep the current password.</div>
+            <div class="form-text">Leave blank to keep the current password · At least 6 characters · One uppercase letter · One number</div>
         </div>
 
         <button type="submit" class="btn btn-success">

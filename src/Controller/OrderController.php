@@ -3,190 +3,275 @@
 namespace App\Controller;
 
 use App\Entity\Order;
-use App\Entity\User;
-use App\Form\OrderType;
 use App\Repository\OrderRepository;
-use App\Repository\ProductRepository;
-use App\Repository\UserRepository;
+use App\Service\CurrencyConverterService;
+use App\Service\EmailService;
+use App\Service\OrderGroupService;
+use App\Service\OrderStatusService;
+use App\Service\PdfService;
+use App\Service\StripeCheckoutService;
+use App\Service\TemporaryShippingStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/orders')]
-#[IsGranted('ROLE_FARMER')]
+#[Route('/market/orders')]
+#[IsGranted('ROLE_USER')]
 class OrderController extends AbstractController
 {
     #[Route('', name: 'order_index', methods: ['GET'])]
-    public function index(
-        Request $request,
-        OrderRepository $orderRepository,
-        ProductRepository $productRepository,
-        UserRepository $userRepository
-    ): Response
+    public function index(OrderRepository $repo, CurrencyConverterService $currencyConverter, OrderGroupService $orderGroupService): Response
     {
-        $currentUser = $this->getAuthenticatedUser();
-        $isAdmin = $this->isGranted('ROLE_ADMIN');
-        $query = trim((string) $request->query->get('q', ''));
-        $status = trim((string) $request->query->get('status', ''));
-        $productId = $request->query->getInt('product');
-        $customerId = $request->query->getInt('customer');
-        $sellerId = $isAdmin ? $request->query->getInt('seller') : (int) $currentUser->getId();
-        $sort = trim((string) $request->query->get('sort', 'newest'));
+        $role = $this->isGranted('ROLE_ADMIN') ? 'admin' : 'customer';
 
-        $orders = $orderRepository->findByFilters(
-            $query !== '' ? $query : null,
-            $productId > 0 ? $productId : null,
-            $customerId > 0 ? $customerId : null,
-            $sellerId > 0 ? $sellerId : null,
-            $status !== '' ? $status : null,
-            $sort !== '' ? $sort : 'newest'
+        $myOrders  = $repo->listQueryBuilder($this->getUser(), 'customer')->getQuery()->getResult();
+        $mySales   = $this->isGranted('ROLE_ADMIN')
+            ? $repo->listQueryBuilder($this->getUser(), 'admin')->getQuery()->getResult()
+            : $repo->listQueryBuilder($this->getUser(), 'seller')->getQuery()->getResult();
+        $orderConversions = [];
+
+        foreach (array_merge($myOrders, $mySales) as $order) {
+            $orderConversions[$order->getId()] = [
+                'unitPrice' => $currencyConverter->convertAmount($order->getUnitPrice()),
+                'totalPrice' => $currencyConverter->convertAmount($order->getTotalPrice()),
+            ];
+        }
+
+        $myOrderGroups = $orderGroupService->group($myOrders);
+        $mySaleGroups = $orderGroupService->group($mySales);
+        $groupConversions = [];
+
+        foreach (array_merge($myOrderGroups, $mySaleGroups) as $group) {
+            $groupConversions[$group['key']] = $currencyConverter->convertAmount($group['totalPrice']);
+        }
+
+        return $this->render('market/orders.html.twig', [
+            'myOrders' => $myOrders,
+            'mySales'  => $mySales,
+            'myOrderGroups' => $myOrderGroups,
+            'mySaleGroups' => $mySaleGroups,
+            'orderConversions' => $orderConversions,
+            'groupConversions' => $groupConversions,
+            'orderGroupService' => $orderGroupService,
+        ]);
+    }
+
+    #[Route('/{id}', name: 'order_show', methods: ['GET'])]
+    public function show(Order $order, OrderRepository $orderRepository, OrderStatusService $orderStatusService, CurrencyConverterService $currencyConverter, StripeCheckoutService $stripeCheckoutService, TemporaryShippingStorage $temporaryShippingStorage): Response
+    {
+        $this->denyUnlessOrderVisible($order);
+        $relatedOrders = $this->filterVisibleOrders($orderRepository->findCheckoutSiblings($order));
+        $shippingDetails = $this->resolveShippingDetails($order, $stripeCheckoutService, $temporaryShippingStorage);
+        $orderTotal = array_sum(array_map(static fn (Order $line): float => (float) $line->getTotalPrice(), $relatedOrders));
+
+        return $this->render('market/order_show.html.twig', [
+            'order' => $order,
+            'orderLines' => $relatedOrders,
+            'orderTotal' => $orderTotal,
+            'availableStatuses' => $orderStatusService->getSelectableStatuses($order),
+            'convertedUnitPrice' => $currencyConverter->convertAmount($order->getUnitPrice()),
+            'convertedTotalPrice' => $currencyConverter->convertAmount($order->getTotalPrice()),
+            'convertedOrderTotal' => $currencyConverter->convertAmount($orderTotal),
+            'shippingDetails' => $shippingDetails,
+        ]);
+    }
+
+    #[Route('/{id}/pdf', name: 'order_export_pdf', methods: ['GET'])]
+    public function exportPdf(Order $order, PdfService $pdfService, StripeCheckoutService $stripeCheckoutService, TemporaryShippingStorage $temporaryShippingStorage): Response
+    {
+        $this->denyUnlessOrderVisible($order);
+        $shippingDetails = $this->resolveShippingDetails($order, $stripeCheckoutService, $temporaryShippingStorage);
+
+        $response = new Response($pdfService->generateOrderPdf($order, $shippingDetails));
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set(
+            'Content-Disposition',
+            $response->headers->makeDisposition(
+                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                sprintf('order-%d.pdf', $order->getId())
+            )
         );
 
-        return $this->render('order/index.html.twig', [
-            'orders' => $orders,
-            'q' => $query,
-            'selectedStatus' => $status,
-            'selectedProduct' => $productId > 0 ? $productId : null,
-            'selectedCustomer' => $customerId > 0 ? $customerId : null,
-            'selectedSeller' => $sellerId > 0 ? $sellerId : null,
-            'selectedSort' => $sort !== '' ? $sort : 'newest',
-            'isAdmin' => $isAdmin,
-            'products' => $productRepository->findBy([], ['name' => 'ASC']),
-            'customers' => $userRepository->findBy([], ['name' => 'ASC']),
-            'sellers' => $isAdmin ? $userRepository->findBy([], ['name' => 'ASC']) : [$currentUser],
-            'statuses' => [
-                'pending' => 'Pending',
-                'confirmed' => 'Confirmed',
-                'processing' => 'Processing',
-                'shipped' => 'Shipped',
-                'delivered' => 'Delivered',
-                'cancelled' => 'Cancelled',
-            ],
-            'sortOptions' => [
-                'newest' => 'Newest first',
-                'oldest' => 'Oldest first',
-                'total_asc' => 'Total low to high',
-                'total_desc' => 'Total high to low',
-                'status_asc' => 'Status A-Z',
-                'status_desc' => 'Status Z-A',
-                'customer_asc' => 'Customer A-Z',
-                'seller_asc' => 'Seller A-Z',
-            ],
-        ]);
+        return $response;
     }
 
-    #[Route('/new', name: 'order_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    #[Route('/{id}/status', name: 'order_status', methods: ['POST'])]
+    public function updateStatus(Order $order, Request $request, EntityManagerInterface $em, EmailService $emailService, OrderStatusService $orderStatusService, OrderRepository $orderRepository): Response
     {
-        if (!$this->isGranted('ROLE_ADMIN')) {
-            throw $this->createAccessDeniedException('Only admins can create orders from the backoffice.');
+        $user = $this->getUser();
+        if (!$this->isGranted('ROLE_ADMIN') && $order->getSeller() !== $user) {
+            throw $this->createAccessDeniedException();
         }
 
-        $order = new Order();
-        $form = $this->createForm(OrderType::class, $order);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $now = new \DateTimeImmutable();
-
-            $order->setOrderDate($now);
-            $order->setCreatedAt($now);
-            $order->setUpdatedAt($now);
-            $this->synchronizeOrderTotals($order);
-
-            $entityManager->persist($order);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Order created successfully.');
-
-            return $this->redirectToRoute('order_index');
+        if (!$this->isCsrfTokenValid('order_status_' . $order->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Invalid token.');
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
         }
 
-        return $this->render('order/new.html.twig', [
-            'form' => $form,
-        ]);
+        $status = (string) $request->request->get('status');
+        $targetOrders = $this->filterStatusEditableOrders($orderRepository->findCheckoutSiblings($order));
+        $result = null;
+
+        foreach ($targetOrders as $targetOrder) {
+            $result = $orderStatusService->applyStatusChange($targetOrder, $status, $request->request->get('reason'));
+
+            if (!$result['success']) {
+                $this->addFlash('error', $result['message']);
+                return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+            }
+        }
+
+        $em->flush();
+
+        if ($result !== null && $result['confirmedJustNow']) {
+            $emailResult = $emailService->sendOrderConfirmedEmail($order);
+            $this->addFlash($emailResult['sent'] ? 'success' : 'warning', $emailResult['message']);
+        } else {
+            $this->addFlash('success', sprintf('Order status updated for %d item(s).', count($targetOrders)));
+        }
+
+        return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
     }
 
-    #[Route('/{id}/edit', name: 'order_edit', methods: ['GET', 'POST'])]
-    public function edit(Order $order, Request $request, EntityManagerInterface $entityManager): Response
+    #[Route('/{id}/cancel', name: 'order_cancel', methods: ['POST'])]
+    public function cancel(Order $order, Request $request, EntityManagerInterface $em, OrderStatusService $orderStatusService, OrderRepository $orderRepository): Response
     {
-        $this->denyAccessUnlessCanManageOrder($order, $this->getAuthenticatedUser());
-        $form = $this->createForm(OrderType::class, $order);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $order->setUpdatedAt(new \DateTimeImmutable());
-            $this->synchronizeOrderTotals($order);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Order updated successfully.');
-
-            return $this->redirectToRoute('order_index');
+        if ($order->getCustomer() !== $this->getUser()) {
+            throw $this->createAccessDeniedException();
         }
 
-        return $this->render('order/edit.html.twig', [
-            'order' => $order,
-            'form' => $form,
-        ]);
-    }
-
-    #[Route('/{id}/delete', name: 'order_delete', methods: ['POST'])]
-    public function delete(Order $order, Request $request, EntityManagerInterface $entityManager): Response
-    {
-        if (!$this->isGranted('ROLE_ADMIN')) {
-            throw $this->createAccessDeniedException('Only admins can delete orders.');
+        if (!$this->isCsrfTokenValid('order_cancel_' . $order->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Invalid token.');
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
         }
 
-        if (!$this->isCsrfTokenValid('delete_order_' . $order->getId(), $request->request->get('_token'))) {
-            $this->addFlash('error', 'Invalid CSRF token.');
+        foreach ($orderRepository->findCheckoutSiblings($order) as $targetOrder) {
+            if ($targetOrder->getCustomer() !== $this->getUser()) {
+                continue;
+            }
 
-            return $this->redirectToRoute('order_index');
+            $result = $orderStatusService->applyStatusChange($targetOrder, Order::STATUS_CANCELLED, 'Cancelled by customer');
+
+            if (!$result['success']) {
+                $this->addFlash('error', $result['message']);
+                return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+            }
         }
 
-        $entityManager->remove($order);
-        $entityManager->flush();
+        $em->flush();
 
-        $this->addFlash('success', 'Order deleted.');
-
+        $this->addFlash('success', 'Order cancelled.');
         return $this->redirectToRoute('order_index');
     }
 
-    private function synchronizeOrderTotals(Order $order): void
+    #[Route('/{id}/pay', name: 'order_pay', methods: ['POST'])]
+    public function pay(Order $order, Request $request, EntityManagerInterface $em, StripeCheckoutService $stripeCheckoutService, OrderRepository $orderRepository): Response
     {
-        $quantity = (int) $order->getQuantity();
-        $unitPrice = (float) $order->getUnitPrice();
-
-        $order->setTotalPrice(number_format($quantity * $unitPrice, 2, '.', ''));
-
-        if ($order->getStatus() === 'cancelled') {
-            $order->setCancelledAt(new \DateTimeImmutable());
-        } else {
-            $order->setCancelledAt(null);
-            $order->setCancelledReason(null);
+        if ($order->getCustomer() !== $this->getUser()) {
+            throw $this->createAccessDeniedException();
         }
+
+        if (!$this->isCsrfTokenValid('order_pay_' . $order->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Invalid token.');
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        if ($order->getPaymentMethod() !== Order::PAYMENT_METHOD_STRIPE) {
+            $this->addFlash('error', 'This order is not configured for Stripe payment.');
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        if ($order->getPaymentStatus() === Order::PAYMENT_STATUS_PAID) {
+            $this->addFlash('success', 'This order has already been paid.');
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        if ($order->getStatus() === Order::STATUS_CANCELLED) {
+            $this->addFlash('error', 'Cancelled orders cannot be paid.');
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        $payableOrders = array_values(array_filter(
+            $orderRepository->findCheckoutSiblings($order),
+            fn (Order $targetOrder): bool => $targetOrder->getCustomer() === $this->getUser()
+                && $targetOrder->getPaymentMethod() === Order::PAYMENT_METHOD_STRIPE
+                && $targetOrder->getPaymentStatus() !== Order::PAYMENT_STATUS_PAID
+                && $targetOrder->getStatus() !== Order::STATUS_CANCELLED
+        ));
+
+        $session = $stripeCheckoutService->createCheckoutSession($payableOrders ?: [$order], $request);
+
+        if (!$session['success']) {
+            $this->addFlash('error', $session['message']);
+            return $this->redirectToRoute('order_show', ['id' => $order->getId()]);
+        }
+
+        foreach ($payableOrders ?: [$order] as $targetOrder) {
+            $targetOrder->setStripeSessionId($session['sessionId']);
+            $targetOrder->setPaymentStatus(Order::PAYMENT_STATUS_PENDING);
+            $targetOrder->setUpdatedAt(new \DateTime());
+        }
+
+        $em->flush();
+
+        return new RedirectResponse($session['checkoutUrl']);
     }
 
-    private function getAuthenticatedUser(): User
+    private function denyUnlessOrderVisible(Order $order): void
     {
         $user = $this->getUser();
-        if (!$user instanceof User) {
-            throw $this->createAccessDeniedException('You must be logged in.');
-        }
 
-        return $user;
+        if (!$this->isGranted('ROLE_ADMIN')
+            && $order->getCustomer() !== $user
+            && $order->getSeller() !== $user) {
+            throw $this->createAccessDeniedException();
+        }
     }
 
-    private function denyAccessUnlessCanManageOrder(Order $order, User $user): void
+    /**
+     * @param Order[] $orders
+     *
+     * @return Order[]
+     */
+    private function filterVisibleOrders(array $orders): array
     {
-        if ($this->isGranted('ROLE_ADMIN')) {
-            return;
+        $user = $this->getUser();
+
+        return array_values(array_filter($orders, fn (Order $order): bool => $this->isGranted('ROLE_ADMIN')
+            || $order->getCustomer() === $user
+            || $order->getSeller() === $user));
+    }
+
+    /**
+     * @param Order[] $orders
+     *
+     * @return Order[]
+     */
+    private function filterStatusEditableOrders(array $orders): array
+    {
+        $user = $this->getUser();
+
+        return array_values(array_filter($orders, fn (Order $order): bool => $this->isGranted('ROLE_ADMIN')
+            || $order->getSeller() === $user));
+    }
+
+    private function resolveShippingDetails(Order $order, StripeCheckoutService $stripeCheckoutService, TemporaryShippingStorage $temporaryShippingStorage): ?array
+    {
+        if ($order->getPaymentMethod() === Order::PAYMENT_METHOD_STRIPE && $order->getStripeSessionId()) {
+            return $stripeCheckoutService->extractShippingDetails(
+                $stripeCheckoutService->retrieveSession((string) $order->getStripeSessionId())
+            );
         }
 
-        if ($order->getSeller()?->getId() !== $user->getId()) {
-            throw $this->createAccessDeniedException('You can only manage orders linked to your products.');
+        if ($order->getPaymentMethod() === Order::PAYMENT_METHOD_CASH) {
+            return $temporaryShippingStorage->getForOrder($order);
         }
+
+        return null;
     }
 }

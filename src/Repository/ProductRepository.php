@@ -3,171 +3,168 @@
 namespace App\Repository;
 
 use App\Entity\Product;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @extends ServiceEntityRepository<Product>
- */
+/** @extends ServiceEntityRepository<Product> */
 class ProductRepository extends ServiceEntityRepository
 {
-    private const SORT_FIELDS = [
-        'newest' => ['p.createdAt', 'DESC'],
-        'oldest' => ['p.createdAt', 'ASC'],
-        'name_asc' => ['p.name', 'ASC'],
-        'name_desc' => ['p.name', 'DESC'],
-        'price_asc' => ['p.price', 'ASC'],
-        'price_desc' => ['p.price', 'DESC'],
-        'stock_asc' => ['p.quantity', 'ASC'],
-        'stock_desc' => ['p.quantity', 'DESC'],
-    ];
-
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Product::class);
     }
 
-    /**
-     * @return Product[]
-     */
-    public function findByFilters(
-        ?string $query,
-        ?string $category,
-        ?int $farmId,
-        ?string $status,
-        string $sort = 'newest',
-        ?int $ownerId = null
-    ): array
+    public function marketplaceQueryBuilder(?string $q = null, ?string $category = null, ?string $sort = null): QueryBuilder
     {
-        $queryBuilder = $this->createQueryBuilder('p')
-            ->leftJoin('p.user', 'u')
-            ->leftJoin('p.farm', 'f')
-            ->addSelect('f')
-            ->addSelect('u')
-        ;
+        $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.user', 'u')->addSelect('u')
+            ->where('p.status = :status')->setParameter('status', 'approved');
 
-        if ($query !== null && $query !== '') {
-            $queryBuilder
-                ->andWhere('p.name LIKE :q OR p.category LIKE :q OR u.name LIKE :q')
-                ->setParameter('q', '%' . $query . '%');
+        if ($q) {
+            $qb->andWhere('p.name LIKE :q OR p.description LIKE :q')
+               ->setParameter('q', '%' . $q . '%');
+        }
+        if ($category) {
+            $qb->andWhere('p.category = :cat')->setParameter('cat', $category);
         }
 
-        if ($category !== null && $category !== '') {
-            $queryBuilder
-                ->andWhere('p.category = :category')
-                ->setParameter('category', $category);
+        switch ($sort) {
+            case 'name_asc':
+                $qb->orderBy('p.name', 'ASC')
+                    ->addOrderBy('p.createdAt', 'DESC');
+                break;
+            case 'name_desc':
+                $qb->orderBy('p.name', 'DESC')
+                    ->addOrderBy('p.createdAt', 'DESC');
+                break;
+            case 'price_asc':
+                $qb->orderBy('p.price', 'ASC')
+                    ->addOrderBy('p.name', 'ASC');
+                break;
+            case 'price_desc':
+                $qb->orderBy('p.price', 'DESC')
+                    ->addOrderBy('p.name', 'ASC');
+                break;
+            case 'newest':
+                $qb->orderBy('p.createdAt', 'DESC')
+                    ->addOrderBy('p.quantity', 'DESC');
+                break;
+            default:
+                $qb->orderBy('p.quantity', 'DESC')
+                    ->addOrderBy('p.createdAt', 'DESC');
+                break;
         }
 
-        if ($farmId !== null) {
-            $queryBuilder
-                ->andWhere('f.id = :farmId')
-                ->setParameter('farmId', $farmId);
-        }
-
-        if ($status !== null && $status !== '') {
-            $queryBuilder
-                ->andWhere('p.status = :status')
-                ->setParameter('status', $status);
-        }
-
-        if ($ownerId !== null) {
-            $queryBuilder
-                ->andWhere('u.id = :ownerId')
-                ->setParameter('ownerId', $ownerId);
-        }
-
-        [$field, $direction] = self::SORT_FIELDS[$sort] ?? self::SORT_FIELDS['newest'];
-
-        return $queryBuilder
-            ->orderBy($field, $direction)
-            ->addOrderBy('p.id', 'DESC')
-            ->getQuery()
-            ->getResult();
+        return $qb;
     }
 
-    /**
-     * @return string[]
-     */
-    public function findAvailableCategories(): array
+    public function sellerQueryBuilder(User $seller, ?string $q = null): QueryBuilder
     {
-        $rows = $this->createQueryBuilder('p')
-            ->select('DISTINCT p.category AS category')
-            ->where('p.category IS NOT NULL')
-            ->andWhere('p.category <> :empty')
-            ->setParameter('empty', '')
-            ->orderBy('p.category', 'ASC')
-            ->getQuery()
-            ->getScalarResult();
+        $qb = $this->createQueryBuilder('p')
+            ->where('p.user = :seller')->setParameter('seller', $seller)
+            ->orderBy('p.createdAt', 'DESC');
 
-        return array_map(static fn (array $row) => (string) $row['category'], $rows);
-    }
-
-    public function countByStatus(string $status): int
-    {
-        return (int) $this->createQueryBuilder('p')
-            ->select('COUNT(p.id)')
-            ->where('p.status = :status')
-            ->setParameter('status', $status)
-            ->getQuery()
-            ->getSingleScalarResult();
-    }
-
-    public function countLowStock(int $threshold): int
-    {
-        return (int) $this->createQueryBuilder('p')
-            ->select('COUNT(p.id)')
-            ->where('p.quantity <= :threshold')
-            ->setParameter('threshold', $threshold)
-            ->getQuery()
-            ->getSingleScalarResult();
-    }
-
-    /**
-     * @return Product[]
-     */
-    public function findApprovedCatalog(?string $query, ?string $category, string $sort = 'newest'): array
-    {
-        $queryBuilder = $this->createQueryBuilder('p')
-            ->leftJoin('p.user', 'u')
-            ->leftJoin('p.farm', 'f')
-            ->addSelect('u', 'f')
-            ->where('p.status = :status')
-            ->andWhere('p.quantity > 0')
-            ->setParameter('status', 'approved');
-
-        if ($query !== null && $query !== '') {
-            $queryBuilder
-                ->andWhere('p.name LIKE :q OR p.category LIKE :q OR u.name LIKE :q')
-                ->setParameter('q', '%' . $query . '%');
+        if ($q) {
+            $qb->andWhere('p.name LIKE :q')->setParameter('q', '%' . $q . '%');
         }
-
-        if ($category !== null && $category !== '') {
-            $queryBuilder
-                ->andWhere('p.category = :category')
-                ->setParameter('category', $category);
-        }
-
-        [$field, $direction] = self::SORT_FIELDS[$sort] ?? self::SORT_FIELDS['newest'];
-
-        return $queryBuilder
-            ->orderBy($field, $direction)
-            ->addOrderBy('p.id', 'DESC')
-            ->getQuery()
-            ->getResult();
+        return $qb;
     }
 
-    public function findApprovedVisibleById(int $id): ?Product
+    public function adminQueryBuilder(?string $q = null, ?string $status = null): QueryBuilder
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.user', 'u')->addSelect('u')
+            ->orderBy('p.createdAt', 'DESC');
+
+        if ($q) {
+            $qb->andWhere('p.name LIKE :q OR u.name LIKE :q')->setParameter('q', '%' . $q . '%');
+        }
+        if ($status) {
+            $qb->andWhere('p.status = :status')->setParameter('status', $status);
+        }
+        return $qb;
+    }
+
+    public function lowStockProducts(int $threshold = 10, int $limit = 5): array
     {
         return $this->createQueryBuilder('p')
-            ->leftJoin('p.user', 'u')
-            ->leftJoin('p.farm', 'f')
-            ->addSelect('u', 'f')
-            ->where('p.id = :id')
-            ->andWhere('p.status = :status')
-            ->andWhere('p.quantity > 0')
-            ->setParameter('id', $id)
+            ->select('p.id AS productId, p.name AS productName, p.category AS category, p.quantity AS quantity')
+            ->where('p.status = :status')
+            ->andWhere('p.quantity <= :threshold')
             ->setParameter('status', 'approved')
+            ->setParameter('threshold', $threshold)
+            ->orderBy('p.quantity', 'ASC')
+            ->addOrderBy('p.updatedAt', 'DESC')
+            ->setMaxResults($limit)
             ->getQuery()
-            ->getOneOrNullResult();
+            ->getArrayResult();
+    }
+
+    public function findBestMarketplaceMatchForTerms(array $terms): ?Product
+    {
+        $terms = array_values(array_unique(array_filter(array_map(static function ($term) {
+            $normalized = mb_strtolower(trim((string) $term));
+
+            return $normalized !== '' ? $normalized : null;
+        }, $terms))));
+
+        if ($terms === []) {
+            return null;
+        }
+
+        $qb = $this->createQueryBuilder('p')
+            ->where('p.status = :status')
+            ->andWhere('p.quantity > 0')
+            ->setParameter('status', 'approved')
+            ->setMaxResults(12);
+
+        $orX = $qb->expr()->orX();
+        foreach ($terms as $index => $term) {
+            $orX->add(sprintf('LOWER(p.name) LIKE :term_%d', $index));
+            $qb->setParameter(sprintf('term_%d', $index), '%' . $term . '%');
+        }
+
+        $products = $qb
+            ->andWhere($orX)
+            ->orderBy('p.quantity', 'DESC')
+            ->addOrderBy('p.views', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        if ($products === []) {
+            return null;
+        }
+
+        usort($products, function (Product $left, Product $right) use ($terms): int {
+            return $this->scoreRecipeMatch($right, $terms) <=> $this->scoreRecipeMatch($left, $terms);
+        });
+
+        return $products[0] ?? null;
+    }
+
+    private function scoreRecipeMatch(Product $product, array $terms): int
+    {
+        $name = mb_strtolower($product->getName());
+        $score = 0;
+
+        foreach ($terms as $term) {
+            if ($name === $term) {
+                $score += 100;
+                continue;
+            }
+
+            if (str_starts_with($name, $term)) {
+                $score += 60;
+                continue;
+            }
+
+            if (str_contains($name, $term)) {
+                $score += 30;
+            }
+        }
+
+        return $score + min($product->getQuantity(), 20);
     }
 }

@@ -1,0 +1,168 @@
+{% extends 'base.html.twig' %}
+{% block title %}Edit {{ farm.name }} — AgriCloud{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+#farmMap { height: 300px; border-radius: 12px; border: 1.5px solid #dde8cc; cursor: crosshair; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ path('farm_show', {id: farm.id}) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h5 class="fw-bold mb-0">Edit Farm — {{ farm.name }}</h5>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4" style="max-width:680px">
+    <div class="card-body p-4">
+        {{ form_start(form, {attr: {enctype: 'multipart/form-data', novalidate: 'novalidate'}}) }}
+
+        <div class="row g-3">
+            <div class="col-md-8">
+                <div class="mb-3">
+                    {{ form_label(form.name) }}
+                    {{ form_widget(form.name) }}
+                    {{ form_errors(form.name) }}
+                    <div class="form-text">Required · 2–150 characters</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form_label(form.farmType) }}
+                    {{ form_widget(form.farmType) }}
+                    {{ form_errors(form.farmType) }}
+                    <div class="form-text">Optional</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            {{ form_label(form.location) }}
+            {{ form_widget(form.location) }}
+            {{ form_errors(form.location) }}
+            <div class="form-text">Required · City, region or address</div>
+        </div>
+
+        <div class="mb-3">
+            <div class="mb-3">
+                {{ form_label(form.area) }}
+                {{ form_widget(form.area) }}
+                {{ form_errors(form.area) }}
+                <div class="form-text">Optional · Positive number · Max 999,999 ha</div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">
+                <i class="bi bi-geo-alt-fill text-success me-1"></i>Pin Location on Map
+            </label>
+            <div id="farmMap" class="mb-2"></div>
+            <button type="button" id="locateMe" class="btn btn-sm btn-outline-success mb-3">
+                <i class="bi bi-crosshair me-1"></i> Use my location
+            </button>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    {{ form_label(form.latitude) }}
+                    {{ form_widget(form.latitude) }}
+                    {{ form_errors(form.latitude) }}
+                    <div class="form-text">Click the map or type manually</div>
+                </div>
+                <div class="col-md-6">
+                    {{ form_label(form.longitude) }}
+                    {{ form_widget(form.longitude) }}
+                    {{ form_errors(form.longitude) }}
+                    <div class="form-text">Click the map or type manually</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            {{ form_label(form.description) }}
+            {{ form_widget(form.description) }}
+            {{ form_errors(form.description) }}
+            <div class="form-text">Optional · Brief description of the farm</div>
+        </div>
+
+        <div class="mb-4">
+            {{ form_label(form.imageFile) }}
+            {% if farm.image %}
+                <div class="mb-2">
+                    <img src="{{ asset('uploads/farms/' ~ farm.image) }}" class="rounded-3" style="height:80px;object-fit:cover" alt="Current image">
+                    <div class="form-text">Upload a new image to replace the current one.</div>
+                </div>
+            {% endif %}
+            {{ form_widget(form.imageFile) }}
+            {{ form_errors(form.imageFile) }}
+            <div class="form-text">Optional · Max 2MB — JPG, PNG or WEBP</div>
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-1"></i> Save Changes
+        </button>
+        <a href="{{ path('farm_show', {id: farm.id}) }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+    const latInput = document.getElementById('farm_latitude');
+    const lngInput = document.getElementById('farm_longitude');
+
+    const initLat = parseFloat(latInput.value) || 36.8189;
+    const initLng = parseFloat(lngInput.value) || 10.1658;
+
+    const map = L.map('farmMap').setView([initLat, initLng], latInput.value ? 13 : 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker = null;
+    if (latInput.value && lngInput.value) {
+        marker = L.marker([initLat, initLng]).addTo(map);
+    }
+
+    function setMarker(lat, lng) {
+        lat = parseFloat(lat.toFixed(6));
+        lng = parseFloat(lng.toFixed(6));
+        latInput.value = lat;
+        lngInput.value = lng;
+        if (marker) { marker.setLatLng([lat, lng]); }
+        else         { marker = L.marker([lat, lng]).addTo(map); }
+    }
+
+    map.on('click', function (e) { setMarker(e.latlng.lat, e.latlng.lng); });
+
+    latInput.addEventListener('change', function () {
+        const lat = parseFloat(this.value), lng = parseFloat(lngInput.value);
+        if (!isNaN(lat) && !isNaN(lng)) { setMarker(lat, lng); map.setView([lat, lng], 13); }
+    });
+    lngInput.addEventListener('change', function () {
+        const lat = parseFloat(latInput.value), lng = parseFloat(this.value);
+        if (!isNaN(lat) && !isNaN(lng)) { setMarker(lat, lng); map.setView([lat, lng], 13); }
+    });
+
+    document.getElementById('locateMe').addEventListener('click', function () {
+        if (!navigator.geolocation) return;
+        this.disabled = true;
+        this.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Locating…';
+        const btn = this;
+        navigator.geolocation.getCurrentPosition(function (pos) {
+            setMarker(pos.coords.latitude, pos.coords.longitude);
+            map.setView([pos.coords.latitude, pos.coords.longitude], 14);
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Located';
+        }, function () {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-crosshair me-1"></i> Use my location';
+        });
+    });
+})();
+</script>
+{% endblock %}

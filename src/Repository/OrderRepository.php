@@ -3,123 +3,144 @@
 namespace App\Repository;
 
 use App\Entity\Order;
+use App\Entity\Product;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @extends ServiceEntityRepository<Order>
- */
+/** @extends ServiceEntityRepository<Order> */
 class OrderRepository extends ServiceEntityRepository
 {
-    private const SORT_FIELDS = [
-        'newest' => ['o.createdAt', 'DESC'],
-        'oldest' => ['o.createdAt', 'ASC'],
-        'total_asc' => ['o.totalPrice', 'ASC'],
-        'total_desc' => ['o.totalPrice', 'DESC'],
-        'status_asc' => ['o.status', 'ASC'],
-        'status_desc' => ['o.status', 'DESC'],
-        'customer_asc' => ['customer.name', 'ASC'],
-        'seller_asc' => ['seller.name', 'ASC'],
-    ];
-
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Order::class);
     }
 
+    public function listQueryBuilder(User $user, string $role): QueryBuilder
+    {
+        $qb = $this->createQueryBuilder('o')
+            ->leftJoin('o.product', 'p')->addSelect('p')
+            ->leftJoin('o.customer', 'c')->addSelect('c')
+            ->leftJoin('o.seller', 's')->addSelect('s')
+            ->orderBy('o.createdAt', 'DESC');
+
+        if ($role === 'customer') {
+            $qb->where('o.customer = :user')->setParameter('user', $user);
+        } elseif ($role === 'seller') {
+            $qb->where('o.seller = :user')->setParameter('user', $user);
+        }
+        return $qb;
+    }
+
     /**
+     * Finds all order rows that belong to the same checkout as the given row.
+     *
+     * Stripe checkouts share a session id. Cash checkouts share the same customer,
+     * payment method, and creation timestamp because they are created together.
+     *
      * @return Order[]
      */
-    public function findByFilters(
-        ?string $query,
-        ?int $productId,
-        ?int $customerId,
-        ?int $sellerId,
-        ?string $status,
-        string $sort = 'newest'
-    ): array
+    public function findCheckoutSiblings(Order $order): array
     {
-        $queryBuilder = $this->createQueryBuilder('o')
-            ->leftJoin('o.customer', 'customer')
-            ->leftJoin('o.seller', 'seller')
-            ->leftJoin('o.product', 'product')
-            ->addSelect('customer', 'seller', 'product')
-        ;
+        $qb = $this->createQueryBuilder('o')
+            ->leftJoin('o.product', 'p')->addSelect('p')
+            ->leftJoin('o.customer', 'c')->addSelect('c')
+            ->leftJoin('o.seller', 's')->addSelect('s')
+            ->orderBy('o.id', 'ASC');
 
-        if ($query !== null && $query !== '') {
-            $queryBuilder
-                ->andWhere('customer.name LIKE :q OR seller.name LIKE :q OR product.name LIKE :q OR o.status LIKE :q OR o.shippingCity LIKE :q')
-                ->setParameter('q', '%' . $query . '%');
+        if ($order->getStripeSessionId()) {
+            return $qb
+                ->where('o.stripeSessionId = :sessionId')
+                ->setParameter('sessionId', $order->getStripeSessionId())
+                ->getQuery()
+                ->getResult();
         }
 
-        if ($productId !== null) {
-            $queryBuilder
-                ->andWhere('product.id = :productId')
-                ->setParameter('productId', $productId);
+        if ($order->getCreatedAt() === null) {
+            return [$order];
         }
 
-        if ($customerId !== null) {
-            $queryBuilder
-                ->andWhere('customer.id = :customerId')
-                ->setParameter('customerId', $customerId);
-        }
-
-        if ($sellerId !== null) {
-            $queryBuilder
-                ->andWhere('seller.id = :sellerId')
-                ->setParameter('sellerId', $sellerId);
-        }
-
-        if ($status !== null && $status !== '') {
-            $queryBuilder
-                ->andWhere('o.status = :status')
-                ->setParameter('status', $status);
-        }
-
-        [$field, $direction] = self::SORT_FIELDS[$sort] ?? self::SORT_FIELDS['newest'];
-
-        return $queryBuilder
-            ->orderBy($field, $direction)
-            ->addOrderBy('o.id', 'DESC')
+        return $qb
+            ->where('o.customer = :customer')
+            ->andWhere('o.paymentMethod = :paymentMethod')
+            ->andWhere('o.createdAt = :createdAt')
+            ->setParameter('customer', $order->getCustomer())
+            ->setParameter('paymentMethod', $order->getPaymentMethod())
+            ->setParameter('createdAt', $order->getCreatedAt())
             ->getQuery()
             ->getResult();
     }
 
-    public function countByStatus(string $status): int
+    public function bestSellingProducts(int $limit = 5): array
+    {
+        return $this->createQueryBuilder('o')
+            ->select('p.id AS productId, p.name AS productName, p.category AS category, SUM(o.quantity) AS soldQty, SUM(o.totalPrice) AS revenue')
+            ->join('o.product', 'p')
+            ->where('o.status != :cancelled')
+            ->setParameter('cancelled', 'cancelled')
+            ->groupBy('p.id, p.name, p.category')
+            ->orderBy('soldQty', 'DESC')
+            ->addOrderBy('revenue', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getArrayResult();
+    }
+
+    public function orderStatusBreakdown(): array
+    {
+        return $this->createQueryBuilder('o')
+            ->select('o.status AS status, COUNT(o.id) AS total')
+            ->groupBy('o.status')
+            ->getQuery()
+            ->getArrayResult();
+    }
+
+    public function monthlySalesTrend(int $months = 4): array
+    {
+        $sql = <<<SQL
+            SELECT DATE_FORMAT(COALESCE(order_date, created_at), '%Y-%m') AS sales_month,
+                   SUM(quantity) AS units_sold,
+                   SUM(total_price) AS revenue
+            FROM orders
+            WHERE status <> :cancelled
+              AND COALESCE(order_date, created_at) IS NOT NULL
+            GROUP BY sales_month
+            ORDER BY sales_month DESC
+            LIMIT :months
+        SQL;
+
+        $conn = $this->getEntityManager()->getConnection();
+
+        return $conn->executeQuery($sql, [
+            'cancelled' => 'cancelled',
+            'months' => $months,
+        ], [
+            'months' => \PDO::PARAM_INT,
+        ])->fetchAllAssociative();
+    }
+
+    public function countForProduct(Product $product): int
     {
         return (int) $this->createQueryBuilder('o')
             ->select('COUNT(o.id)')
-            ->where('o.status = :status')
-            ->setParameter('status', $status)
+            ->where('o.product = :product')
+            ->setParameter('product', $product)
             ->getQuery()
             ->getSingleScalarResult();
     }
 
-    public function getDeliveredRevenue(): float
+    public function userHasPurchasedProduct(User $user, Product $product): bool
     {
-        return (float) $this->createQueryBuilder('o')
-            ->select('COALESCE(SUM(o.totalPrice), 0)')
-            ->where('o.status = :status')
-            ->setParameter('status', 'delivered')
+        return (int) $this->createQueryBuilder('o')
+            ->select('COUNT(o.id)')
+            ->where('o.customer = :user')
+            ->andWhere('o.product = :product')
+            ->andWhere('o.status != :cancelled')
+            ->setParameter('user', $user)
+            ->setParameter('product', $product)
+            ->setParameter('cancelled', Order::STATUS_CANCELLED)
             ->getQuery()
-            ->getSingleScalarResult();
-    }
-
-    /**
-     * @return Order[]
-     */
-    public function findForCustomer(User $customer): array
-    {
-        return $this->createQueryBuilder('o')
-            ->leftJoin('o.product', 'product')
-            ->leftJoin('o.seller', 'seller')
-            ->addSelect('product', 'seller')
-            ->where('o.customer = :customer')
-            ->setParameter('customer', $customer)
-            ->orderBy('o.createdAt', 'DESC')
-            ->addOrderBy('o.id', 'DESC')
-            ->getQuery()
-            ->getResult();
+            ->getSingleScalarResult() > 0;
     }
 }

@@ -1,0 +1,172 @@
+{% extends 'base.html.twig' %}
+{% block title %}Checkout - AgriCloud{% endblock %}
+
+{% block stylesheets %}
+<style>
+.payment-choice-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.payment-choice-card{position:relative}
+.payment-choice-card input{position:absolute;opacity:0;pointer-events:none}
+.payment-choice-label{display:block;height:100%;border:1px solid #dbe6cf;border-radius:20px;padding:1rem 1rem .9rem;background:#fbfcf8;cursor:pointer;transition:all .18s ease}
+.payment-choice-label strong{display:block;margin-bottom:.2rem;color:#203015}
+.payment-choice-label span{display:block;font-size:.9rem;line-height:1.6;color:#6b7c59}
+.payment-choice-card input:checked + .payment-choice-label{border-color:#77b81e;background:#f1f8e3;box-shadow:0 0 0 .22rem rgba(119,184,30,.12)}
+.shipping-panel{transition:opacity .18s ease,transform .18s ease}
+.shipping-panel.is-hidden{display:none}
+@media (max-width: 767.98px){.payment-choice-group{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ path('cart_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h5 class="fw-bold mb-0"><i class="bi bi-credit-card me-2"></i>Checkout</h5>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h6 class="fw-bold mb-3">Checkout Options</h6>
+            {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+
+            <div class="mb-4">
+                {{ form_label(form.paymentMethod) }}
+                <div class="payment-choice-group">
+                    {% for choice in form.paymentMethod %}
+                        <div class="payment-choice-card">
+                            {{ form_widget(choice) }}
+                            <label class="payment-choice-label" for="{{ choice.vars.id }}">
+                                <strong>{{ choice.vars.label }}</strong>
+                                <span>
+                                    {% if choice.vars.value == 'stripe' %}
+                                        Pay securely with Stripe checkout.
+                                    {% else %}
+                                        Confirm now and pay when the order is delivered.
+                                    {% endif %}
+                                </span>
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+                {{ form_errors(form.paymentMethod) }}
+            </div>
+
+            <div class="rounded-4 border border-success-subtle bg-success-subtle p-3 mb-4">
+                <div class="fw-semibold text-success mb-1">
+                    <i class="bi bi-shield-lock me-1"></i>Shipping details stay temporary
+                </div>
+                <div class="small text-muted">
+                    Cash on delivery uses a temporary delivery form kept outside your database, and Stripe collects shipping on the hosted checkout page. AgriCloud does not persist shipping details permanently.
+                </div>
+            </div>
+
+            <div id="cash-shipping-panel" class="shipping-panel rounded-4 border bg-light p-3 mb-4">
+                <div class="fw-semibold mb-3">Cash on delivery shipping details</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        {{ form_label(form.shippingName) }}
+                        {{ form_widget(form.shippingName) }}
+                        {{ form_errors(form.shippingName) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_label(form.shippingEmail) }}
+                        {{ form_widget(form.shippingEmail) }}
+                        {{ form_errors(form.shippingEmail) }}
+                    </div>
+                </div>
+                <div class="mt-3">
+                    {{ form_label(form.shippingAddress) }}
+                    {{ form_widget(form.shippingAddress) }}
+                    {{ form_errors(form.shippingAddress) }}
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        {{ form_label(form.shippingCity) }}
+                        {{ form_widget(form.shippingCity) }}
+                        {{ form_errors(form.shippingCity) }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form_label(form.shippingPostal) }}
+                        {{ form_widget(form.shippingPostal) }}
+                        {{ form_errors(form.shippingPostal) }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form_label(form.shippingPhone) }}
+                        {{ form_widget(form.shippingPhone) }}
+                        {{ form_errors(form.shippingPhone) }}
+                    </div>
+                </div>
+                <div class="mt-3">
+                    {{ form_label(form.notes) }}
+                    {{ form_widget(form.notes) }}
+                    {{ form_errors(form.notes) }}
+                </div>
+                <div class="form-text mt-2">These details are stored temporarily for delivery handling and cleared after processing or expiry.</div>
+            </div>
+
+            <div class="rounded-4 border bg-light p-3 mb-4">
+                <div class="fw-semibold mb-1">What gets stored</div>
+                <div class="small text-muted">
+                    We only keep your order items, total amount in TND, payment status, and Stripe session reference. Cash delivery details live in temporary storage, while Stripe shipping data is read from Stripe only when needed.
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">
+                <i class="bi bi-bag-check me-1"></i>Continue - {{ total|number_format(2) }} TND
+            </button>
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h6 class="fw-bold mb-3">Order Summary</h6>
+            {% for item in items %}
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="small">
+                    <span class="fw-semibold">{{ item.product.name }}</span>
+                    <span class="text-muted"> x {{ item.quantity }}</span>
+                </div>
+                <span class="small fw-semibold">{{ item.subtotal|number_format(2) }} TND</span>
+            </div>
+            {% endfor %}
+            <hr>
+            <div class="d-flex justify-content-between fw-bold">
+                <span>Total</span>
+                <span class="text-success">{{ total|number_format(2) }} TND</span>
+            </div>
+            {% if stripeConvertedTotal is not null %}
+            <div class="d-flex justify-content-between small text-muted mt-2">
+                <span>Stripe charge</span>
+                <span>{{ stripeConvertedTotal|number_format(2) }} {{ stripeCurrency }}</span>
+            </div>
+            {% endif %}
+            <div class="text-muted small mt-3">
+                Stripe checkout charges in {{ stripeCurrency }} using the current TND conversion rate and collects shipping details on the hosted page.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const panel = document.getElementById('cash-shipping-panel');
+    const paymentInputs = Array.from(document.querySelectorAll('input[name="{{ form.paymentMethod.vars.full_name }}"]'));
+
+    if (!panel || paymentInputs.length === 0) {
+        return;
+    }
+
+    const syncPanel = () => {
+        const selected = paymentInputs.find((input) => input.checked);
+        const showCashForm = selected && selected.value === 'cash';
+        panel.classList.toggle('is-hidden', !showCashForm);
+    };
+
+    paymentInputs.forEach((input) => input.addEventListener('change', syncPanel));
+    syncPanel();
+});
+</script>
+{% endblock %}

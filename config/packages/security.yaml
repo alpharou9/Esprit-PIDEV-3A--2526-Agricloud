@@ -16,23 +16,24 @@ security:
         main:
             lazy: true
             provider: app_user_provider
-            form_login:
-                login_path: app_login
-                check_path: app_login
-                default_target_path: /post-login
+            user_checker: App\Security\UserChecker
+            custom_authenticators:
+                - App\Security\LoginFormAuthenticator
             logout:
                 path: app_logout
                 target: app_login
 
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/guest-login, roles: PUBLIC_ACCESS }
+        - { path: ^/face/login,  roles: PUBLIC_ACCESS }
+        - { path: ^/auth/google, roles: PUBLIC_ACCESS }
+        - { path: ^/$, roles: PUBLIC_ACCESS }
+        - { path: ^/blog, roles: PUBLIC_ACCESS }
         - { path: ^/market, roles: PUBLIC_ACCESS }
-        - { path: ^/cart, roles: ROLE_CUSTOMER }
-        - { path: ^/my-orders, roles: ROLE_CUSTOMER }
-        - { path: ^/products, roles: ROLE_FARMER }
-        - { path: ^/orders, roles: ROLE_FARMER }
-        - { path: ^/post-login, roles: ROLE_USER }
-        - { path: ^/$, roles: ROLE_FARMER }
+        - { path: ^/events, roles: PUBLIC_ACCESS }
+        - { path: ^/, roles: ROLE_USER }
 
     role_hierarchy:
-        ROLE_ADMIN: [ROLE_USER, ROLE_FARMER, ROLE_CUSTOMER]
+        ROLE_ADMIN: [ROLE_USER]

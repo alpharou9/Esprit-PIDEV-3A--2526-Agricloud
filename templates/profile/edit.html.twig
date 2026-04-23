@@ -1,54 +1,142 @@
-{% extends 'base_front.html.twig' %}
+{% extends 'base.html.twig' %}
 
 {% block title %}Edit Profile — AgriCloud{% endblock %}
+{% block page_title %}Edit Profile{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .edit-card {
+        border: none; border-radius: 20px;
+        box-shadow: 0 4px 24px rgba(0,0,0,.07);
+        background: #fff;
+        overflow: hidden;
+    }
+    .edit-card-header {
+        background: linear-gradient(135deg, #1a2e0a 0%, #3a6010 100%);
+        padding: 28px 32px;
+    }
+    .edit-card-header h5 { color: #fff; font-size: 1.15rem; font-weight: 700; margin: 0; }
+    .edit-card-header p  { color: rgba(255,255,255,.6); font-size: .85rem; margin: 4px 0 0; }
+    .edit-card-body { padding: 32px; }
+
+    .form-label { font-weight: 600; font-size: .85rem; color: #555; margin-bottom: 6px; }
+    .form-control, .form-select {
+        border-radius: 10px; border: 1.5px solid #e0e0e0;
+        padding: 10px 14px; font-size: .93rem;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #77b81e;
+        box-shadow: 0 0 0 3px rgba(119,184,30,.15);
+    }
+
+    .field-group {
+        background: #f8faf4; border-radius: 14px;
+        padding: 20px 20px 8px; margin-bottom: 20px;
+    }
+    .field-group-title {
+        font-size: .7rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 1.5px; color: #77b81e; margin-bottom: 14px;
+        display: flex; align-items: center; gap: 6px;
+    }
+
+    .btn-save {
+        background: #77b81e; color: #fff; border: none;
+        border-radius: 10px; padding: 11px 30px;
+        font-size: .95rem; font-weight: 600;
+        display: inline-flex; align-items: center; gap: 6px;
+        transition: background .2s;
+    }
+    .btn-save:hover { background: #5a9014; color: #fff; }
+
+    .btn-cancel {
+        border: 1.5px solid #ddd; border-radius: 10px;
+        padding: 11px 24px; font-size: .95rem; color: #666;
+        text-decoration: none; transition: all .2s;
+        display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-cancel:hover { border-color: #aaa; color: #333; }
+
+    .password-hint {
+        background: #fff8e1; border-left: 3px solid #f59e0b;
+        border-radius: 0 8px 8px 0; padding: 10px 14px;
+        font-size: .82rem; color: #92400e; margin-top: 8px;
+    }
+</style>
+{% endblock %}
 
 {% block body %}
+
+<div class="mb-4">
+    <a href="{{ path('profile_show') }}" class="text-decoration-none d-inline-flex align-items-center gap-1" style="color:#77b81e;font-size:.9rem">
+        <i class="bi bi-arrow-left"></i> Back to profile
+    </a>
+</div>
+
 <div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="d-flex align-items-center mb-3 gap-2">
-            <a href="{{ path('profile_show') }}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left"></i>
-            </a>
-            <h5 class="fw-bold mb-0">Edit My Profile</h5>
-        </div>
+    <div class="col-lg-7 col-xl-6">
+        <div class="edit-card">
+            <div class="edit-card-header">
+                <h5><i class="bi bi-pencil-square me-2"></i>Edit Profile</h5>
+                <p>Update your personal information and password</p>
+            </div>
+            <div class="edit-card-body">
+                {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
 
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-4">
-                {{ form_start(form) }}
+                {# Personal info #}
+                <div class="field-group">
+                    <div class="field-group-title"><i class="bi bi-person-fill"></i> Personal Information</div>
 
-                <div class="mb-3">
-                    {{ form_label(form.name) }}
-                    {{ form_widget(form.name) }}
-                    {{ form_errors(form.name) }}
+                    <div class="mb-3">
+                        {{ form_label(form.name) }}
+                        {{ form_widget(form.name, {attr: {class: 'form-control', placeholder: 'Your full name'}}) }}
+                        {{ form_errors(form.name) }}
+                        <div class="form-text">Letters, spaces, hyphens and apostrophes only · 2–100 characters</div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.email) }}
+                        {{ form_widget(form.email, {attr: {class: 'form-control', placeholder: 'your@email.com'}}) }}
+                        {{ form_errors(form.email) }}
+                        <div class="form-text">Valid email address · Maximum 150 characters · Must be unique</div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.phone) }}
+                        {{ form_widget(form.phone, {attr: {class: 'form-control', placeholder: '+216 XX XXX XXX'}}) }}
+                        {{ form_errors(form.phone) }}
+                        <div class="form-text">Optional · 8–20 digits, may start with +</div>
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    {{ form_label(form.email) }}
-                    {{ form_widget(form.email) }}
-                    {{ form_errors(form.email) }}
+                {# Password #}
+                <div class="field-group">
+                    <div class="field-group-title"><i class="bi bi-lock-fill"></i> Change Password</div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.plainPassword) }}
+                        {{ form_widget(form.plainPassword, {attr: {class: 'form-control', placeholder: 'New password (leave blank to keep current)'}}) }}
+                        {{ form_errors(form.plainPassword) }}
+                        <div class="password-hint">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Leave blank to keep your current password · At least 6 characters · One uppercase letter · One number
+                        </div>
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    {{ form_label(form.phone) }}
-                    {{ form_widget(form.phone) }}
-                    {{ form_errors(form.phone) }}
+                <div class="d-flex align-items-center gap-3 pt-2">
+                    <button type="submit" class="btn-save">
+                        <i class="bi bi-check-lg"></i> Save Changes
+                    </button>
+                    <a href="{{ path('profile_show') }}" class="btn-cancel">
+                        <i class="bi bi-x"></i> Cancel
+                    </a>
                 </div>
-
-                <div class="mb-4">
-                    {{ form_label(form.plainPassword) }}
-                    {{ form_widget(form.plainPassword) }}
-                    {{ form_errors(form.plainPassword) }}
-                    <div class="form-text">Leave blank to keep your current password.</div>
-                </div>
-
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-lg me-1"></i> Save Changes
-                </button>
-                <a href="{{ path('profile_show') }}" class="btn btn-outline-secondary ms-2">Cancel</a>
 
                 {{ form_end(form) }}
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}

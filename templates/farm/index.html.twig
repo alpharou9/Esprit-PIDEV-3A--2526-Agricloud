@@ -1,0 +1,98 @@
+{% extends 'base.html.twig' %}
+{% block title %}Farms — AgriCloud{% endblock %}
+
+{% block stylesheets %}
+<style>
+.farm-card { border-radius:14px; border:none; box-shadow:0 2px 10px rgba(0,0,0,.07); transition:transform .15s,box-shadow .15s; overflow:hidden; }
+.farm-card:hover { transform:translateY(-3px); box-shadow:0 6px 20px rgba(0,0,0,.12); }
+.farm-img { height:160px; object-fit:cover; width:100%; }
+.farm-img-placeholder { height:160px; background:linear-gradient(135deg,#d1e7dd,#a3cfbb); display:flex; align-items:center; justify-content:center; font-size:3rem; color:#198754; }
+.status-badge { position:absolute; top:10px; right:10px; }
+.pagination { gap:4px; }
+.pagination .page-item .page-link { border:none; border-radius:8px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:500; color:#495057; background:#f1f3f5; transition:all .15s; padding:0; }
+.pagination .page-item .page-link:hover { background:#d1e7dd; color:#198754; transform:translateY(-1px); }
+.pagination .page-item.active .page-link { background:#198754; color:#fff; box-shadow:0 3px 8px rgba(25,135,84,.4); }
+.pagination .page-item.disabled .page-link { background:transparent; color:#ced4da; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0"><i class="bi bi-house-heart me-2"></i>Farms</h5>
+    <a href="{{ path('farm_new') }}" class="btn btn-success btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> New Farm
+    </a>
+</div>
+
+<form method="get" class="mb-4 d-flex gap-2" style="max-width:400px">
+    <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search by name or location…">
+    <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-search"></i></button>
+    {% if q %}<a href="{{ path('farm_index') }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-x"></i></a>{% endif %}
+</form>
+
+{% if pagination.totalItemCount == 0 %}
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-house-heart" style="font-size:3rem;opacity:.3"></i>
+        <p class="mt-2">{% if q %}No farms match "{{ q }}".{% else %}No farms yet.{% endif %}</p>
+        <a href="{{ path('farm_new') }}" class="btn btn-success btn-sm">Add your first farm</a>
+    </div>
+{% else %}
+<div class="row g-3">
+    {% for farm in pagination %}
+    <div class="col-md-4">
+        <div class="card farm-card h-100 position-relative">
+            {% if farm.image %}
+                <img src="{{ asset('uploads/farms/' ~ farm.image) }}" class="farm-img" alt="{{ farm.name }}">
+            {% else %}
+                <div class="farm-img-placeholder"><i class="bi bi-tree-fill"></i></div>
+            {% endif %}
+
+            <span class="badge status-badge
+                {% if farm.status == 'approved' %}bg-success
+                {% elseif farm.status == 'pending' %}bg-warning text-dark
+                {% elseif farm.status == 'rejected' %}bg-danger
+                {% else %}bg-secondary{% endif %}">
+                {{ farm.status|capitalize }}
+            </span>
+
+            <div class="card-body">
+                <h6 class="fw-bold mb-1">{{ farm.name }}</h6>
+                <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>{{ farm.location }}</p>
+                <div class="d-flex gap-2 flex-wrap mb-2">
+                    {% if farm.farmType %}
+                        <span class="badge bg-light text-dark border"><i class="bi bi-tag me-1"></i>{{ farm.farmType|capitalize }}</span>
+                    {% endif %}
+                    {% if farm.area %}
+                        <span class="badge bg-light text-dark border"><i class="bi bi-rulers me-1"></i>{{ farm.area }} ha</span>
+                    {% endif %}
+                    <span class="badge bg-light text-dark border"><i class="bi bi-grid me-1"></i>{{ farm.fields|length }} fields</span>
+                </div>
+                {% if is_granted('ROLE_ADMIN') %}
+                    <p class="text-muted small mb-0"><i class="bi bi-person me-1"></i>{{ farm.user.name }}</p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-white border-0 d-flex gap-2 pb-3">
+                <a href="{{ path('farm_show', {id: farm.id}) }}" class="btn btn-sm btn-outline-success flex-grow-1">
+                    <i class="bi bi-eye me-1"></i> View
+                </a>
+                <a href="{{ path('farm_edit', {id: farm.id}) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                <form method="post" action="{{ path('farm_delete', {id: farm.id}) }}" class="d-inline"
+                      onsubmit="return confirm('Delete {{ farm.name }}?')">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_farm_' ~ farm.id) }}">
+                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if pagination.pageCount > 1 %}
+<div class="d-flex justify-content-center mt-4">
+    {{ knp_pagination_render(pagination) }}
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -11,3 +11,9 @@ framework:
 
     php_errors:
         log: true
+
+parameters:
+    farms_upload_dir: '%kernel.project_dir%/public/uploads/farms'
+    products_upload_dir: '%kernel.project_dir%/public/uploads/products'
+    posts_upload_dir: '%kernel.project_dir%/public/uploads/posts'
+    events_upload_dir: '%kernel.project_dir%/public/uploads/events'

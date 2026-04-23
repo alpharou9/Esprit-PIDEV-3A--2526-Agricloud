@@ -9,6 +9,7 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class RegistrationType extends AbstractType
 {
@@ -29,10 +30,16 @@ class RegistrationType extends AbstractType
                 'attr'     => ['class' => 'form-control', 'placeholder' => '+216 XX XXX XXX'],
             ])
             ->add('plainPassword', PasswordType::class, [
-                'label'    => 'Password',
-                'mapped'   => false,
-                'required' => true,
-                'attr'     => ['class' => 'form-control', 'autocomplete' => 'new-password'],
+                'label'       => 'Password',
+                'mapped'      => false,
+                'required'    => true,
+                'attr'        => ['class' => 'form-control', 'autocomplete' => 'new-password'],
+                'constraints' => [
+                    new Assert\NotBlank(message: 'Password is required.'),
+                    new Assert\Length(min: 6, max: 100, minMessage: 'Password must be at least 6 characters.'),
+                    new Assert\Regex(pattern: '/[A-Z]/', message: 'Password must contain at least one uppercase letter.'),
+                    new Assert\Regex(pattern: '/[0-9]/', message: 'Password must contain at least one number.'),
+                ],
             ]);
     }
 

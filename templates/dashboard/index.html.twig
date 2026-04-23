@@ -1,129 +1,432 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Dashboard - AgriCloud{% endblock %}
+{% block title %}Dashboard — AgriCloud{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block stylesheets %}
+<style>
+    /* ── Hero banner ── */
+    .dash-hero {
+        border-radius: 20px; overflow: hidden; position: relative;
+        background: linear-gradient(135deg, rgba(20,50,5,.82) 0%, rgba(60,110,10,.65) 100%),
+                    url('{{ asset('theme/agriculture-farm/img/1.jpg') }}') center/cover no-repeat;
+        padding: 48px 48px;
+        margin-bottom: 32px;
+        color: #fff;
+    }
+    .dash-hero h2 { font-size: 2rem; font-weight: 700; margin: 0 0 6px; }
+    .dash-hero p  { font-size: 1rem; color: rgba(255,255,255,.8); margin: 0; }
+    .dash-hero .hero-date { font-size: .85rem; color: rgba(255,255,255,.6); margin-top: 6px; }
+
+    /* ── Section heading ── */
+    .section-heading {
+        font-size: .7rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 2px; color: #77b81e; margin-bottom: 14px;
+    }
+
+    /* ── Quick-action cards (regular user) ── */
+    .qa-card {
+        border: none; border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.07);
+        padding: 28px 22px;
+        background: #fff;
+        text-decoration: none; color: inherit;
+        display: block; height: 100%;
+        transition: transform .18s, box-shadow .18s;
+    }
+    .qa-card:hover { transform: translateY(-5px); box-shadow: 0 12px 32px rgba(0,0,0,.12); color: inherit; }
+    .qa-icon {
+        width: 60px; height: 60px; border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.6rem; margin-bottom: 16px;
+    }
+    .qa-card h6 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .qa-card p  { font-size: .85rem; color: #888; margin: 0; }
+
+    /* ── Stat cards (admin) ── */
+    .stat-card {
+        border: none; border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.07);
+        background: #fff; overflow: hidden;
+        transition: transform .18s;
+    }
+    .stat-card:hover { transform: translateY(-4px); }
+    .stat-card-body { padding: 22px 22px 16px; }
+    .stat-card .stat-icon {
+        width: 52px; height: 52px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.35rem; flex-shrink: 0;
+    }
+    .stat-number { font-size: 2.2rem; font-weight: 700; line-height: 1; }
+    .stat-label  { font-size: .82rem; color: #888; margin-top: 2px; }
+    .stat-bar { height: 4px; border-radius: 0; }
+
+    /* ── Chart cards ── */
+    .chart-card {
+        border: none; border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.07);
+        background: #fff; padding: 22px; height: 100%;
+    }
+    .chart-card h6 { font-weight: 700; font-size: .95rem; margin-bottom: 16px; }
+
+    /* ── Recent user rows ── */
+    .recent-avatar {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: #e8f5d0; color: #77b81e;
+        font-weight: 700; font-size: .85rem;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+
+    .insight-card {
+        border: none; border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.07);
+        background: #fff; padding: 22px; height: 100%;
+    }
+    .insight-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+    .insight-item {
+        display: flex; align-items: flex-start; gap: 12px;
+        padding: 12px 14px; border-radius: 14px; background: #f7faef;
+        border: 1px solid rgba(119,184,30,.12);
+    }
+    .insight-badge {
+        width: 30px; height: 30px; border-radius: 10px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: #e6f3ca; color: #5a9014; font-weight: 700; flex-shrink: 0;
+    }
+</style>
+{% endblock %}
 
 {% block body %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="fw-bold mb-1">Commerce Dashboard</h4>
-        <p class="text-muted mb-0">Workshop-style Symfony back office connected to your shared AgriCloud database.</p>
-    </div>
-    <span class="text-muted small">Welcome back, <strong>{{ app.user.name }}</strong></span>
+
+{# ── Hero ── #}
+<div class="dash-hero">
+    <h2>Welcome back, {{ app.user.name }} 👋</h2>
+    <p>Here's what's happening on your AgriCloud platform today.</p>
+    <div class="hero-date"><i class="bi bi-calendar3 me-1"></i>{{ "now"|date("l, d F Y") }}</div>
 </div>
 
+{% if is_granted('ROLE_ADMIN') %}
+
+{# ── Admin stat cards ── #}
+<p class="section-heading">Overview</p>
+<div class="row g-3 mb-4">
+
+    <div class="col-sm-6 col-xl-3">
+        <a href="{{ path('user_index') }}" class="text-decoration-none">
+            <div class="stat-card">
+                <div class="stat-card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background:#e8f4fd">
+                        <i class="bi bi-people-fill text-primary"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number">{{ userCount }}</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                </div>
+                <div class="progress stat-bar"><div class="progress-bar bg-primary" style="width:100%"></div></div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#e8f8ee">
+                    <i class="bi bi-person-check-fill" style="color:#77b81e"></i>
+                </div>
+                <div>
+                    <div class="stat-number">{{ activeCount }}</div>
+                    <div class="stat-label">Active Users</div>
+                </div>
+            </div>
+            <div class="progress stat-bar">
+                <div class="progress-bar" style="background:#77b81e;width:{{ userCount > 0 ? (activeCount / userCount * 100)|round : 0 }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#fde8e8">
+                    <i class="bi bi-person-x-fill text-danger"></i>
+                </div>
+                <div>
+                    <div class="stat-number">{{ blockedCount }}</div>
+                    <div class="stat-label">Blocked Users</div>
+                </div>
+            </div>
+            <div class="progress stat-bar">
+                <div class="progress-bar bg-danger" style="width:{{ userCount > 0 ? (blockedCount / userCount * 100)|round : 0 }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <a href="{{ path('role_index') }}" class="text-decoration-none">
+            <div class="stat-card">
+                <div class="stat-card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background:#fff8e1">
+                        <i class="bi bi-shield-check text-warning"></i>
+                    </div>
+                    <div>
+                        <div class="stat-number">{{ roleCount }}</div>
+                        <div class="stat-label">Roles</div>
+                    </div>
+                </div>
+                <div class="progress stat-bar"><div class="progress-bar bg-warning" style="width:100%"></div></div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<p class="section-heading">AI Sales Insights</p>
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="insight-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0"><i class="bi bi-graph-up-arrow me-2" style="color:#77b81e"></i>Sales Insights</h6>
+                <div class="text-muted small">{{ salesOrderCount }} orders • {{ salesProductCount }} products • {{ salesInsightCount }} insights</div>
+            </div>
+            <ul class="insight-list">
+                {% for insight in salesInsights %}
+                    <li class="insight-item">
+                        <span class="insight-badge">{{ loop.index }}</span>
+                        <span>{{ insight }}</span>
+                    </li>
+                {% else %}
+                    <li class="insight-item">
+                        <span class="insight-badge"><i class="bi bi-info-lg"></i></span>
+                        <span>No sales insights are available yet.</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+{# ── Charts + Recent users ── #}
+<p class="section-heading">Analytics</p>
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="chart-card">
+            <h6><i class="bi bi-pie-chart-fill me-2" style="color:#77b81e"></i>User Status</h6>
+            <div class="d-flex justify-content-center align-items-center" style="height:210px">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="chart-card">
+            <h6><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Users per Role</h6>
+            <div style="height:210px">
+                <canvas id="roleChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0"><i class="bi bi-clock-history me-2 text-secondary"></i>Recent Users</h6>
+                <a href="{{ path('user_index') }}" class="btn btn-sm" style="background:#e8f8ee;color:#77b81e;font-size:.75rem;border-radius:8px">View all</a>
+            </div>
+            <div class="d-flex flex-column gap-2">
+                {% for u in recentUsers %}
+                <div class="d-flex align-items-center gap-2">
+                    <div class="recent-avatar">{{ u.name|slice(0,1)|upper }}</div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="fw-semibold small text-truncate">{{ u.name }}</div>
+                        <div class="text-muted" style="font-size:.72rem">{{ u.email }}</div>
+                    </div>
+                    {% if u.status == 'active' %}
+                        <span class="badge rounded-pill" style="background:#e8f8ee;color:#77b81e;font-size:.68rem">Active</span>
+                    {% elseif u.status == 'blocked' %}
+                        <span class="badge rounded-pill bg-danger-subtle text-danger" style="font-size:.68rem">Blocked</span>
+                    {% else %}
+                        <span class="badge rounded-pill bg-secondary-subtle text-secondary" style="font-size:.68rem">Inactive</span>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="text-muted small">No users yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── Quick actions (admin) ── #}
+<p class="section-heading">Quick Actions</p>
 <div class="row g-3">
     <div class="col-md-3">
-        <a href="{{ path('product_index') }}" class="text-decoration-none">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-success bg-opacity-10 p-3">
-                        <i class="bi bi-basket-fill text-success fs-4"></i>
-                    </div>
-                    <div>
-                        <div class="fw-semibold">{{ stats.products }}</div>
-                        <div class="text-muted small">Products in catalog</div>
-                    </div>
-                </div>
-            </div>
+        <a href="{{ path('user_new') }}" class="qa-card">
+            <div class="qa-icon" style="background:#e8f4fd"><i class="bi bi-person-plus text-primary"></i></div>
+            <h6>New User</h6>
+            <p>Create a user account</p>
         </a>
     </div>
     <div class="col-md-3">
-        <a href="{{ path('product_index') }}" class="text-decoration-none">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-warning bg-opacity-10 p-3">
-                        <i class="bi bi-check2-circle text-warning fs-4"></i>
-                    </div>
-                    <div>
-                        <div class="fw-semibold">{{ stats.approved_products }}</div>
-                        <div class="text-muted small">Approved products</div>
-                    </div>
-                </div>
-            </div>
+        <a href="{{ path('role_new') }}" class="qa-card">
+            <div class="qa-icon" style="background:#e8f8ee"><i class="bi bi-shield-plus" style="color:#77b81e"></i></div>
+            <h6>New Role</h6>
+            <p>Define permissions</p>
         </a>
     </div>
     <div class="col-md-3">
-        <a href="{{ path('order_index') }}" class="text-decoration-none">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-primary bg-opacity-10 p-3">
-                        <i class="bi bi-receipt-cutoff text-primary fs-4"></i>
-                    </div>
-                    <div>
-                        <div class="fw-semibold">{{ stats.orders }}</div>
-                        <div class="text-muted small">Orders tracked</div>
-                    </div>
-                </div>
-            </div>
+        <a href="{{ path('blog_admin_comments') }}" class="qa-card">
+            <div class="qa-icon" style="background:#fff8e1"><i class="bi bi-chat-dots text-warning"></i></div>
+            <h6>Moderate Comments</h6>
+            <p>Review pending comments</p>
         </a>
     </div>
     <div class="col-md-3">
-        <a href="{{ path('order_index') }}" class="text-decoration-none">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-danger bg-opacity-10 p-3">
-                        <i class="bi bi-exclamation-diamond text-danger fs-4"></i>
-                    </div>
-                    <div>
-                        <div class="fw-semibold">{{ stats.low_stock_products }}</div>
-                        <div class="text-muted small">Products low on stock</div>
-                    </div>
-                </div>
+        <a href="{{ path('market_index') }}" class="qa-card">
+            <div class="qa-icon" style="background:#fde8e8"><i class="bi bi-shop text-danger"></i></div>
+            <h6>Marketplace</h6>
+            <p>Browse all products</p>
+        </a>
+    </div>
+</div>
+
+{% else %}
+
+{# ── Regular user quick-access cards ── #}
+<p class="section-heading">Quick Access</p>
+<div class="row g-3 mb-4">
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="{{ path('profile_show') }}" class="qa-card">
+            <div class="qa-icon" style="background:#e8f4fd"><i class="bi bi-person-circle text-primary"></i></div>
+            <h6>My Profile</h6>
+            <p>View & edit your personal info</p>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="{{ path('farm_index') }}" class="qa-card">
+            <div class="qa-icon" style="background:#e8f8ee"><i class="bi bi-house-heart" style="color:#77b81e"></i></div>
+            <h6>My Farms</h6>
+            <p>Manage your farms and fields</p>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="{{ path('market_index') }}" class="qa-card">
+            <div class="qa-icon" style="background:#fff8e1"><i class="bi bi-shop text-warning"></i></div>
+            <h6>Marketplace</h6>
+            <p>Browse and buy farm products</p>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="{{ path('my_products') }}" class="qa-card">
+            <div class="qa-icon" style="background:#fde8e8"><i class="bi bi-box-seam text-danger"></i></div>
+            <h6>My Products</h6>
+            <p>List and manage your produce</p>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="{{ path('event_index') }}" class="qa-card">
+            <div class="qa-icon" style="background:#f0ebff"><i class="bi bi-calendar-event text-purple" style="color:#7c3aed"></i></div>
+            <h6>Events</h6>
+            <p>Discover & join farming events</p>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="{{ path('blog_index') }}" class="qa-card">
+            <div class="qa-icon" style="background:#e8f8f5"><i class="bi bi-journal-richtext" style="color:#0d9488"></i></div>
+            <h6>Blog</h6>
+            <p>Read & share farming insights</p>
+        </a>
+    </div>
+
+</div>
+
+{# ── More shortcuts ── #}
+<p class="section-heading">Your Activity</p>
+<div class="row g-3">
+    <div class="col-sm-6 col-lg-3">
+        <a href="{{ path('cart_index') }}" class="qa-card" style="padding:20px 18px">
+            <div class="d-flex align-items-center gap-3">
+                <div class="qa-icon mb-0" style="background:#e8f4fd;width:44px;height:44px;font-size:1.2rem"><i class="bi bi-cart text-primary"></i></div>
+                <div><h6 class="mb-0" style="font-size:.95rem">My Cart</h6><p class="mb-0" style="font-size:.8rem">View cart items</p></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <a href="{{ path('order_index') }}" class="qa-card" style="padding:20px 18px">
+            <div class="d-flex align-items-center gap-3">
+                <div class="qa-icon mb-0" style="background:#e8f8ee;width:44px;height:44px;font-size:1.2rem"><i class="bi bi-receipt" style="color:#77b81e"></i></div>
+                <div><h6 class="mb-0" style="font-size:.95rem">My Orders</h6><p class="mb-0" style="font-size:.8rem">Track your orders</p></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <a href="{{ path('event_my_registrations') }}" class="qa-card" style="padding:20px 18px">
+            <div class="d-flex align-items-center gap-3">
+                <div class="qa-icon mb-0" style="background:#f0ebff;width:44px;height:44px;font-size:1.2rem"><i class="bi bi-ticket-perforated" style="color:#7c3aed"></i></div>
+                <div><h6 class="mb-0" style="font-size:.95rem">My Registrations</h6><p class="mb-0" style="font-size:.8rem">Events you joined</p></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <a href="{{ path('blog_my_posts') }}" class="qa-card" style="padding:20px 18px">
+            <div class="d-flex align-items-center gap-3">
+                <div class="qa-icon mb-0" style="background:#e8f8f5;width:44px;height:44px;font-size:1.2rem"><i class="bi bi-pencil-square" style="color:#0d9488"></i></div>
+                <div><h6 class="mb-0" style="font-size:.95rem">My Posts</h6><p class="mb-0" style="font-size:.8rem">Manage your articles</p></div>
             </div>
         </a>
     </div>
 </div>
 
-<div class="row g-3 mt-1">
-    <div class="col-lg-7">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold mb-0">Module overview</h5>
-                    <span class="badge text-bg-success">Connected</span>
-                </div>
-                <p class="text-muted mb-3">
-                    This Symfony project now follows the workshop structure and reuses the Esprit PIDEV template,
-                    while mapping directly to your `products`, `orders`, `users`, and `roles` tables.
-                </p>
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="p-3 rounded-4 bg-light h-100">
-                            <div class="small text-uppercase text-muted fw-semibold">Pending orders</div>
-                            <div class="display-6 fw-bold">{{ stats.pending_orders }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="p-3 rounded-4 bg-light h-100">
-                            <div class="small text-uppercase text-muted fw-semibold">Delivered revenue</div>
-                            <div class="display-6 fw-bold">{{ stats.delivered_revenue|number_format(2, '.', ' ') }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="p-3 rounded-4 bg-light h-100">
-                            <div class="small text-uppercase text-muted fw-semibold">Quick access</div>
-                            <div class="mt-2 d-grid gap-2">
-                                <a href="{{ path('product_new') }}" class="btn btn-success btn-sm">Add product</a>
-                                <a href="{{ path('order_new') }}" class="btn btn-outline-success btn-sm">Add order</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-5">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <h5 class="fw-bold mb-3">Workshop scope</h5>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item px-0">Doctrine entities mapped to the shared MySQL database.</li>
-                    <li class="list-group-item px-0">Bootstrap and Twig templates styled from the Esprit PIDEV starter.</li>
-                    <li class="list-group-item px-0">CRUD pages for products and orders.</li>
-                    <li class="list-group-item px-0">Security and login kept from the workshop template.</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
+{% endif %}
+{% endblock %}
+
+{% block javascripts %}
+{% if is_granted('ROLE_ADMIN') %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const agriGreen = '#77b81e';
+
+new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: {
+        labels: {{ statusLabels|raw }},
+        datasets: [{
+            data: {{ statusValues|raw }},
+            backgroundColor: ['#77b81e','#dc3545','#6c757d','#0d6efd'],
+            borderWidth: 0, hoverOffset: 6
+        }]
+    },
+    options: {
+        cutout: '72%',
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+        maintainAspectRatio: false
+    }
+});
+
+new Chart(document.getElementById('roleChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ roleLabels|raw }},
+        datasets: [{
+            label: 'Users',
+            data: {{ roleValues|raw }},
+            backgroundColor: agriGreen + 'cc',
+            borderRadius: 8,
+            borderSkipped: false
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f0f0' } },
+            x: { grid: { display: false } }
+        },
+        maintainAspectRatio: false
+    }
+});
+</script>
+{% endif %}
 {% endblock %}
