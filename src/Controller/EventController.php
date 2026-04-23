@@ -250,6 +250,43 @@ class EventController extends AbstractController
         return $this->redirectToRoute('event_participants', ['id' => $participation->getEvent()->getId()]);
     }
 
+    // ── Calendar JSON feed ────────────────────────────────────────
+    #[Route('/calendar/feed', name: 'event_calendar_feed', methods: ['GET'])]
+    public function calendarFeed(EventRepository $repo): Response
+    {
+        $events = $repo->createQueryBuilder('e')
+            ->where('e.status != :cancelled')
+            ->setParameter('cancelled', 'cancelled')
+            ->orderBy('e.eventDate', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        $colors = [
+            'upcoming'  => '#77b81e',
+            'ongoing'   => '#3b82f6',
+            'completed' => '#6b7280',
+        ];
+
+        $data = array_map(function (Event $e) use ($colors): array {
+            return [
+                'id'              => $e->getId(),
+                'title'           => $e->getTitle(),
+                'start'           => $e->getEventDate()?->format('c'),
+                'end'             => $e->getEndDate()?->format('c'),
+                'url'             => $this->generateUrl('event_show', ['id' => $e->getId()]),
+                'backgroundColor' => $colors[$e->getStatus()] ?? '#77b81e',
+                'borderColor'     => $colors[$e->getStatus()] ?? '#77b81e',
+                'extendedProps'   => [
+                    'location' => $e->getLocation(),
+                    'category' => $e->getCategory(),
+                    'status'   => $e->getStatus(),
+                ],
+            ];
+        }, $events);
+
+        return $this->json($data);
+    }
+
     // ── iCal download ─────────────────────────────────────────────
     #[Route('/{id}/ical', name: 'event_ical', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function ical(Event $event): Response

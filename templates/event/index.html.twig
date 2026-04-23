@@ -2,6 +2,7 @@
 {% block title %}Events — AgriCloud{% endblock %}
 
 {% block stylesheets %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
 <style>
 .event-card{border-radius:14px;border:none;box-shadow:0 2px 10px rgba(0,0,0,.07);transition:transform .15s,box-shadow .15s;overflow:hidden}
 .event-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.12)}
@@ -9,6 +10,33 @@
 .event-img-placeholder{height:175px;background:linear-gradient(135deg,#d1e7dd,#a3cfbb);display:flex;align-items:center;justify-content:center;font-size:3rem;color:#198754}
 .category-pill{cursor:pointer;border-radius:20px;padding:4px 14px;font-size:.8rem;border:1px solid #dee2e6;background:#fff;transition:all .15s;text-decoration:none;color:#495057}
 .category-pill:hover,.category-pill.active{background:#198754;color:#fff;border-color:#198754}
+
+/* View toggle */
+.view-tab{border:none;background:none;padding:8px 18px;border-radius:8px;font-size:.88rem;font-weight:600;color:#666;cursor:pointer;transition:all .15s}
+.view-tab.active{background:#77b81e;color:#fff}
+
+/* Calendar wrapper */
+#calendarView{display:none;background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+#calendarView.show{display:block}
+
+/* FullCalendar overrides */
+.fc .fc-toolbar-title{font-size:1.1rem;font-weight:700}
+.fc .fc-button-primary{background:#77b81e;border-color:#77b81e}
+.fc .fc-button-primary:hover{background:#5a9014;border-color:#5a9014}
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active{background:#5a9014;border-color:#5a9014}
+.fc-event{cursor:pointer;border-radius:6px !important;font-size:.78rem}
+.fc-daygrid-event{white-space:normal !important}
+
+/* Tooltip popup */
+.cal-tooltip{
+    position:fixed;z-index:9999;background:#1a2e0a;color:#fff;
+    border-radius:10px;padding:10px 14px;font-size:.8rem;
+    max-width:220px;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.25);
+    display:none;
+}
+.cal-tooltip .ct-title{font-weight:700;margin-bottom:4px;font-size:.85rem}
+.cal-tooltip .ct-meta{opacity:.8;display:flex;align-items:center;gap:5px;margin-top:3px}
 </style>
 {% endblock %}
 
@@ -16,84 +44,191 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="fw-bold mb-0"><i class="bi bi-calendar-event me-2"></i>Events</h5>
     <div class="d-flex gap-2">
+        <div style="background:#f4f6f0;border-radius:10px;padding:3px;display:flex;gap:2px">
+            <button class="view-tab active" id="tabList" onclick="switchView('list')">
+                <i class="bi bi-grid-3x3-gap me-1"></i>Grid
+            </button>
+            <button class="view-tab" id="tabCal" onclick="switchView('calendar')">
+                <i class="bi bi-calendar3 me-1"></i>Calendar
+            </button>
+        </div>
         <a href="{{ path('event_my_registrations') }}" class="btn btn-outline-success btn-sm"><i class="bi bi-ticket-perforated me-1"></i>My Registrations</a>
-        <a href="{{ path('event_my') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-calendar3 me-1"></i>My Events</a>
+        <a href="{{ path('event_my') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-list-ul me-1"></i>My Events</a>
         <a href="{{ path('event_new') }}" class="btn btn-success btn-sm"><i class="bi bi-plus-lg me-1"></i>Create Event</a>
     </div>
 </div>
 
-<form method="get" class="mb-3">
-    <div class="d-flex gap-2 flex-wrap">
-        <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search events…" style="max-width:260px">
-        <select name="status" class="form-select form-select-sm" style="max-width:150px">
-            <option value="">All statuses</option>
-            {% for val, label in {upcoming:'Upcoming', ongoing:'Ongoing', completed:'Completed', cancelled:'Cancelled'} %}
-                <option value="{{ val }}" {{ status == val ? 'selected' : '' }}>{{ label }}</option>
-            {% endfor %}
-        </select>
-        <input type="hidden" name="category" value="{{ category }}">
-        <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-search"></i></button>
-        {% if q or category or status %}<a href="{{ path('event_index') }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-x"></i></a>{% endif %}
+{# ── Grid view filters ── #}
+<div id="listFilters">
+    <form method="get" class="mb-3">
+        <div class="d-flex gap-2 flex-wrap">
+            <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search events…" style="max-width:260px">
+            <select name="status" class="form-select form-select-sm" style="max-width:150px">
+                <option value="">All statuses</option>
+                {% for val, label in {upcoming:'Upcoming', ongoing:'Ongoing', completed:'Completed', cancelled:'Cancelled'} %}
+                    <option value="{{ val }}" {{ status == val ? 'selected' : '' }}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <input type="hidden" name="category" value="{{ category }}">
+            <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-search"></i></button>
+            {% if q or category or status %}<a href="{{ path('event_index') }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-x"></i></a>{% endif %}
+        </div>
+    </form>
+
+    <div class="d-flex gap-2 flex-wrap mb-4">
+        <a href="{{ path('event_index', {q: q, status: status}) }}" class="category-pill {{ category == '' ? 'active' : '' }}">All</a>
+        {% for cat in ['Workshop','Conference','Fair','Training','Webinar','Other'] %}
+            <a href="{{ path('event_index', {q: q, status: status, category: cat}) }}" class="category-pill {{ category == cat ? 'active' : '' }}">{{ cat }}</a>
+        {% endfor %}
     </div>
-</form>
-
-<div class="d-flex gap-2 flex-wrap mb-4">
-    <a href="{{ path('event_index', {q: q, status: status}) }}" class="category-pill {{ category == '' ? 'active' : '' }}">All</a>
-    {% for cat in ['Workshop','Conference','Fair','Training','Webinar','Other'] %}
-        <a href="{{ path('event_index', {q: q, status: status, category: cat}) }}" class="category-pill {{ category == cat ? 'active' : '' }}">{{ cat }}</a>
-    {% endfor %}
 </div>
 
-{% if pagination.totalItemCount == 0 %}
-<div class="text-center text-muted py-5">
-    <i class="bi bi-calendar-x" style="font-size:3rem;opacity:.3"></i>
-    <p class="mt-2">No events found.</p>
-</div>
-{% else %}
-<div class="row g-3">
-    {% for event in pagination %}
-    <div class="col-md-4">
-        <div class="card event-card h-100">
-            {% if event.image %}
-                <img src="{{ asset('uploads/events/' ~ event.image) }}" class="event-img" alt="{{ event.title }}">
-            {% else %}
-                <div class="event-img-placeholder"><i class="bi bi-calendar-event"></i></div>
-            {% endif %}
-            <div class="card-body d-flex flex-column">
-                <div class="d-flex justify-content-between align-items-start mb-1">
-                    <h6 class="fw-bold mb-0 flex-grow-1 me-2">{{ event.title }}</h6>
-                    {% set sc = {upcoming:'success',ongoing:'primary',completed:'secondary',cancelled:'danger'} %}
-                    <span class="badge bg-{{ sc[event.status] ?? 'secondary' }} text-nowrap small">{{ event.status|capitalize }}</span>
-                </div>
-                {% if event.category %}<span class="badge bg-light text-dark border small mb-2">{{ event.category }}</span>{% endif %}
-                <p class="text-muted small mb-2 flex-grow-1">{{ event.description|slice(0,80) }}{% if event.description|length > 80 %}…{% endif %}</p>
-                <div class="text-muted small mt-auto">
-                    <div><i class="bi bi-calendar me-1"></i>{{ event.eventDate ? event.eventDate|date('d M Y, H:i') : '—' }}</div>
-                    <div><i class="bi bi-geo-alt me-1"></i>{{ event.location }}</div>
-                    <div class="d-flex justify-content-between mt-1">
-                        <span><i class="bi bi-person me-1"></i>{{ event.user.name }}</span>
-                        {% if event.capacity %}
-                            <span><i class="bi bi-people me-1"></i>{{ event.confirmedCount }}/{{ event.capacity }}</span>
-                        {% else %}
-                            <span><i class="bi bi-people me-1"></i>{{ event.confirmedCount }} registered</span>
-                        {% endif %}
+{# ── Grid view ── #}
+<div id="listView">
+    {% if pagination.totalItemCount == 0 %}
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-calendar-x" style="font-size:3rem;opacity:.3"></i>
+        <p class="mt-2">No events found.</p>
+    </div>
+    {% else %}
+    <div class="row g-3">
+        {% for event in pagination %}
+        <div class="col-md-4">
+            <div class="card event-card h-100">
+                {% if event.image %}
+                    <img src="{{ asset('uploads/events/' ~ event.image) }}" class="event-img" alt="{{ event.title }}">
+                {% else %}
+                    <div class="event-img-placeholder"><i class="bi bi-calendar-event"></i></div>
+                {% endif %}
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <h6 class="fw-bold mb-0 flex-grow-1 me-2">{{ event.title }}</h6>
+                        {% set sc = {upcoming:'success',ongoing:'primary',completed:'secondary',cancelled:'danger'} %}
+                        <span class="badge bg-{{ sc[event.status] ?? 'secondary' }} text-nowrap small">{{ event.status|capitalize }}</span>
+                    </div>
+                    {% if event.category %}<span class="badge bg-light text-dark border small mb-2">{{ event.category }}</span>{% endif %}
+                    <p class="text-muted small mb-2 flex-grow-1">{{ event.description|slice(0,80) }}{% if event.description|length > 80 %}…{% endif %}</p>
+                    <div class="text-muted small mt-auto">
+                        <div><i class="bi bi-calendar me-1"></i>{{ event.eventDate ? event.eventDate|date('d M Y, H:i') : '—' }}</div>
+                        <div><i class="bi bi-geo-alt me-1"></i>{{ event.location }}</div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span><i class="bi bi-person me-1"></i>{{ event.user.name }}</span>
+                            {% if event.capacity %}
+                                <span><i class="bi bi-people me-1"></i>{{ event.confirmedCount }}/{{ event.capacity }}</span>
+                            {% else %}
+                                <span><i class="bi bi-people me-1"></i>{{ event.confirmedCount }} registered</span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="card-footer bg-white border-0 pb-3">
-                <a href="{{ path('event_show', {id: event.id}) }}" class="btn btn-success btn-sm w-100">
-                    <i class="bi bi-eye me-1"></i>View Event
-                </a>
+                <div class="card-footer bg-white border-0 pb-3">
+                    <a href="{{ path('event_show', {id: event.id}) }}" class="btn btn-success btn-sm w-100">
+                        <i class="bi bi-eye me-1"></i>View Event
+                    </a>
+                </div>
             </div>
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
+
+    {% if pagination.pageCount > 1 %}
+    <div class="d-flex justify-content-center mt-4">
+        {{ knp_pagination_render(pagination) }}
+    </div>
+    {% endif %}
+    {% endif %}
 </div>
 
-{% if pagination.pageCount > 1 %}
-<div class="d-flex justify-content-center mt-4">
-    {{ knp_pagination_render(pagination) }}
+{# ── Calendar view ── #}
+<div id="calendarView">
+    <div id="fullCalendar"></div>
 </div>
-{% endif %}
-{% endif %}
+
+{# Tooltip #}
+<div class="cal-tooltip" id="calTooltip"></div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script>
+const FEED_URL = '{{ path('event_calendar_feed') }}';
+let calendar = null;
+
+function switchView(mode) {
+    const listView    = document.getElementById('listView');
+    const listFilters = document.getElementById('listFilters');
+    const calView     = document.getElementById('calendarView');
+    const tabList     = document.getElementById('tabList');
+    const tabCal      = document.getElementById('tabCal');
+
+    if (mode === 'calendar') {
+        listView.style.display    = 'none';
+        listFilters.style.display = 'none';
+        calView.classList.add('show');
+        tabList.classList.remove('active');
+        tabCal.classList.add('active');
+        if (!calendar) initCalendar();
+    } else {
+        listView.style.display    = '';
+        listFilters.style.display = '';
+        calView.classList.remove('show');
+        tabList.classList.add('active');
+        tabCal.classList.remove('active');
+    }
+}
+
+function initCalendar() {
+    const tooltip = document.getElementById('calTooltip');
+
+    calendar = new FullCalendar.Calendar(document.getElementById('fullCalendar'), {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left:   'prev,next today',
+            center: 'title',
+            right:  'dayGridMonth,timeGridWeek,listMonth'
+        },
+        height: 'auto',
+        events: FEED_URL,
+        eventClick: function(info) {
+            info.jsEvent.preventDefault();
+            if (info.event.url) window.location.href = info.event.url;
+        },
+        eventMouseEnter: function(info) {
+            const props = info.event.extendedProps;
+            const statusColors = { upcoming: '#77b81e', ongoing: '#3b82f6', completed: '#6b7280' };
+            const color = statusColors[props.status] || '#77b81e';
+            tooltip.innerHTML = `
+                <div class="ct-title">${info.event.title}</div>
+                ${props.location ? `<div class="ct-meta"><i class="bi bi-geo-alt"></i>${props.location}</div>` : ''}
+                ${props.category ? `<div class="ct-meta"><i class="bi bi-tag"></i>${props.category}</div>` : ''}
+                <div class="ct-meta" style="margin-top:6px">
+                    <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:4px"></span>
+                    ${props.status.charAt(0).toUpperCase() + props.status.slice(1)}
+                </div>
+            `;
+            tooltip.style.display = 'block';
+        },
+        eventMouseLeave: function() {
+            tooltip.style.display = 'none';
+        },
+        eventDidMount: function(info) {
+            info.el.title = info.event.title;
+        }
+    });
+
+    calendar.render();
+
+    document.addEventListener('mousemove', function(e) {
+        tooltip.style.left = (e.clientX + 14) + 'px';
+        tooltip.style.top  = (e.clientY + 14) + 'px';
+    });
+}
+
+// Legend
+const legend = [
+    { color: '#77b81e', label: 'Upcoming' },
+    { color: '#3b82f6', label: 'Ongoing' },
+    { color: '#6b7280', label: 'Completed' },
+];
+</script>
 {% endblock %}

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Farm;
+use App\Entity\Notification;
 use App\Form\FarmType;
 use App\Repository\FarmRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -149,10 +150,17 @@ class FarmController extends AbstractController
         $farm->setStatus('approved');
         $farm->setApprovedAt(new \DateTime());
         $farm->setApprovedBy($this->getUser());
+
+        $notif = new Notification();
+        $notif->setUser($farm->getUser());
+        $notif->setMessage('Your farm "' . $farm->getName() . '" has been approved!');
+        $notif->setLink($this->generateUrl('farm_show', ['id' => $farm->getId()]));
+        $notif->setType('farm_approved');
+        $em->persist($notif);
         $em->flush();
 
-        $this->sendFarmStatusEmail($mailer, $farm, 'approved');
-        $this->addFlash('success', 'Farm approved.');
+        $emailSent = $this->sendFarmStatusEmail($mailer, $farm, 'approved');
+        $this->addFlash('success', 'Farm approved.' . ($emailSent ? ' Notification sent to ' . $farm->getUser()->getEmail() . '.' : ''));
         return $this->redirectToRoute('farm_show', ['id' => $farm->getId()]);
     }
 
@@ -168,6 +176,13 @@ class FarmController extends AbstractController
         $farm->setStatus('rejected');
         $farm->setApprovedAt(null);
         $farm->setApprovedBy(null);
+
+        $notif = new Notification();
+        $notif->setUser($farm->getUser());
+        $notif->setMessage('Your farm "' . $farm->getName() . '" was not approved. Please review the details.');
+        $notif->setLink($this->generateUrl('farm_show', ['id' => $farm->getId()]));
+        $notif->setType('farm_rejected');
+        $em->persist($notif);
         $em->flush();
 
         $this->sendFarmStatusEmail($mailer, $farm, 'rejected');
@@ -175,7 +190,7 @@ class FarmController extends AbstractController
         return $this->redirectToRoute('farm_show', ['id' => $farm->getId()]);
     }
 
-    private function sendFarmStatusEmail(MailerInterface $mailer, Farm $farm, string $status): void
+    private function sendFarmStatusEmail(MailerInterface $mailer, Farm $farm, string $status): bool
     {
         try {
             $html = $this->renderView('emails/farm_status.html.twig', [
@@ -189,6 +204,9 @@ class FarmController extends AbstractController
                 ->to($farm->getUser()->getEmail())
                 ->subject('Your farm "' . $farm->getName() . '" has been ' . $status)
                 ->html($html));
-        } catch (\Throwable) {}
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }
