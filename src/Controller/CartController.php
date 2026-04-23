@@ -168,7 +168,7 @@ class CartController extends AbstractController
                 $order->setSeller($product->getUser());
                 $order->setQuantity($item->getQuantity());
                 $order->setUnitPrice($product->getPrice());
-                $order->setTotalPrice((string)($product->getPrice() * $item->getQuantity()));
+                $order->setTotalPrice((string)((float) $product->getPrice() * $item->getQuantity()));
                 $order->setStatus('pending');
                 $order->setPaymentMethod($paymentMethod);
                 $order->setPaymentStatus(Order::PAYMENT_STATUS_PENDING);

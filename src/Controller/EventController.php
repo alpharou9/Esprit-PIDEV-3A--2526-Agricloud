@@ -10,8 +10,11 @@ use App\Repository\ParticipationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
@@ -153,8 +156,14 @@ class EventController extends AbstractController
 
     // ── Register for event ────────────────────────────────────────
     #[Route('/{id}/register', name: 'event_register', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function register(Event $event, Request $request, EntityManagerInterface $em, ParticipationRepository $repo): Response
-    {
+    public function register(
+        Event $event,
+        Request $request,
+        EntityManagerInterface $em,
+        ParticipationRepository $repo,
+        MailerInterface $mailer,
+        #[Autowire('%env(MAILER_FROM)%')] string $mailerFrom,
+    ): Response {
         if (!$this->isCsrfTokenValid('register_event_' . $event->getId(), $request->request->get('_token'))) {
             $this->addFlash('error', 'Invalid CSRF token.');
             return $this->redirectToRoute('event_show', ['id' => $event->getId()]);
@@ -180,7 +189,19 @@ class EventController extends AbstractController
                 $existing->setCancelledReason(null);
                 $existing->setUpdatedAt($now);
                 $em->flush();
-                $this->addFlash('success', 'You are registered for this event!');
+                try {
+                    $html = $this->renderView('email/event_ticket.html.twig', [
+                        'event'         => $event,
+                        'participation' => $existing,
+                    ]);
+                    $email = (new Email())
+                        ->from($mailerFrom)
+                        ->to($this->getUser()->getEmail())
+                        ->subject('Your ticket for: ' . $event->getTitle())
+                        ->html($html);
+                    $mailer->send($email);
+                } catch (\Throwable) {}
+                $this->addFlash('success', 'You are registered! Check your email for your ticket.');
                 return $this->redirectToRoute('event_show', ['id' => $event->getId()]);
             }
             $this->addFlash('error', 'You are already registered for this event.');
@@ -196,7 +217,23 @@ class EventController extends AbstractController
         $em->persist($participation);
         $em->flush();
 
-        $this->addFlash('success', 'You are registered for this event!');
+        // Send ticket email
+        try {
+            $html = $this->renderView('email/event_ticket.html.twig', [
+                'event'         => $event,
+                'participation' => $participation,
+            ]);
+            $email = (new Email())
+                ->from($mailerFrom)
+                ->to($this->getUser()->getEmail())
+                ->subject('Your ticket for: ' . $event->getTitle())
+                ->html($html);
+            $mailer->send($email);
+        } catch (\Throwable) {
+            // Mailer not configured — registration still succeeds
+        }
+
+        $this->addFlash('success', 'You are registered! Check your email for your ticket.');
         return $this->redirectToRoute('event_show', ['id' => $event->getId()]);
     }
 

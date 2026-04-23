@@ -48,7 +48,9 @@
         "symfony/web-link": "6.4.*",
         "symfony/yaml": "6.4.*",
         "twig/extra-bundle": "^2.12|^3.0",
-        "twig/twig": "^2.12|^3.0"
+        "twig/twig": "^2.12|^3.0",
+        "ahmed-bhs/doctrine-doctor": "dev-main",
+        "phpmyadmin/sql-parser": "^6.0"
     },
     "config": {
         "allow-plugins": {
@@ -57,7 +59,8 @@
             "symfony/runtime": true
         },
         "bump-after-update": true,
-        "sort-packages": true
+        "sort-packages": true,
+        "platform-check": false
     },
     "autoload": {
         "psr-4": {
@@ -80,8 +83,7 @@
         "symfony/polyfill-php82": "*"
     },
     "scripts": {
-        "auto-scripts": [
-        ],
+        "auto-scripts": [],
         "post-install-cmd": [
             "@auto-scripts"
         ],

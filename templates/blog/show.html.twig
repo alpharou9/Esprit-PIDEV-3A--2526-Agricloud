@@ -150,6 +150,144 @@
                 <li><i class="bi bi-chat me-1"></i>{{ post.approvedComments|length }} comments</li>
             </ul>
         </div>
+
+        {# Translator #}
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+            <h6 class="fw-semibold mb-2"><i class="bi bi-translate me-1"></i>Translate Post</h6>
+            <select id="translateLang" class="form-select form-select-sm mb-2">
+                <option value="">— Select language —</option>
+                <option value="fr">French</option>
+                <option value="ar">Arabic</option>
+                <option value="es">Spanish</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+                <option value="pt">Portuguese</option>
+                <option value="zh">Chinese</option>
+            </select>
+            <button id="translateBtn" class="btn btn-sm btn-outline-success w-100">
+                <i class="bi bi-translate me-1"></i>Translate
+            </button>
+            <div id="translateStatus" class="form-text mt-1"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+// ── Translator (MyMemory API) ─────────────────────────────
+document.getElementById('translateBtn').addEventListener('click', function () {
+    const lang   = document.getElementById('translateLang').value;
+    const status = document.getElementById('translateStatus');
+    if (!lang) { status.textContent = 'Please select a language.'; return; }
+
+    const contentEl = document.querySelector('[style*="white-space:pre-wrap"]');
+    if (!contentEl) return;
+
+    const original = contentEl.innerText.trim();
+    const text     = original.substring(0, 500);
+    if (!text) return;
+
+    this.disabled = true;
+    status.textContent = 'Translating…';
+
+    fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${lang}`)
+        .then(r => r.json())
+        .then(data => {
+            const translated = data.responseData?.translatedText;
+            if (translated && data.responseStatus === 200) {
+                contentEl.innerText = translated;
+                status.innerHTML = `<span class="text-success">Translated · <a href="#" id="restoreOriginal">Restore original</a></span>`;
+                document.getElementById('restoreOriginal').addEventListener('click', function (e) {
+                    e.preventDefault();
+                    contentEl.innerText = original;
+                    status.textContent = '';
+                    document.getElementById('translateBtn').disabled = false;
+                });
+            } else {
+                status.textContent = 'Translation failed. Try again.';
+                document.getElementById('translateBtn').disabled = false;
+            }
+        })
+        .catch(() => {
+            status.textContent = 'Service unavailable.';
+            document.getElementById('translateBtn').disabled = false;
+        });
+});
+
+// ── Chatbot ───────────────────────────────────────────────
+document.getElementById('chatToggle').addEventListener('click', () => {
+    const chatBox = document.getElementById('chatBox');
+    chatBox.style.display = chatBox.style.display === 'none' ? 'flex' : 'none';
+    if (chatBox.style.display === 'flex' && document.getElementById('chatMessages').children.length === 0) {
+        appendMessage('bot', 'Hi! I\'m the AgriCloud assistant. Ask me anything about farming.');
+    }
+});
+
+document.getElementById('chatSend').addEventListener('click', sendMessage);
+document.getElementById('chatInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+function appendMessage(role, text) {
+    const msgs   = document.getElementById('chatMessages');
+    const div    = document.createElement('div');
+    div.style.cssText = `margin-bottom:10px;display:flex;${role === 'user' ? 'justify-content:flex-end' : ''}`;
+    const bubble = document.createElement('div');
+    bubble.style.cssText = `max-width:78%;padding:9px 13px;border-radius:${role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px'};font-size:.875rem;line-height:1.5;${role === 'user' ? 'background:#77b81e;color:#fff' : 'background:#f0f4e8;color:#1a2e0a'}`;
+    bubble.textContent = text;
+    div.appendChild(bubble);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const btn   = document.getElementById('chatSend');
+    const msgs  = document.getElementById('chatMessages');
+    const text  = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    btn.disabled = true;
+    appendMessage('user', text);
+
+    const typing = document.createElement('div');
+    typing.style.cssText = 'margin-bottom:10px;color:#aaa;font-size:.8rem;font-style:italic';
+    typing.textContent = 'Typing…';
+    msgs.appendChild(typing);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    try {
+        const res  = await fetch('/blog/chatbot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text }),
+        });
+        const data = await res.json();
+        typing.remove();
+        appendMessage('bot', data.reply || 'Sorry, I could not answer that.');
+    } catch {
+        typing.remove();
+        appendMessage('bot', 'Service unavailable right now.');
+    }
+    btn.disabled = false;
+}
+</script>
+
+<div id="chatToggle" style="position:fixed;bottom:28px;right:28px;z-index:1050;width:52px;height:52px;border-radius:50%;background:#77b81e;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.2);font-size:1.4rem" title="AgriCloud Assistant">
+    <i class="bi bi-chat-dots-fill"></i>
+</div>
+<div id="chatBox" style="display:none;position:fixed;bottom:90px;right:28px;z-index:1050;width:320px;height:420px;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.15);flex-direction:column;overflow:hidden">
+    <div style="background:linear-gradient(135deg,#1a3a08,#2d5c10);padding:14px 18px;color:#fff;font-weight:600;font-size:.95rem">
+        <i class="bi bi-robot me-2"></i>AgriCloud Assistant
+    </div>
+    <div id="chatMessages" style="flex:1;overflow-y:auto;padding:14px;background:#fafcf7"></div>
+    <div style="padding:10px 12px;border-top:1px solid #eee;display:flex;gap:8px">
+        <input id="chatInput" type="text" placeholder="Ask about farming…" style="flex:1;border:1.5px solid #dde8cc;border-radius:8px;padding:8px 12px;font-size:.85rem;outline:none">
+        <button id="chatSend" style="background:#77b81e;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer">
+            <i class="bi bi-send-fill"></i>
+        </button>
     </div>
 </div>
 {% endblock %}

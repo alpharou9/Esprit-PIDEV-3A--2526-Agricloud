@@ -250,6 +250,44 @@
                     <i class="bi bi-chevron-right ms-auto text-muted"></i>
                 </a>
 
+                {# Download PDF #}
+                <a href="{{ path('profile_export_pdf') }}" target="_blank"
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                   style="background:#f8faf4;transition:background .2s"
+                   onmouseover="this.style.background='#e8f8ee'" onmouseout="this.style.background='#f8faf4'">
+                    <div style="width:36px;height:36px;border-radius:10px;background:#e8f8ee;color:#77b81e;display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-file-earmark-arrow-down-fill"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="font-size:.9rem">Export Profile PDF</div>
+                        <div class="text-muted" style="font-size:.78rem">Download your profile card</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                </a>
+
+                {# QR Code toggle #}
+                <button onclick="document.getElementById('qrPanel').classList.toggle('d-none')"
+                        class="d-flex align-items-center gap-3 p-3 rounded-3 border-0 w-100 text-start"
+                        style="background:#f8faf4;transition:background .2s;cursor:pointer"
+                        onmouseover="this.style.background='#e8f8ee'" onmouseout="this.style.background='#f8faf4'">
+                    <div style="width:36px;height:36px;border-radius:10px;background:#e8f8ee;color:#77b81e;display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-qr-code"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="font-size:.9rem">My QR Code</div>
+                        <div class="text-muted" style="font-size:.78rem">Share your profile link</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                </button>
+
+                {# QR Panel (hidden by default) #}
+                <div id="qrPanel" class="d-none p-3 rounded-3 text-center" style="background:#f8faf4;border:1.5px dashed #dde8cc">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data={{ (app.request.schemeAndHttpHost ~ path('profile_show'))|url_encode }}&color=1a2e0a&bgcolor=f8faf4"
+                         alt="Profile QR Code"
+                         style="border-radius:10px;border:2px solid #dde8cc;margin-bottom:10px">
+                    <div class="text-muted" style="font-size:.75rem">Scan to view your AgriCloud profile</div>
+                </div>
+
                 {# Face enroll button #}
                 <button onclick="document.getElementById('faceModal').style.display='flex'"
                         class="d-flex align-items-center gap-3 p-3 rounded-3 border-0 w-100 text-start"

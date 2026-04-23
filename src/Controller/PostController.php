@@ -11,11 +11,14 @@ use App\Repository\PostRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[Route('/blog')]
 #[IsGranted('ROLE_USER')]
@@ -263,6 +266,50 @@ class PostController extends AbstractController
 
         $this->addFlash('success', 'Comment submitted and awaiting moderation.');
         return $this->redirectToRoute('blog_show', ['slug' => $post->getSlug()]);
+    }
+
+    // ── Chatbot (HuggingFace Inference API) ──────────────────────
+    #[Route('/chatbot', name: 'blog_chatbot', methods: ['POST'])]
+    public function chatbot(
+        Request $request,
+        HttpClientInterface $httpClient,
+        #[Autowire('%env(HUGGINGFACE_API_TOKEN)%')] string $hfToken,
+    ): JsonResponse {
+        $data    = json_decode($request->getContent(), true);
+        $message = trim($data['message'] ?? '');
+
+        if ($message === '') {
+            return $this->json(['reply' => 'Please type a message.']);
+        }
+
+        try {
+            $response = $httpClient->request('POST',
+                'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3',
+                [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $hfToken,
+                        'Content-Type'  => 'application/json',
+                    ],
+                    'json' => [
+                        'inputs'     => '<s>[INST] You are AgriCloud assistant, a helpful agriculture expert. Answer briefly. ' . $message . ' [/INST]',
+                        'parameters' => ['max_new_tokens' => 200, 'temperature' => 0.7],
+                    ],
+                    'timeout' => 20,
+                ]
+            );
+
+            $result = $response->toArray();
+            $text   = $result[0]['generated_text'] ?? '';
+
+            // Strip the prompt — keep only the response after [/INST]
+            if (str_contains($text, '[/INST]')) {
+                $text = trim(substr($text, strrpos($text, '[/INST]') + 7));
+            }
+
+            return $this->json(['reply' => $text ?: 'I could not generate a response.']);
+        } catch (\Throwable) {
+            return $this->json(['reply' => 'The AI service is unavailable right now. Please try again later.']);
+        }
     }
 
     // ── Show post (slug — must be LAST) ───────────────────────────
