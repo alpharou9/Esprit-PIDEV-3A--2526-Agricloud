@@ -17,10 +17,8 @@ security:
             lazy: true
             provider: app_user_provider
             user_checker: App\Security\UserChecker
-            form_login:
-                login_path: app_login
-                check_path: app_login
-                default_target_path: dashboard
+            custom_authenticators:
+                - App\Security\LoginFormAuthenticator
             logout:
                 path: app_logout
                 target: app_login
@@ -30,6 +28,7 @@ security:
         - { path: ^/register, roles: PUBLIC_ACCESS }
         - { path: ^/guest-login, roles: PUBLIC_ACCESS }
         - { path: ^/face/login,  roles: PUBLIC_ACCESS }
+        - { path: ^/auth/google, roles: PUBLIC_ACCESS }
         - { path: ^/$, roles: PUBLIC_ACCESS }
         - { path: ^/blog, roles: PUBLIC_ACCESS }
         - { path: ^/market, roles: PUBLIC_ACCESS }
