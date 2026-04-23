@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Role — AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex align-items-center mb-3 gap-2">
+    <a href="{{ path('role_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <h5 class="fw-bold mb-0">Edit Role — {{ role.name }}</h5>
+</div>
+
+<div class="card border-0 shadow-sm" style="max-width:500px">
+    <div class="card-body p-4">
+        {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+        <div class="mb-3">
+            {{ form_label(form.name) }}
+            {{ form_widget(form.name) }}
+            {{ form_errors(form.name) }}
+            <div class="form-text">Required · At least 2 characters (e.g. Admin, Farmer, Customer)</div>
+        </div>
+        <div class="mb-4">
+            {{ form_label(form.description) }}
+            {{ form_widget(form.description) }}
+            {{ form_errors(form.description) }}
+            <div class="form-text">Optional · Brief description of this role's permissions</div>
+        </div>
+        <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-1"></i> Save Changes
+        </button>
+        <a href="{{ path('role_index') }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

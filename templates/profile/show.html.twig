@@ -1,0 +1,469 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Profile — AgriCloud{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .profile-hero {
+        border-radius: 20px; overflow: hidden;
+        background: linear-gradient(135deg, #1a2e0a 0%, #3a6010 100%);
+        padding: 40px 40px 80px;
+        position: relative;
+        margin-bottom: 0;
+    }
+    .profile-hero h2 { color: #fff; font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; }
+    .profile-hero p  { color: rgba(255,255,255,.65); font-size: .9rem; margin: 0; }
+
+    .profile-avatar-wrap {
+        position: relative; z-index: 2;
+        margin-top: -56px;
+        padding: 0 40px;
+        margin-bottom: 24px;
+    }
+    .profile-avatar {
+        width: 110px; height: 110px; border-radius: 50%;
+        background: var(--agri-green, #77b81e);
+        border: 4px solid #fff;
+        box-shadow: 0 8px 24px rgba(0,0,0,.15);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2.8rem; font-weight: 700; color: #fff;
+        overflow: hidden;
+    }
+    .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    .profile-card {
+        border: none; border-radius: 20px;
+        box-shadow: 0 4px 24px rgba(0,0,0,.07);
+        background: #fff;
+    }
+
+    .info-row {
+        display: flex; align-items: flex-start;
+        padding: 16px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-icon {
+        width: 38px; height: 38px; border-radius: 10px;
+        background: #f0f7e0; color: #77b81e;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; flex-shrink: 0; margin-right: 14px;
+    }
+    .info-label { font-size: .75rem; color: #aaa; text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 2px; }
+    .info-value { font-size: .97rem; font-weight: 600; color: #222; }
+
+    .btn-edit {
+        background: #77b81e; color: #fff; border: none;
+        border-radius: 10px; padding: 9px 26px;
+        font-size: .9rem; font-weight: 600;
+        text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+        transition: background .2s;
+    }
+    .btn-edit:hover { background: #5a9014; color: #fff; }
+
+    .stat-pill {
+        border-radius: 12px; padding: 18px 24px;
+        background: #fff;
+        box-shadow: 0 4px 16px rgba(0,0,0,.06);
+        text-align: center;
+    }
+    .stat-pill .num { font-size: 1.8rem; font-weight: 700; color: #77b81e; line-height: 1; }
+    .stat-pill .lbl { font-size: .78rem; color: #888; margin-top: 4px; }
+</style>
+{% endblock %}
+
+{% block body %}
+
+{# ── Hero banner ── #}
+<div class="profile-hero mb-0">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h2>{{ user.name }}</h2>
+            <p>{{ user.email }}</p>
+        </div>
+        <a href="{{ path('profile_edit') }}" class="btn-edit">
+            <i class="bi bi-pencil"></i> Edit Profile
+        </a>
+    </div>
+</div>
+
+{# ── Avatar + stat pills ── #}
+<div class="profile-avatar-wrap">
+    <div class="d-flex align-items-flex-end gap-4 flex-wrap">
+        <div class="profile-avatar">
+            {% if user.profilePicture %}
+                <img src="{{ asset('uploads/avatars/' ~ user.profilePicture) }}" alt="{{ user.name }}">
+            {% else %}
+                {{ user.name|slice(0,1)|upper }}
+            {% endif %}
+        </div>
+        <div class="d-flex gap-3 flex-wrap" style="padding-bottom:4px">
+            <div class="stat-pill">
+                <div class="num">
+                    {% if user.role %}
+                        <i class="bi bi-shield-check" style="font-size:1.4rem"></i>
+                    {% else %}
+                        <i class="bi bi-person" style="font-size:1.4rem"></i>
+                    {% endif %}
+                </div>
+                <div class="lbl">{{ user.role ? user.role.name : 'User' }}</div>
+            </div>
+            <div class="stat-pill">
+                <div class="num">
+                    {% if user.status == 'active' %}
+                        <i class="bi bi-circle-fill text-success" style="font-size:1rem"></i>
+                    {% else %}
+                        <i class="bi bi-circle-fill text-danger" style="font-size:1rem"></i>
+                    {% endif %}
+                </div>
+                <div class="lbl">{{ user.status|capitalize }}</div>
+            </div>
+            <div class="stat-pill">
+                <div class="num" style="font-size:1.1rem">
+                    {{ user.createdAt ? user.createdAt|date('M Y') : '—' }}
+                </div>
+                <div class="lbl">Member since</div>
+            </div>
+            {% if user.emailVerifiedAt %}
+            <div class="stat-pill">
+                <div class="num"><i class="bi bi-patch-check-fill text-primary" style="font-size:1.3rem"></i></div>
+                <div class="lbl">Verified</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# ── Info card ── #}
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="profile-card p-4">
+            <h6 class="fw-bold mb-3" style="color:#77b81e;font-size:.75rem;text-transform:uppercase;letter-spacing:1.5px">
+                <i class="bi bi-person-lines-fill me-2"></i>Personal Information
+            </h6>
+
+            <div class="info-row">
+                <div class="info-icon"><i class="bi bi-person-fill"></i></div>
+                <div>
+                    <div class="info-label">Full Name</div>
+                    <div class="info-value">{{ user.name }}</div>
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-icon"><i class="bi bi-envelope-fill"></i></div>
+                <div>
+                    <div class="info-label">Email Address</div>
+                    <div class="info-value">{{ user.email }}</div>
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-icon"><i class="bi bi-telephone-fill"></i></div>
+                <div>
+                    <div class="info-label">Phone Number</div>
+                    <div class="info-value">{{ user.phone ?? '—' }}</div>
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-icon"><i class="bi bi-shield-fill"></i></div>
+                <div>
+                    <div class="info-label">Role</div>
+                    <div class="info-value">
+                        {% if user.role %}
+                            <span class="badge rounded-pill" style="background:#e8f8ee;color:#77b81e;font-size:.85rem;padding:6px 14px">
+                                {{ user.role.name }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted">No role assigned</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-icon"><i class="bi bi-calendar-check-fill"></i></div>
+                <div>
+                    <div class="info-label">Joined</div>
+                    <div class="info-value">{{ user.createdAt ? user.createdAt|date('d F Y') : '—' }}</div>
+                </div>
+            </div>
+
+            {% if user.oauthProvider %}
+            <div class="info-row">
+                <div class="info-icon"><i class="bi bi-box-arrow-in-right"></i></div>
+                <div>
+                    <div class="info-label">Login Method</div>
+                    <div class="info-value">{{ user.oauthProvider|capitalize }} OAuth</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="profile-card p-4 h-100">
+            <h6 class="fw-bold mb-3" style="color:#77b81e;font-size:.75rem;text-transform:uppercase;letter-spacing:1.5px">
+                <i class="bi bi-lightning-charge-fill me-2"></i>Quick Actions
+            </h6>
+            <div class="d-flex flex-column gap-2">
+                <a href="{{ path('profile_edit') }}" class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none" style="background:#f8faf4;transition:background .2s" onmouseover="this.style.background='#e8f8ee'" onmouseout="this.style.background='#f8faf4'">
+                    <div style="width:36px;height:36px;border-radius:10px;background:#e8f8ee;color:#77b81e;display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-pencil-fill"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="font-size:.9rem">Edit Profile</div>
+                        <div class="text-muted" style="font-size:.78rem">Update your info & password</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                </a>
+                <a href="{{ path('farm_index') }}" class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none" style="background:#f8faf4;transition:background .2s" onmouseover="this.style.background='#e8f8ee'" onmouseout="this.style.background='#f8faf4'">
+                    <div style="width:36px;height:36px;border-radius:10px;background:#e8f8ee;color:#77b81e;display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-house-heart-fill"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="font-size:.9rem">My Farms</div>
+                        <div class="text-muted" style="font-size:.78rem">Manage farms & fields</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                </a>
+                <a href="{{ path('my_products') }}" class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none" style="background:#f8faf4;transition:background .2s" onmouseover="this.style.background='#e8f8ee'" onmouseout="this.style.background='#f8faf4'">
+                    <div style="width:36px;height:36px;border-radius:10px;background:#e8f8ee;color:#77b81e;display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-box-seam-fill"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="font-size:.9rem">My Products</div>
+                        <div class="text-muted" style="font-size:.78rem">View listed products</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                </a>
+                <a href="{{ path('order_index') }}" class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none" style="background:#f8faf4;transition:background .2s" onmouseover="this.style.background='#e8f8ee'" onmouseout="this.style.background='#f8faf4'">
+                    <div style="width:36px;height:36px;border-radius:10px;background:#e8f8ee;color:#77b81e;display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-receipt-cutoff"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="font-size:.9rem">My Orders</div>
+                        <div class="text-muted" style="font-size:.78rem">Track your purchases</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                </a>
+
+                {# Download PDF #}
+                <a href="{{ path('profile_export_pdf') }}" target="_blank"
+                   class="d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none"
+                   style="background:#f8faf4;transition:background .2s"
+                   onmouseover="this.style.background='#e8f8ee'" onmouseout="this.style.background='#f8faf4'">
+                    <div style="width:36px;height:36px;border-radius:10px;background:#e8f8ee;color:#77b81e;display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-file-earmark-arrow-down-fill"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="font-size:.9rem">Export Profile PDF</div>
+                        <div class="text-muted" style="font-size:.78rem">Download your profile card</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                </a>
+
+                {# QR Code toggle #}
+                <button onclick="document.getElementById('qrPanel').classList.toggle('d-none')"
+                        class="d-flex align-items-center gap-3 p-3 rounded-3 border-0 w-100 text-start"
+                        style="background:#f8faf4;transition:background .2s;cursor:pointer"
+                        onmouseover="this.style.background='#e8f8ee'" onmouseout="this.style.background='#f8faf4'">
+                    <div style="width:36px;height:36px;border-radius:10px;background:#e8f8ee;color:#77b81e;display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-qr-code"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="font-size:.9rem">My QR Code</div>
+                        <div class="text-muted" style="font-size:.78rem">Share your profile link</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                </button>
+
+                {# QR Panel (hidden by default) #}
+                <div id="qrPanel" class="d-none p-3 rounded-3 text-center" style="background:#f8faf4;border:1.5px dashed #dde8cc">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data={{ (app.request.schemeAndHttpHost ~ path('profile_show'))|url_encode }}&color=1a2e0a&bgcolor=f8faf4"
+                         alt="Profile QR Code"
+                         style="border-radius:10px;border:2px solid #dde8cc;margin-bottom:10px">
+                    <div class="text-muted" style="font-size:.75rem">Scan to view your AgriCloud profile</div>
+                </div>
+
+                {# Face enroll button #}
+                <button onclick="document.getElementById('faceModal').style.display='flex'"
+                        class="d-flex align-items-center gap-3 p-3 rounded-3 border-0 w-100 text-start"
+                        style="background:#f8faf4;transition:background .2s;cursor:pointer"
+                        onmouseover="this.style.background='#e8f8ee'" onmouseout="this.style.background='#f8faf4'">
+                    <div style="width:36px;height:36px;border-radius:10px;background:{% if user.faceEnrolledAt %}#e8f8ee{% else %}#fff3cd{% endif %};color:{% if user.faceEnrolledAt %}#77b81e{% else %}#f59e0b{% endif %};display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-camera-fill"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="font-size:.9rem">
+                            {% if user.faceEnrolledAt %}Face Enrolled{% else %}Enroll Face{% endif %}
+                        </div>
+                        <div class="text-muted" style="font-size:.78rem">
+                            {% if user.faceEnrolledAt %}
+                                Enrolled on {{ user.faceEnrolledAt|date('d M Y') }} · Click to re-enroll
+                            {% else %}
+                                Enable face login
+                            {% endif %}
+                        </div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── Face Enroll Modal ── #}
+<div id="faceModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:20px;padding:32px;width:480px;max-width:95vw;text-align:center;position:relative">
+        <button onclick="closeEnrollModal()" style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#999">&times;</button>
+        <h5 class="fw-bold mb-1" style="color:#1a2e0a"><i class="bi bi-camera-fill me-2" style="color:#77b81e"></i>Enroll Your Face</h5>
+        <p class="text-muted mb-3" style="font-size:.85rem">Position your face in the frame, then click Capture.</p>
+
+        <div style="position:relative;display:inline-block;border-radius:14px;overflow:hidden;border:3px solid #dde8cc">
+            <video id="enrollVideo" autoplay muted playsinline style="width:380px;max-width:100%;display:block"></video>
+            <canvas id="enrollOverlay" style="position:absolute;top:0;left:0;pointer-events:none"></canvas>
+        </div>
+
+        <div id="enrollStatus" class="mt-3" style="font-size:.88rem;min-height:24px;color:#888">Loading models…</div>
+
+        <div class="d-flex gap-3 justify-content-center mt-3">
+            <button id="enrollBtn" onclick="captureAndEnroll()" disabled
+                    style="background:#77b81e;color:#fff;border:none;border-radius:10px;padding:10px 28px;font-weight:600;cursor:pointer;opacity:.5">
+                <i class="bi bi-camera me-1"></i> Capture & Save
+            </button>
+            <button onclick="closeEnrollModal()" style="background:#f0f0f0;color:#555;border:none;border-radius:10px;padding:10px 20px;font-weight:600;cursor:pointer">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+<script>
+const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+let enrollStream = null;
+let enrollDetectionInterval = null;
+
+async function openEnrollModal() {
+    document.getElementById('faceModal').style.display = 'flex';
+    await startEnrollCamera();
+}
+
+async function startEnrollCamera() {
+    const video   = document.getElementById('enrollVideo');
+    const overlay = document.getElementById('enrollOverlay');
+    const status  = document.getElementById('enrollStatus');
+    const btn     = document.getElementById('enrollBtn');
+
+    status.textContent = 'Loading face detection models…';
+    status.style.color = '#888';
+
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+
+    enrollStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    video.srcObject = enrollStream;
+    await new Promise(r => video.onloadedmetadata = r);
+
+    overlay.width  = video.videoWidth;
+    overlay.height = video.videoHeight;
+
+    status.textContent = 'Align your face in the frame…';
+
+    enrollDetectionInterval = setInterval(async () => {
+        const detection = await faceapi
+            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks(true)
+            .withFaceDescriptor();
+
+        const ctx = overlay.getContext('2d');
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+        if (detection) {
+            const box = detection.detection.box;
+            ctx.strokeStyle = '#77b81e';
+            ctx.lineWidth   = 3;
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+            status.textContent = 'Face detected! Click Capture & Save.';
+            status.style.color = '#3a6a0a';
+            btn.disabled       = false;
+            btn.style.opacity  = '1';
+        } else {
+            status.textContent = 'No face detected — move closer or improve lighting.';
+            status.style.color = '#e67e22';
+            btn.disabled       = true;
+            btn.style.opacity  = '.5';
+        }
+    }, 300);
+}
+
+async function captureAndEnroll() {
+    const video  = document.getElementById('enrollVideo');
+    const status = document.getElementById('enrollStatus');
+    const btn    = document.getElementById('enrollBtn');
+
+    btn.disabled      = true;
+    btn.style.opacity = '.5';
+    status.textContent = 'Processing…';
+
+    const detection = await faceapi
+        .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks(true)
+        .withFaceDescriptor();
+
+    if (!detection) {
+        status.textContent = 'No face detected. Please try again.';
+        status.style.color = '#e74c3c';
+        btn.disabled       = false;
+        btn.style.opacity  = '1';
+        return;
+    }
+
+    const descriptor = Array.from(detection.descriptor);
+
+    const res  = await fetch('{{ path("face_enroll") }}', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ descriptor }),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+        status.textContent = '✓ Face enrolled successfully!';
+        status.style.color = '#3a6a0a';
+        setTimeout(() => { closeEnrollModal(); location.reload(); }, 1200);
+    } else {
+        status.textContent = data.error || 'Enrollment failed.';
+        status.style.color = '#e74c3c';
+        btn.disabled       = false;
+        btn.style.opacity  = '1';
+    }
+}
+
+function closeEnrollModal() {
+    clearInterval(enrollDetectionInterval);
+    if (enrollStream) enrollStream.getTracks().forEach(t => t.stop());
+    enrollStream = null;
+    document.getElementById('faceModal').style.display = 'none';
+    document.getElementById('enrollStatus').textContent = 'Loading models…';
+    document.getElementById('enrollStatus').style.color = '#888';
+    document.getElementById('enrollBtn').disabled       = true;
+    document.getElementById('enrollBtn').style.opacity  = '.5';
+    document.getElementById('enrollOverlay').getContext('2d').clearRect(0,0,9999,9999);
+}
+
+// Auto-start when modal opens via button
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('[onclick*="faceModal"]').addEventListener('click', () => {
+        startEnrollCamera();
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AgriCloud — Sign In</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Philosopher:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Philosopher', sans-serif; margin: 0; padding: 0; height: 100vh; display: flex; }
+
+        /* ── Left panel ── */
+        .auth-left {
+            width: 55%;
+            background:
+                radial-gradient(ellipse at 80% 20%, rgba(119,184,30,.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 10% 90%, rgba(30,80,5,.4) 0%, transparent 50%),
+                linear-gradient(145deg, #0d1f05 0%, #1a3a08 40%, #2d5c10 100%);
+            display: flex; flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 56px;
+            position: relative;
+            overflow: hidden;
+        }
+        .auth-left::before {
+            content: '';
+            position: absolute; inset: 0;
+            background-image: radial-gradient(circle at 1px 1px, rgba(119,184,30,.06) 1px, transparent 0);
+            background-size: 36px 36px;
+            pointer-events: none;
+        }
+        .auth-left::after {
+            content: '';
+            position: absolute; bottom: -60px; right: -60px;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: rgba(119,184,30,.15);
+        }
+
+        .auth-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .auth-brand span { font-size: 1.6rem; font-weight: 700; color: #fff; }
+        .auth-brand i { color: #77b81e; font-size: 1.8rem; }
+
+        .auth-hero-text { z-index: 1; }
+        .auth-hero-text h2 { color: #fff; font-size: 2.4rem; font-weight: 700; line-height: 1.2; margin-bottom: 16px; }
+        .auth-hero-text h2 span { color: #a3d43a; }
+        .auth-hero-text p { color: rgba(255,255,255,.72); font-size: 1rem; max-width: 420px; }
+
+        .auth-features { display: flex; flex-direction: column; gap: 14px; z-index: 1; }
+        .auth-feature { display: flex; align-items: center; gap: 12px; }
+        .auth-feature-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: rgba(119,184,30,.25);
+            display: flex; align-items: center; justify-content: center;
+            color: #a3d43a; font-size: 1.1rem; flex-shrink: 0;
+        }
+        .auth-feature span { color: rgba(255,255,255,.8); font-size: .92rem; }
+
+        /* ── Right panel ── */
+        .auth-right {
+            width: 45%;
+            background: #f8faf4;
+            display: flex; align-items: center; justify-content: center;
+            padding: 40px 48px;
+        }
+        .auth-form-wrap { width: 100%; max-width: 380px; }
+
+        .auth-form-wrap h3 { font-size: 1.7rem; font-weight: 700; color: #1a2e0a; margin-bottom: 6px; }
+        .auth-form-wrap .subtitle { color: #888; font-size: .9rem; margin-bottom: 32px; }
+
+        .form-label { font-weight: 600; font-size: .85rem; color: #444; margin-bottom: 6px; }
+        .form-control {
+            border-radius: 10px; border: 1.5px solid #dde8cc;
+            padding: 11px 14px; font-size: .93rem; background: #fff;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .form-control:focus {
+            border-color: #77b81e;
+            box-shadow: 0 0 0 3px rgba(119,184,30,.15);
+            outline: none;
+        }
+        .input-icon { position: relative; }
+        .input-icon i {
+            position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+            color: #aaa; font-size: .95rem; pointer-events: none;
+        }
+        .input-icon .form-control { padding-left: 38px; }
+
+        .btn-auth {
+            background: #77b81e; color: #fff; border: none;
+            border-radius: 10px; padding: 12px; font-size: 1rem; font-weight: 600;
+            width: 100%; transition: background .2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-auth:hover { background: #5a9014; color: #fff; }
+
+        .auth-divider { display: flex; align-items: center; gap: 12px; margin: 24px 0; }
+        .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: #dde8cc; }
+        .auth-divider span { color: #aaa; font-size: .82rem; white-space: nowrap; }
+
+        .btn-guest {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 11px;
+            border: 1.5px solid #dde8cc; border-radius: 10px;
+            background: #fff; color: #555; font-size: .95rem; font-weight: 600;
+            text-decoration: none; transition: all .2s;
+        }
+        .btn-guest:hover { border-color: #77b81e; color: #77b81e; background: #f0f7e0; }
+
+        .auth-switch { text-align: center; font-size: .88rem; color: #888; }
+        .auth-switch a { color: #77b81e; font-weight: 700; text-decoration: none; }
+        .auth-switch a:hover { text-decoration: underline; }
+
+        @media (max-width: 768px) {
+            .auth-left { display: none; }
+            .auth-right { width: 100%; padding: 32px 24px; }
+        }
+    </style>
+</head>
+<body>
+
+{# ── Left panel ── #}
+<div class="auth-left">
+    <a href="{{ path('home') }}" class="auth-brand">
+        <i class="bi bi-tree-fill"></i>
+        <span>AgriCloud</span>
+    </a>
+
+    <div class="auth-hero-text">
+        <h2>Welcome<br>Back to<br><span>AgriCloud.</span></h2>
+        <p>Sign in to manage your farms, browse the marketplace, and connect with the agricultural community.</p>
+    </div>
+
+    <div class="auth-features">
+        <div class="auth-feature">
+            <div class="auth-feature-icon"><i class="bi bi-house-heart-fill"></i></div>
+            <span>Manage your farms and fields</span>
+        </div>
+        <div class="auth-feature">
+            <div class="auth-feature-icon"><i class="bi bi-shop"></i></div>
+            <span>Buy and sell agricultural products</span>
+        </div>
+        <div class="auth-feature">
+            <div class="auth-feature-icon"><i class="bi bi-calendar-event"></i></div>
+            <span>Discover and join farming events</span>
+        </div>
+    </div>
+</div>
+
+{# ── Right panel ── #}
+<div class="auth-right">
+    <div class="auth-form-wrap">
+        <h3>Sign In</h3>
+        <p class="subtitle">Enter your credentials to access your account</p>
+
+        {% if error %}
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4" style="border-radius:10px;border:none;background:#fde8e8;color:#b91c1c;font-size:.88rem">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                {{ error.messageKey|trans(error.messageData, 'security') }}
+            </div>
+        {% endif %}
+
+
+        <form method="post" action="{{ path('app_login') }}" id="loginForm">
+            <div class="mb-3">
+                <label for="email" class="form-label">Email Address</label>
+                <div class="input-icon">
+                    <i class="bi bi-envelope"></i>
+                    <input type="email" id="email" name="_username" class="form-control"
+                           value="{{ last_username }}" autofocus autocomplete="email"
+                           placeholder="your@email.com" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-icon">
+                    <i class="bi bi-lock"></i>
+                    <input type="password" id="password" name="_password" class="form-control"
+                           autocomplete="current-password" placeholder="••••••••" required>
+                </div>
+            </div>
+
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+            <div class="g-recaptcha mb-3" data-sitekey="{{ recaptcha_key }}"></div>
+
+            <button type="submit" class="btn-auth">
+                <i class="bi bi-box-arrow-in-right"></i> Sign In
+            </button>
+        </form>
+
+        <div class="auth-divider"><span>or</span></div>
+
+        <a href="{{ path('auth_google') }}" class="btn-guest" style="gap:10px">
+            <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                <path fill="none" d="M0 0h48v48H0z"/>
+            </svg>
+            Sign in with Google
+        </a>
+
+        <div class="auth-divider"><span>or</span></div>
+
+        <button type="button" onclick="openFaceLogin()" class="btn-guest" style="width:100%;cursor:pointer">
+            <i class="bi bi-camera-fill"></i> Sign In with Face
+        </button>
+
+        <div class="auth-divider"><span>or</span></div>
+
+        <a href="{{ path('guest_login') }}" class="btn-guest">
+            <i class="bi bi-person-dash"></i> Continue as Guest
+        </a>
+
+        <div class="auth-switch mt-3">
+            No account? <a href="{{ path('app_register') }}">Create one for free →</a>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="{{ path('home') }}" class="text-muted text-decoration-none" style="font-size:.82rem">
+                <i class="bi bi-arrow-left me-1"></i>Back to homepage
+            </a>
+        </div>
+    </div>
+</div>
+
+{# ── Face Login Modal ── #}
+<div id="faceLoginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:20px;padding:32px;width:460px;max-width:95vw;text-align:center;position:relative">
+        <button onclick="closeFaceLogin()" style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#999">&times;</button>
+        <h5 class="fw-bold mb-1" style="color:#1a2e0a"><i class="bi bi-camera-fill me-2" style="color:#77b81e"></i>Face Sign In</h5>
+        <p style="color:#888;font-size:.85rem;margin-bottom:16px">Look at the camera — recognition is automatic.</p>
+
+        <div style="position:relative;display:inline-block;border-radius:14px;overflow:hidden;border:3px solid #dde8cc">
+            <video id="faceVideo" autoplay muted playsinline style="width:360px;max-width:100%;display:block"></video>
+            <canvas id="faceOverlay" style="position:absolute;top:0;left:0;pointer-events:none"></canvas>
+        </div>
+
+        <div id="faceStatus" style="margin-top:14px;font-size:.88rem;min-height:22px;color:#888">Loading models…</div>
+
+        <button onclick="closeFaceLogin()" style="margin-top:16px;background:#f0f0f0;color:#555;border:none;border-radius:10px;padding:10px 28px;font-weight:600;cursor:pointer">
+            Cancel
+        </button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+<script>
+const MODEL_URL   = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+let faceStream    = null;
+let faceInterval  = null;
+let modelsLoaded  = false;
+let recognising   = false;
+
+async function openFaceLogin() {
+    document.getElementById('faceLoginModal').style.display = 'flex';
+    const status = document.getElementById('faceStatus');
+
+    if (!modelsLoaded) {
+        status.textContent = 'Loading models… (first time may take a few seconds)';
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+        modelsLoaded = true;
+    }
+
+    faceStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    const video   = document.getElementById('faceVideo');
+    const overlay = document.getElementById('faceOverlay');
+    video.srcObject = faceStream;
+    await new Promise(r => video.onloadedmetadata = r);
+    overlay.width  = video.videoWidth;
+    overlay.height = video.videoHeight;
+    status.textContent = 'Align your face in the frame…';
+
+    faceInterval = setInterval(async () => {
+        if (recognising) return;
+        const detection = await faceapi
+            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks(true)
+            .withFaceDescriptor();
+
+        const ctx = overlay.getContext('2d');
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+        if (!detection) {
+            status.textContent = 'No face detected…';
+            status.style.color = '#888';
+            return;
+        }
+
+        const box = detection.detection.box;
+        ctx.strokeStyle = '#77b81e';
+        ctx.lineWidth   = 3;
+        ctx.strokeRect(box.x, box.y, box.width, box.height);
+        status.textContent = 'Face detected — verifying…';
+        status.style.color = '#3a6a0a';
+
+        recognising = true;
+        const descriptor = Array.from(detection.descriptor);
+
+        try {
+            const res  = await fetch('/face/login', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ descriptor }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                status.textContent = '✓ Recognised! Redirecting…';
+                status.style.color = '#3a6a0a';
+                clearInterval(faceInterval);
+                setTimeout(() => window.location.href = data.redirect, 800);
+            } else {
+                status.textContent = data.error || 'Not recognised. Keep still…';
+                status.style.color = '#e74c3c';
+                setTimeout(() => { recognising = false; }, 2000);
+            }
+        } catch (e) {
+            status.textContent = 'Server error. Try again.';
+            status.style.color = '#e74c3c';
+            recognising = false;
+        }
+    }, 800);
+}
+
+function closeFaceLogin() {
+    clearInterval(faceInterval);
+    if (faceStream) faceStream.getTracks().forEach(t => t.stop());
+    faceStream   = null;
+    recognising  = false;
+    document.getElementById('faceLoginModal').style.display = 'none';
+    document.getElementById('faceStatus').textContent = 'Loading models…';
+    document.getElementById('faceStatus').style.color = '#888';
+    document.getElementById('faceOverlay').getContext('2d').clearRect(0,0,9999,9999);
+}
+</script>
+</body>
+</html>
