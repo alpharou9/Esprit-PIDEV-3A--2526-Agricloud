@@ -139,6 +139,27 @@ INSERT INTO `fields` (`id`, `farm_id`, `name`, `area`, `soil_type`, `crop_type`,
 (1, 1, 'bonnus field', 5500.00, NULL, NULL, NULL, 'active', '2026-02-05 19:40:31', '2026-02-05 19:40:31');
 
 -- --------------------------------------------------------
+-- Table: farm_notifications
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `farm_notifications`;
+CREATE TABLE IF NOT EXISTS `farm_notifications` (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `farm_id` bigint UNSIGNED NOT NULL,
+  `type` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `message` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_read` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_farm_notification_user` (`user_id`),
+  KEY `idx_farm_notification_farm` (`farm_id`),
+  KEY `idx_farm_notification_read` (`user_id`,`is_read`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 -- Table: products
 -- --------------------------------------------------------
 
@@ -412,6 +433,10 @@ ALTER TABLE `farms`
 
 ALTER TABLE `fields`
   ADD CONSTRAINT `fields_ibfk_1` FOREIGN KEY (`farm_id`) REFERENCES `farms` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `farm_notifications`
+  ADD CONSTRAINT `farm_notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `farm_notifications_ibfk_2` FOREIGN KEY (`farm_id`) REFERENCES `farms` (`id`) ON DELETE CASCADE;
 
 ALTER TABLE `products`
   ADD CONSTRAINT `products_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,

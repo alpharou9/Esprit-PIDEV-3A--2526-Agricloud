@@ -1,0 +1,45 @@
+<div class="dropdown notification-dropdown">
+    <a class="notification-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Farm notifications">
+        <i class="bi bi-bell fs-5"></i>
+        {% if unreadCount > 0 %}
+            <span class="notification-badge">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+        {% endif %}
+    </a>
+    <div class="dropdown-menu dropdown-menu-end">
+        <div class="notification-header d-flex justify-content-between align-items-center">
+            <div>
+                <div class="fw-semibold">Farm notifications</div>
+                <div class="small text-muted">Approval and rejection updates</div>
+            </div>
+            {% if unreadCount > 0 %}
+                <span class="badge bg-danger">{{ unreadCount }} new</span>
+            {% endif %}
+        </div>
+
+        {% if notifications is empty %}
+            <div class="p-4 text-center text-muted small">
+                No farm review notifications yet.
+            </div>
+        {% else %}
+            {% for notification in notifications %}
+                <a href="{{ path('farm_notification_open', {id: notification.id}) }}"
+                   class="notification-item {{ notification.isRead ? '' : 'unread' }}">
+                    <div class="d-flex justify-content-between gap-3">
+                        <div>
+                            <div class="fw-semibold">{{ notification.title }}</div>
+                            <div class="small text-muted mt-1">{{ notification.message }}</div>
+                        </div>
+                        <span class="badge {{ notification.status == 'approved' ? 'bg-success' : 'bg-danger' }}">
+                            {{ notification.status|capitalize }}
+                        </span>
+                    </div>
+                    <div class="small text-muted mt-2">{{ notification.createdAt|date('d M Y H:i') }}</div>
+                </a>
+            {% endfor %}
+        {% endif %}
+
+        <div class="notification-footer">
+            <a href="{{ path('farm_notification_index') }}" class="small fw-semibold text-decoration-none">View all</a>
+        </div>
+    </div>
+</div>

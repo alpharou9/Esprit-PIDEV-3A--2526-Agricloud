@@ -123,4 +123,24 @@ class Farm
     public function setUpdatedAt(?\DateTimeInterface $updatedAt): static { $this->updatedAt = $updatedAt; return $this; }
 
     public function getFields(): Collection { return $this->fields; }
+
+    public function getAreaValue(): ?float
+    {
+        return $this->area === null ? null : (float) $this->area;
+    }
+
+    public function getAllocatedFieldArea(?Field $excludedField = null): float
+    {
+        $allocatedArea = 0.0;
+
+        foreach ($this->fields as $field) {
+            if ($excludedField !== null && $field === $excludedField) {
+                continue;
+            }
+
+            $allocatedArea += (float) $field->getArea();
+        }
+
+        return round($allocatedArea, 2);
+    }
 }

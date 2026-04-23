@@ -1,0 +1,147 @@
+<script>
+(function () {
+    const locationInput = document.getElementById('{{ form.location.vars.id }}');
+    const latInput = document.getElementById('{{ form.latitude.vars.id }}');
+    const lngInput = document.getElementById('{{ form.longitude.vars.id }}');
+    const locateButton = document.getElementById('locateMe');
+    const statusNode = document.getElementById('farmMapStatus');
+
+    if (!locationInput || !latInput || !lngInput || typeof L === 'undefined') {
+        return;
+    }
+
+    const defaultCenter = { lat: 36.8065, lng: 10.1815, zoom: 7 };
+    const parsedLat = parseFloat(latInput.value);
+    const parsedLng = parseFloat(lngInput.value);
+    const hasInitialCoordinates = !Number.isNaN(parsedLat) && !Number.isNaN(parsedLng);
+    const initialCenter = hasInitialCoordinates
+        ? { lat: parsedLat, lng: parsedLng, zoom: 14 }
+        : defaultCenter;
+
+    const map = L.map('farmMap').setView([initialCenter.lat, initialCenter.lng], initialCenter.zoom);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    let marker = null;
+    let lastAutoLocation = '';
+
+    function setStatus(message, isError) {
+        statusNode.textContent = message;
+        statusNode.classList.toggle('text-danger', Boolean(isError));
+        statusNode.classList.toggle('text-muted', !isError);
+    }
+
+    function updateInputs(lat, lng) {
+        latInput.value = Number(lat).toFixed(8);
+        lngInput.value = Number(lng).toFixed(8);
+    }
+
+    function updateMarker(lat, lng, panMap) {
+        updateInputs(lat, lng);
+
+        if (marker) {
+            marker.setLatLng([lat, lng]);
+        } else {
+            marker = L.marker([lat, lng]).addTo(map);
+        }
+
+        if (panMap !== false) {
+            map.setView([lat, lng], Math.max(map.getZoom(), 14));
+        }
+
+        setStatus('Pinned at ' + Number(lat).toFixed(6) + ', ' + Number(lng).toFixed(6) + '.', false);
+    }
+
+    function maybeUpdateLocationLabel(label) {
+        if (!label) {
+            return;
+        }
+
+        const currentValue = locationInput.value.trim();
+        if (currentValue === '' || currentValue === lastAutoLocation) {
+            locationInput.value = label;
+            lastAutoLocation = label;
+        }
+    }
+
+    function reverseGeocode(lat, lng) {
+        const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat='
+            + encodeURIComponent(lat)
+            + '&lon='
+            + encodeURIComponent(lng);
+
+        fetch(url, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('Reverse geocoding failed');
+                }
+
+                return response.json();
+            })
+            .then(function (data) {
+                maybeUpdateLocationLabel(data.display_name || '');
+            })
+            .catch(function () {
+                setStatus('Pinned location saved. Enter the address manually if needed.', false);
+            });
+    }
+
+    function applyCoordinates(lat, lng) {
+        updateMarker(lat, lng, true);
+        reverseGeocode(lat, lng);
+    }
+
+    if (hasInitialCoordinates) {
+        updateMarker(parsedLat, parsedLng, false);
+    }
+
+    map.on('click', function (event) {
+        applyCoordinates(event.latlng.lat, event.latlng.lng);
+    });
+
+    function syncManualCoordinates() {
+        const lat = parseFloat(latInput.value);
+        const lng = parseFloat(lngInput.value);
+
+        if (Number.isNaN(lat) || Number.isNaN(lng)) {
+            return;
+        }
+
+        updateMarker(lat, lng, true);
+    }
+
+    latInput.addEventListener('change', syncManualCoordinates);
+    lngInput.addEventListener('change', syncManualCoordinates);
+
+    if (locateButton) {
+        locateButton.addEventListener('click', function () {
+            if (!navigator.geolocation) {
+                setStatus('This browser cannot access your location.', true);
+                return;
+            }
+
+            locateButton.disabled = true;
+            locateButton.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Locating...';
+
+            navigator.geolocation.getCurrentPosition(function (position) {
+                applyCoordinates(position.coords.latitude, position.coords.longitude);
+                locateButton.disabled = false;
+                locateButton.innerHTML = '<i class="bi bi-check-lg me-1"></i>Location selected';
+            }, function () {
+                locateButton.disabled = false;
+                locateButton.innerHTML = '<i class="bi bi-crosshair me-1"></i>Use my location';
+                setStatus('Location access failed. Click on the map instead.', true);
+            }, {
+                enableHighAccuracy: true,
+                timeout: 10000
+            });
+        });
+    }
+})();
+</script>

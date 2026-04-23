@@ -12,11 +12,19 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\File;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 class FarmType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $coordinateConstraints = [];
+        if ($options['require_coordinates']) {
+            $coordinateConstraints[] = new NotBlank([
+                'message' => 'Choose the farm location on the map.',
+            ]);
+        }
+
         $builder
             ->add('name', TextType::class, [
                 'label' => 'Farm Name',
@@ -24,12 +32,16 @@ class FarmType extends AbstractType
             ])
             ->add('location', TextType::class, [
                 'label' => 'Location',
-                'attr'  => ['class' => 'form-control', 'placeholder' => 'City, Region'],
+                'attr'  => [
+                    'class' => 'form-control',
+                    'placeholder' => 'City, Region or address',
+                    'data-farm-location-input' => 'true',
+                ],
             ])
             ->add('farmType', ChoiceType::class, [
                 'label'       => 'Farm Type',
                 'required'    => false,
-                'placeholder' => '— Select type —',
+                'placeholder' => '-- Select type --',
                 'choices'     => [
                     'Crop Farm'      => 'crop',
                     'Livestock Farm' => 'livestock',
@@ -46,16 +58,28 @@ class FarmType extends AbstractType
                 'attr'     => ['class' => 'form-control', 'placeholder' => '0.00'],
             ])
             ->add('latitude', NumberType::class, [
-                'label'    => 'Latitude',
-                'required' => false,
-                'scale'    => 8,
-                'attr'     => ['class' => 'form-control', 'placeholder' => '36.81897'],
+                'label'       => 'Latitude',
+                'required'    => $options['require_coordinates'],
+                'scale'       => 8,
+                'constraints' => $coordinateConstraints,
+                'attr'        => [
+                    'class' => 'form-control',
+                    'placeholder' => '36.81897000',
+                    'step' => '0.00000001',
+                    'data-farm-latitude-input' => 'true',
+                ],
             ])
             ->add('longitude', NumberType::class, [
-                'label'    => 'Longitude',
-                'required' => false,
-                'scale'    => 8,
-                'attr'     => ['class' => 'form-control', 'placeholder' => '10.16579'],
+                'label'       => 'Longitude',
+                'required'    => $options['require_coordinates'],
+                'scale'       => 8,
+                'constraints' => $coordinateConstraints,
+                'attr'        => [
+                    'class' => 'form-control',
+                    'placeholder' => '10.16579000',
+                    'step' => '0.00000001',
+                    'data-farm-longitude-input' => 'true',
+                ],
             ])
             ->add('description', TextareaType::class, [
                 'label'    => 'Description',
@@ -79,6 +103,10 @@ class FarmType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['data_class' => Farm::class]);
+        $resolver->setDefaults([
+            'data_class' => Farm::class,
+            'require_coordinates' => false,
+        ]);
+        $resolver->setAllowedTypes('require_coordinates', 'bool');
     }
 }

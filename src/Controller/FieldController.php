@@ -7,6 +7,8 @@ use App\Entity\Field;
 use App\Form\FieldType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -34,12 +36,14 @@ class FieldController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $field->setCreatedAt(new \DateTime());
-            $em->persist($field);
-            $em->flush();
+            if ($this->validateFieldAreaConstraints($form, $farm, $field)) {
+                $field->setCreatedAt(new \DateTime());
+                $em->persist($field);
+                $em->flush();
 
-            $this->addFlash('success', 'Field added successfully.');
-            return $this->redirectToRoute('farm_show', ['id' => $farmId]);
+                $this->addFlash('success', 'Field added successfully.');
+                return $this->redirectToRoute('farm_show', ['id' => $farmId]);
+            }
         }
 
         return $this->render('field/new.html.twig', ['form' => $form, 'farm' => $farm]);
@@ -58,11 +62,13 @@ class FieldController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $field->setUpdatedAt(new \DateTime());
-            $em->flush();
+            if ($this->validateFieldAreaConstraints($form, $farm, $field)) {
+                $field->setUpdatedAt(new \DateTime());
+                $em->flush();
 
-            $this->addFlash('success', 'Field updated.');
-            return $this->redirectToRoute('farm_show', ['id' => $farmId]);
+                $this->addFlash('success', 'Field updated.');
+                return $this->redirectToRoute('farm_show', ['id' => $farmId]);
+            }
         }
 
         return $this->render('field/edit.html.twig', ['form' => $form, 'field' => $field, 'farm' => $farm]);
@@ -87,5 +93,44 @@ class FieldController extends AbstractController
 
         $this->addFlash('success', 'Field deleted.');
         return $this->redirectToRoute('farm_show', ['id' => $farmId]);
+    }
+
+    private function validateFieldAreaConstraints(FormInterface $form, Farm $farm, Field $field): bool
+    {
+        $farmArea = $farm->getAreaValue();
+        if ($farmArea === null) {
+            $form->addError(new FormError('Set the farm area before creating or editing fields.'));
+            return false;
+        }
+
+        $allocatedOtherFields = $farm->getAllocatedFieldArea($field);
+        if ($allocatedOtherFields > $farmArea + 0.00001) {
+            $form->addError(new FormError(sprintf(
+                'This farm already has %.2f ha allocated across its other fields, which is above the farm total area of %.2f ha. Increase the farm area first.',
+                $allocatedOtherFields,
+                $farmArea
+            )));
+            return false;
+        }
+
+        $fieldArea = (float) $field->getArea();
+        if ($fieldArea > $farmArea + 0.00001) {
+            $form->get('area')->addError(new FormError(sprintf(
+                'A single field cannot exceed the farm total area of %.2f ha.',
+                $farmArea
+            )));
+            return false;
+        }
+
+        $remainingArea = round($farmArea - $allocatedOtherFields, 2);
+        if ($fieldArea > $remainingArea + 0.00001) {
+            $form->get('area')->addError(new FormError(sprintf(
+                'This field is too large. Only %.2f ha remain available on the farm.',
+                max($remainingArea, 0)
+            )));
+            return false;
+        }
+
+        return true;
     }
 }

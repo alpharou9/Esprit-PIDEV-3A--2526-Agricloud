@@ -33,6 +33,63 @@
             font-size: 1rem; color: rgba(255,255,255,.9); font-weight: 700;
         }
         .agri-topbar .topbar-actions { display: flex; align-items: center; gap: 12px; }
+        .notification-dropdown .dropdown-menu {
+            width: 360px;
+            border: none;
+            border-radius: 14px;
+            box-shadow: 0 16px 32px rgba(0,0,0,.18);
+            padding: 0;
+            overflow: hidden;
+        }
+        .notification-toggle {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(255,255,255,.55);
+            color: #fff;
+            text-decoration: none;
+            background: rgba(255,255,255,.08);
+        }
+        .notification-toggle:hover { color: #fff; background: rgba(255,255,255,.16); }
+        .notification-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            border-radius: 999px;
+            background: #dc3545;
+            color: #fff;
+            font-size: .72rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        .notification-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid #eef2e8;
+            background: #f8fbf1;
+        }
+        .notification-item {
+            display: block;
+            padding: 14px 16px;
+            text-decoration: none;
+            color: #24310f;
+            border-bottom: 1px solid #eef2e8;
+        }
+        .notification-item:hover { background: #f7faf1; color: #24310f; }
+        .notification-item.unread { background: #f0f7e0; }
+        .notification-footer {
+            padding: 12px 16px;
+            background: #fff;
+            text-align: center;
+        }
         .topbar-user { color: rgba(255,255,255,.9); text-decoration: none; font-size: .9rem; display: flex; align-items: center; gap: 6px; }
         .topbar-user:hover { color: #fff; }
         .topbar-logout {
@@ -180,6 +237,9 @@
 <header class="agri-topbar">
     <span class="topbar-title">{% block page_title %}{% endblock %}</span>
     <div class="topbar-actions">
+        {% if app.user %}
+            {{ render(path('farm_notification_button')) }}
+        {% endif %}
         <a href="{{ path('profile_show') }}" class="topbar-user">
             <i class="bi bi-person-circle fs-5"></i>
             {{ app.user.name ?? 'Guest' }}
