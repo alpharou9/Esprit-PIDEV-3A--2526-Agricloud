@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            color: #163020;
+            margin: 0;
+            padding: 32px;
+            font-size: 13px;
+            background: #ffffff;
+        }
+
+        .ticket {
+            border: 2px solid #198754;
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .header {
+            background: #198754;
+            color: #ffffff;
+            padding: 24px 28px;
+        }
+
+        .header h1 {
+            margin: 0 0 6px;
+            font-size: 28px;
+        }
+
+        .content {
+            padding: 28px;
+        }
+
+        .availability {
+            margin: 0 0 20px;
+            padding: 14px 16px;
+            border-radius: 14px;
+        }
+
+        .availability-dot {
+            display: inline-block;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .meta {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0 22px;
+        }
+
+        .meta td {
+            padding: 10px 0;
+            border-bottom: 1px solid #dce7dc;
+            vertical-align: top;
+        }
+
+        .label {
+            width: 150px;
+            font-weight: bold;
+            color: #0f5132;
+        }
+
+        .description {
+            margin-top: 18px;
+            padding: 18px;
+            background: #f8fbf7;
+            border: 1px solid #dce7dc;
+            border-radius: 12px;
+            white-space: pre-line;
+            line-height: 1.7;
+        }
+
+        .footer {
+            margin-top: 22px;
+            font-size: 11px;
+            color: #48654e;
+        }
+
+        .qr-wrapper {
+            margin-top: 24px;
+            padding: 18px;
+            border: 1px solid #dce7dc;
+            border-radius: 12px;
+            background: #ffffff;
+        }
+
+        .qr-image {
+            width: 160px;
+            height: 160px;
+            border: 1px solid #dce7dc;
+            border-radius: 10px;
+            padding: 8px;
+            background: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <div class="header">
+            <div style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;">AgriCloud Event Ticket</div>
+            <h1>{{ event.title }}</h1>
+            <div>Ticket number: {{ ticketNumber }}</div>
+        </div>
+
+        <div class="content">
+            <div class="availability" style="background: {{ availability.background }}; border: 1px solid {{ availability.color }};">
+                <span class="availability-dot" style="background: {{ availability.color }};"></span>
+                <strong style="color: {{ availability.color }};">{{ availability.label }}</strong>
+                {% if availability.remainingSlots is not null %}
+                    <span style="color:#48654e;">, {{ availability.remainingSlots }} slot{{ availability.remainingSlots == 1 ? '' : 's' }} left out of {{ availability.capacity }}</span>
+                {% endif %}
+            </div>
+
+            <table class="meta">
+                <tr>
+                    <td class="label">Participant</td>
+                    <td>{{ participant.name }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Email</td>
+                    <td>{{ participant.email }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Event date</td>
+                    <td>{{ event.eventDate ? event.eventDate|date('d M Y, H:i') : 'TBD' }}</td>
+                </tr>
+                <tr>
+                    <td class="label">End date</td>
+                    <td>{{ event.endDate ? event.endDate|date('d M Y, H:i') : 'Not specified' }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Location</td>
+                    <td>{{ event.location }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Organizer</td>
+                    <td>{{ event.user ? event.user.name : 'AgriCloud' }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Registered on</td>
+                    <td>{{ participation.registrationDate ? participation.registrationDate|date('d M Y, H:i') : 'Just now' }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Generated at</td>
+                    <td>{{ generatedAt|date('d M Y, H:i') }}</td>
+                </tr>
+            </table>
+
+            <div>
+                <strong>Description</strong>
+                <div class="description">{{ event.description }}</div>
+            </div>
+
+            {% if qrCodeUrl and mapSearchUrl %}
+                <div class="qr-wrapper">
+                    <strong>Scan to open the location in maps</strong>
+                    <div style="margin-top: 12px;">
+                        <img class="qr-image" src="{{ qrCodeUrl }}" alt="QR code for {{ event.location }}">
+                    </div>
+                    <div style="margin-top: 12px; line-height: 1.6;">
+                        Location: {{ event.location }}<br>
+                        Map link: {{ mapSearchUrl }}
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="footer">
+                Please keep this ticket and present it when needed for event check-in.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

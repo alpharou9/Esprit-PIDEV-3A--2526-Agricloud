@@ -1,0 +1,104 @@
+{% extends 'base.html.twig' %}
+{% block title %}My Events — AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="fw-bold mb-0"><i class="bi bi-calendar3 me-2"></i>{{ is_granted('ROLE_ADMIN') ? 'All Events' : 'My Events' }}</h5>
+    <div class="d-flex gap-2">
+        <a href="{{ path('event_calendar') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-calendar-week me-1"></i>Calendar</a>
+        <a href="{{ path('event_new') }}" class="btn btn-success btn-sm"><i class="bi bi-plus-lg me-1"></i>Create Event</a>
+    </div>
+</div>
+
+<form method="get" class="d-flex gap-2 mb-4 flex-wrap">
+    <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search…" style="max-width:240px">
+    {% if is_granted('ROLE_ADMIN') %}
+    <select name="status" class="form-select form-select-sm" style="max-width:160px">
+        <option value="">All statuses</option>
+        {% for val, label in {upcoming:'Upcoming', ongoing:'Ongoing', completed:'Completed', cancelled:'Cancelled'} %}
+            <option value="{{ val }}" {{ status == val ? 'selected' : '' }}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    {% endif %}
+    <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-search"></i></button>
+    {% if q or status %}<a href="{{ path('event_my') }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-x"></i></a>{% endif %}
+</form>
+
+{% if pagination.totalItemCount == 0 %}
+<div class="text-center text-muted py-5">
+    <i class="bi bi-calendar-x" style="font-size:3rem;opacity:.3"></i>
+    <p class="mt-2">No events yet. <a href="{{ path('event_new') }}">Create your first event →</a></p>
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    {% if is_granted('ROLE_ADMIN') %}<th>Organizer</th>{% endif %}
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Registered</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in pagination %}
+                {% set confirmed = event.confirmedCount %}
+                {% set capacity = event.capacity %}
+                {% if capacity %}
+                    {% set ratio = confirmed / capacity %}
+                    {% if confirmed >= capacity %}
+                        {% set availability = {label:'Full', color:'#c0392b', background:'#fdeeed'} %}
+                    {% elseif ratio < 0.5 %}
+                        {% set availability = {label:'Many spots left', color:'#198754', background:'#eaf7ef'} %}
+                    {% elseif ratio < 0.85 %}
+                        {% set availability = {label:'Filling up', color:'#d97706', background:'#fff4df'} %}
+                    {% else %}
+                        {% set availability = {label:'Almost full', color:'#c0392b', background:'#fdeeed'} %}
+                    {% endif %}
+                {% else %}
+                    {% set availability = {label:'Open registration', color:'#198754', background:'#eaf7ef'} %}
+                {% endif %}
+                <tr>
+                    <td class="fw-semibold">
+                        <a href="{{ path('event_show', {id: event.id}) }}" class="text-decoration-none text-dark">{{ event.title }}</a>
+                        <div class="mt-1">
+                            <span class="badge border" style="background:{{ availability.background }};color:{{ availability.color }};border-color:{{ availability.color }}33 !important;">
+                                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{{ availability.color }};margin-right:6px;"></span>{{ availability.label }}
+                            </span>
+                        </div>
+                    </td>
+                    <td>{% if event.category %}<span class="badge bg-light text-dark border">{{ event.category }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                    {% if is_granted('ROLE_ADMIN') %}<td class="text-muted small">{{ event.user.name }}</td>{% endif %}
+                    <td class="text-muted small">{{ event.eventDate ? event.eventDate|date('d M Y') : '—' }}</td>
+                    <td class="text-muted small">{{ event.location|slice(0,30) }}{% if event.location|length > 30 %}…{% endif %}</td>
+                    <td>
+                        {% set sc = {upcoming:'success',ongoing:'primary',completed:'secondary',cancelled:'danger'} %}
+                        <span class="badge bg-{{ sc[event.status] ?? 'secondary' }}">{{ event.status|capitalize }}</span>
+                    </td>
+                    <td class="text-muted small">{{ event.confirmedCount }}{% if event.capacity %}/{{ event.capacity }}{% endif %}</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{{ path('event_participants', {id: event.id}) }}" class="btn btn-sm btn-outline-secondary" title="Participants"><i class="bi bi-people"></i></a>
+                            <a href="{{ path('event_edit', {id: event.id}) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                            <form method="post" action="{{ path('event_delete', {id: event.id}) }}" onsubmit="return confirm('Delete this event?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete_event_' ~ event.id) }}">
+                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% if pagination.pageCount > 1 %}
+<div class="d-flex justify-content-center mt-4">{{ knp_pagination_render(pagination) }}</div>
+{% endif %}
+{% endif %}
+{% endblock %}

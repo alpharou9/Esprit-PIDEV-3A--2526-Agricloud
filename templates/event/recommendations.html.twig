@@ -1,0 +1,137 @@
+{% extends 'base.html.twig' %}
+{% block title %}Event Recommendations - AgriCloud{% endblock %}
+
+{% block stylesheets %}
+<style>
+.reco-hero{padding:28px;border-radius:24px;background:linear-gradient(135deg,#163020,#198754);color:#fff;box-shadow:0 14px 34px rgba(0,0,0,.12)}
+.reco-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.reco-card{background:#fff;border:none;border-radius:22px;box-shadow:0 10px 24px rgba(0,0,0,.08);overflow:hidden}
+.reco-cover{height:180px;object-fit:cover;width:100%}
+.reco-cover-placeholder{height:180px;background:linear-gradient(135deg,#d1e7dd,#a3cfbb);display:flex;align-items:center;justify-content:center;font-size:3rem;color:#198754}
+.reco-reasons{display:flex;flex-wrap:wrap;gap:8px}
+.reco-reason{padding:5px 10px;border-radius:999px;background:#eef6eb;color:#37543f;font-size:.75rem;font-weight:700}
+.reco-score{padding:6px 12px;border-radius:999px;background:#fff4df;color:#9a6200;font-size:.8rem;font-weight:700}
+.reco-chat{border:1px solid #dce7dc;border-radius:20px;padding:14px 16px;min-height:120px;resize:vertical}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="reco-hero mb-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+            <div class="small text-uppercase" style="letter-spacing:.2em;opacity:.8;">Smart Event Discovery</div>
+            <h3 class="mb-2">Recommended for you</h3>
+            <p class="mb-0" style="max-width:760px;opacity:.92;">
+                Recommendations combine your chosen location, what you type in plain language, event availability, upcoming dates, and a small boost from your registration history.
+            </p>
+        </div>
+        <a href="{{ path('event_index') }}" class="btn btn-light btn-sm"><i class="bi bi-arrow-left me-1"></i>Back to events</a>
+    </div>
+</div>
+
+<form method="get" class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <label class="form-label fw-semibold">Your location</label>
+            <input type="text" name="location" value="{{ location }}" class="form-control" placeholder="Example: Tunis, Sfax, Nabeul">
+            <div class="small text-muted mt-2">Enter any city or area and we will prioritize nearby event locations.</div>
+        </div>
+        <div class="col-lg-8">
+            <label class="form-label fw-semibold">Tell us what you want</label>
+            <textarea name="need" class="form-control reco-chat" placeholder="Examples: I want something online.&#10;I want a farming workshop near Tunis.&#10;I want a beginner training about irrigation.">{{ need }}</textarea>
+            <div class="small text-muted mt-2">You can type naturally. It no longer depends only on exact words from the description.</div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mt-3">
+        <button class="btn btn-success"><i class="bi bi-stars me-1"></i>Ask for recommendations</button>
+        <a href="{{ path('event_recommendations') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset</a>
+    </div>
+    <div class="small text-muted mt-2">
+        {% if location is not empty %}
+            We are using <strong>{{ location }}</strong> as your reference location.
+        {% else %}
+            Add your location to prioritize events near that city or area.
+        {% endif %}
+    </div>
+</form>
+
+{% if recommendations is empty %}
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-stars" style="font-size:3rem;opacity:.25"></i>
+        <p class="mt-3 mb-0">No matching events were found right now. Try a broader need or remove the filters.</p>
+    </div>
+{% else %}
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h5 class="fw-bold mb-0">Top suggestions</h5>
+        <div class="text-muted small">{{ recommendations|length }} event{{ recommendations|length == 1 ? '' : 's' }} ranked for you</div>
+    </div>
+
+    <div class="reco-grid">
+        {% for recommendation in recommendations %}
+            {% set event = recommendation.event %}
+            {% set confirmed = event.confirmedCount %}
+            {% set capacity = event.capacity %}
+            {% if capacity %}
+                {% set ratio = confirmed / capacity %}
+                {% if confirmed >= capacity %}
+                    {% set availability = {label:'Full', color:'#c0392b', background:'#fdeeed'} %}
+                {% elseif ratio < 0.5 %}
+                    {% set availability = {label:'Many spots left', color:'#198754', background:'#eaf7ef'} %}
+                {% elseif ratio < 0.85 %}
+                    {% set availability = {label:'Filling up', color:'#d97706', background:'#fff4df'} %}
+                {% else %}
+                    {% set availability = {label:'Almost full', color:'#c0392b', background:'#fdeeed'} %}
+                {% endif %}
+            {% else %}
+                {% set availability = {label:'Open registration', color:'#198754', background:'#eaf7ef'} %}
+            {% endif %}
+
+            <div class="reco-card">
+                {% if event.image %}
+                    <img src="{{ asset('uploads/events/' ~ event.image) }}" class="reco-cover" alt="{{ event.title }}">
+                {% else %}
+                    <div class="reco-cover-placeholder"><i class="bi bi-calendar-event"></i></div>
+                {% endif %}
+
+                <div class="p-3">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <h5 class="mb-0">{{ event.title }}</h5>
+                        <span class="reco-score">{{ recommendation.score }} pts</span>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge border" style="background:{{ availability.background }};color:{{ availability.color }};border-color:{{ availability.color }}33 !important;">
+                            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{{ availability.color }};margin-right:6px;"></span>{{ availability.label }}
+                        </span>
+                        {% if event.category %}
+                            <span class="badge bg-light text-dark border">{{ event.category }}</span>
+                        {% endif %}
+                        {% if recommendation.locationConfidence is not null %}
+                            <span class="badge bg-light text-dark border"><i class="bi bi-geo me-1"></i>Location match</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="text-muted small mb-3">
+                        <div><i class="bi bi-calendar me-1"></i>{{ event.eventDate ? event.eventDate|date('d M Y, H:i') : 'TBD' }}</div>
+                        <div><i class="bi bi-geo-alt me-1"></i>{{ event.location }}</div>
+                        <div><i class="bi bi-people me-1"></i>{{ event.confirmedCount }}{% if event.capacity %}/{{ event.capacity }}{% endif %}</div>
+                    </div>
+
+                    <p class="text-muted small">{{ event.description|slice(0, 120) }}{% if event.description|length > 120 %}...{% endif %}</p>
+
+                    <div class="reco-reasons mb-3">
+                        {% for reason in recommendation.reasons %}
+                            <span class="reco-reason">{{ reason }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <a href="{{ path('event_show', {id: event.id}) }}" class="btn btn-success w-100">
+                        <i class="bi bi-eye me-1"></i>Open event
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock %}

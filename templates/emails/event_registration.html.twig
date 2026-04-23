@@ -1,0 +1,22 @@
+{# templates/emails/event_registration.html.twig #}
+{% extends 'emails/layout.html.twig' %} {# Optional: if you have a base email layout #}
+
+{% block body %}
+    <div style="font-family: sans-serif; line-height: 1.5; color: #333;">
+        <h2 style="color: #2e7d32;">Registration Confirmed!</h2>
+
+        <p>Hello <strong>{{ user.name }}</strong>,</p>
+
+        <p>You have successfully registered for the event: <strong>{{ event.title }}</strong>.</p>
+
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>Date:</strong> {{ event.createdAt|date('d M Y H:i') }}</p>
+            <p><strong>Location:</strong> {{ event.location }}</p>
+        </div>
+
+        <p>Thank you for being part of the AgriCloud community!</p>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        <small style="color: #888;">This is an automated message. Please do not reply directly to this email.</small>
+    </div>
+{% endblock %}
