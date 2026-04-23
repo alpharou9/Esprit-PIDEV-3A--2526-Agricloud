@@ -1,0 +1,78 @@
+{% extends 'front_base.html.twig' %}
+
+{% block title %}Order #{{ order.id }} - AgriCloud{% endblock %}
+
+{% block maincontainer %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Order #{{ order.id }}</h2>
+        <p class="text-muted mb-0">Review your order details and current status.</p>
+    </div>
+    <a href="{{ path('customer_order_index') }}" class="btn btn-outline-success">
+        <i class="bi bi-arrow-left me-1"></i>Back to my orders
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">Order Summary</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="small text-uppercase text-muted fw-semibold">Product</div>
+                        <div class="fw-semibold">{{ order.product ? order.product.name : 'N/A' }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small text-uppercase text-muted fw-semibold">Seller</div>
+                        <div class="fw-semibold">{{ order.seller ? order.seller.name : 'N/A' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="small text-uppercase text-muted fw-semibold">Quantity</div>
+                        <div class="fw-semibold">{{ order.quantity }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="small text-uppercase text-muted fw-semibold">Unit price</div>
+                        <div class="fw-semibold">{{ order.unitPrice|number_format(2, '.', ' ') }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="small text-uppercase text-muted fw-semibold">Total</div>
+                        <div class="fw-semibold">{{ order.totalPrice|number_format(2, '.', ' ') }}</div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <h5 class="fw-bold mb-3">Shipping</h5>
+                <div class="text-muted">{{ order.shippingAddress }}</div>
+                <div class="text-muted">{{ order.shippingCity ?: '-' }} {{ order.shippingPostal ?: '' }}</div>
+                <div class="text-muted">{{ order.shippingEmail ?: '-' }}</div>
+                <div class="text-muted">{{ order.shippingPhone ?: '-' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body">
+                <div class="small text-uppercase text-muted fw-semibold">Status</div>
+                <div class="display-6 fw-bold mb-3">{{ order.status|capitalize }}</div>
+                <div class="small text-muted mb-2">Created at</div>
+                <div class="fw-semibold mb-3">{{ order.createdAt ? order.createdAt|date('Y-m-d H:i') : '-' }}</div>
+                {% if order.deliveryDate %}
+                    <div class="small text-muted mb-2">Delivery date</div>
+                    <div class="fw-semibold mb-3">{{ order.deliveryDate|date('Y-m-d') }}</div>
+                {% endif %}
+                {% if order.status == 'pending' %}
+                    <form method="post" action="{{ path('customer_order_cancel', {id: order.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('cancel_order_' ~ order.id) }}">
+                        <button class="btn btn-outline-danger w-100" onclick="return confirm('Cancel this order?')">
+                            Cancel order
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

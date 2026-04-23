@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+{% block title %}Order #{{ order.id }} — AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ path('order_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h5 class="fw-bold mb-0">Order #{{ order.id }}</h5>
+    {% set sc = {pending:'warning',confirmed:'primary',processing:'info',shipped:'primary',delivered:'success',cancelled:'danger'} %}
+    <span class="badge bg-{{ sc[order.status] ?? 'secondary' }} {% if order.status == 'pending' %}text-dark{% endif %}">{{ order.status|capitalize }}</span>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+            <h6 class="fw-bold mb-3">Product</h6>
+            <div class="d-flex gap-3 align-items-center">
+                {% if order.product.image %}
+                    <img src="{{ asset('uploads/products/' ~ order.product.image) }}" class="rounded-3" style="width:70px;height:70px;object-fit:cover">
+                {% else %}
+                    <div class="rounded-3 bg-light d-flex align-items-center justify-content-center" style="width:70px;height:70px;font-size:2rem;color:#198754"><i class="bi bi-bag-heart"></i></div>
+                {% endif %}
+                <div>
+                    <div class="fw-semibold fs-6">{{ order.product.name }}</div>
+                    <div class="text-muted small">Sold by {{ order.seller.name }}</div>
+                    <div class="mt-1">
+                        <span class="fw-bold text-success">{{ order.unitPrice }} TND</span>
+                        <span class="text-muted"> × {{ order.quantity }} = </span>
+                        <span class="fw-bold text-success">{{ order.totalPrice }} TND</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h6 class="fw-bold mb-3">Shipping Details</h6>
+            <dl class="row mb-0">
+                <dt class="col-sm-4 text-muted">Address</dt>
+                <dd class="col-sm-8">{{ order.shippingAddress }}</dd>
+                <dt class="col-sm-4 text-muted">City</dt>
+                <dd class="col-sm-8">{{ order.shippingCity }}{% if order.shippingPostal %} — {{ order.shippingPostal }}{% endif %}</dd>
+                <dt class="col-sm-4 text-muted">Email</dt>
+                <dd class="col-sm-8">{{ order.shippingEmail }}</dd>
+                <dt class="col-sm-4 text-muted">Phone</dt>
+                <dd class="col-sm-8">{{ order.shippingPhone ?? '—' }}</dd>
+                {% if order.notes %}
+                <dt class="col-sm-4 text-muted">Notes</dt>
+                <dd class="col-sm-8">{{ order.notes }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-3">
+            <h6 class="fw-bold mb-3">Order Info</h6>
+            <dl class="row mb-0">
+                <dt class="col-sm-5 text-muted">Customer</dt>
+                <dd class="col-sm-7">{{ order.customer.name }}</dd>
+                <dt class="col-sm-5 text-muted">Order Date</dt>
+                <dd class="col-sm-7 small">{{ order.orderDate ? order.orderDate|date('d M Y H:i') : '—' }}</dd>
+                {% if order.cancelledAt %}
+                <dt class="col-sm-5 text-muted">Cancelled</dt>
+                <dd class="col-sm-7 small text-danger">{{ order.cancelledAt|date('d M Y') }}{% if order.cancelledReason %} — {{ order.cancelledReason }}{% endif %}</dd>
+                {% endif %}
+            </dl>
+        </div>
+
+        {# Seller/Admin: update status #}
+        {% if (order.seller == app.user or is_granted('ROLE_ADMIN')) and order.status != 'cancelled' and order.status != 'delivered' %}
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-3">
+            <h6 class="fw-bold mb-3">Update Status</h6>
+            <form method="post" action="{{ path('order_status', {id: order.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('order_status_' ~ order.id) }}">
+                <select name="status" class="form-select mb-2">
+                    {% for s in ['pending','confirmed','processing','shipped','delivered','cancelled'] %}
+                        <option value="{{ s }}" {{ order.status == s ? 'selected' : '' }}>{{ s|capitalize }}</option>
+                    {% endfor %}
+                </select>
+                <textarea name="reason" class="form-control mb-2" rows="2" placeholder="Cancellation reason (if cancelling)…"></textarea>
+                <button class="btn btn-success btn-sm w-100">Update Status</button>
+            </form>
+        </div>
+        {% endif %}
+
+        {# Customer: cancel order #}
+        {% if order.customer == app.user and order.status in ['pending','confirmed'] %}
+        <form method="post" action="{{ path('order_cancel', {id: order.id}) }}"
+              onsubmit="return confirm('Cancel this order?')">
+            <input type="hidden" name="_token" value="{{ csrf_token('order_cancel_' ~ order.id) }}">
+            <button class="btn btn-outline-danger btn-sm w-100"><i class="bi bi-x-circle me-1"></i>Cancel Order</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

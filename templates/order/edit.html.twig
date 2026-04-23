@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Order - AgriCloud{% endblock %}
+
+{% block body %}
+<div class="mb-4">
+    <h3 class="fw-bold mb-1">Edit order #{{ order.id }}</h3>
+    <p class="text-muted mb-0">Update order details while keeping totals synchronized from quantity and unit price.</p>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        {% include 'order/_form.html.twig' with {form: form, button_label: 'Save changes'} %}
+    </div>
+</div>
+{% endblock %}

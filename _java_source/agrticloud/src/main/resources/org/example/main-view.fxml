@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="org.example.controller.MainController">
+
+    <!-- Sidebar -->
+    <VBox styleClass="sidebar">
+        <VBox spacing="2" styleClass="sidebar-logo">
+            <Label text="AgriCloud" style="-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold;"/>
+            <Label text="Farm Management System" styleClass="subtitle"
+                   style="-fx-text-fill: #81C784; -fx-font-size: 11px;"/>
+        </VBox>
+
+        <VBox styleClass="sidebar-menu">
+            <Button fx:id="dashBtn"      text="Dashboard" styleClass="menu-item" maxWidth="Infinity" onAction="#onDashboard"/>
+            <Button fx:id="prodBtn"      text="Products"  styleClass="menu-item" maxWidth="Infinity" onAction="#onProducts"/>
+            <Button fx:id="ordBtn"       text="Orders"    styleClass="menu-item" maxWidth="Infinity" onAction="#onOrders"/>
+            <Button fx:id="setBtn"       text="Settings"  styleClass="menu-item" maxWidth="Infinity" onAction="#onSettings"/>
+            <Button fx:id="analyticsBtn" text="Analytics" styleClass="menu-item" maxWidth="Infinity" onAction="#onAnalytics"/>
+        </VBox>
+
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <!-- Bell notification button -->
+        <StackPane fx:id="bellPane" styleClass="bell-pane" onMouseClicked="#onBell">
+            <padding><Insets top="8" right="20" bottom="8" left="20"/></padding>
+            <Button fx:id="bellBtn" text="🔔  Notifications" styleClass="bell-btn"
+                    maxWidth="Infinity" onAction="#onBell"/>
+            <Label fx:id="bellBadge" text="0" styleClass="bell-badge" visible="false"/>
+        </StackPane>
+
+        <VBox spacing="4">
+            <padding><Insets top="8" right="20" bottom="20" left="20"/></padding>
+            <Label text="v2.0.0" style="-fx-text-fill: #5A7A5D; -fx-font-size: 10px;"/>
+        </VBox>
+    </VBox>
+
+    <!-- Content area with toast + notification panel layers -->
+    <StackPane HBox.hgrow="ALWAYS">
+        <StackPane fx:id="contentArea" styleClass="content-area"/>
+        <StackPane fx:id="notifLayer" pickOnBounds="false" alignment="BOTTOM_LEFT">
+            <!-- notification panel injected here by MainController -->
+        </StackPane>
+        <StackPane fx:id="toastLayer" pickOnBounds="false" alignment="TOP_RIGHT">
+            <padding><Insets top="16" right="16"/></padding>
+        </StackPane>
+    </StackPane>
+</HBox>
