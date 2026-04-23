@@ -271,7 +271,9 @@
             </div>
         </div>
 
+        {% if recaptcha_key %}
         <div class="g-recaptcha mb-3" data-sitekey="{{ recaptcha_key }}"></div>
+        {% endif %}
 
         <button type="submit" class="btn-auth">
             <i class="bi bi-person-plus"></i> Create My Account

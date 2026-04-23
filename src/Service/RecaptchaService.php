@@ -20,6 +20,11 @@ public function __construct(
      */
     public function verify(string $token): bool
     {
+        // No keys configured — skip check (dev/demo mode)
+        if (empty($this->secretKey)) {
+            return true;
+        }
+
         if (empty($token)) {
             return false;
         }
