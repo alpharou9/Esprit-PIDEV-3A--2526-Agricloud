@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Farmer Portal{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>AgriCloud Portal</h1>
+        <a href="{{ path('app_farm_new') }}" class="btn btn-success">+ Add My Farm</a>
+    </div>
+
+    <div class="row">
+        {% for farm in farms %}
+            {% if farm.status == 'approved' %}
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">{{ farm.name }}</h5>
+                            <p class="card-text text-muted">{{ farm.location }}</p>
+                            <a href="{{ path('app_farm_show', {'id': farm.id}) }}" class="btn btn-sm btn-primary">Details</a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endblock %}
