@@ -8,19 +8,34 @@ use App\Form\CommentType;
 use App\Form\PostType;
 use App\Repository\CommentRepository;
 use App\Repository\PostRepository;
+use App\Service\ChatbotService;
+use App\Service\CommentModerationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[Route('/blog')]
 #[IsGranted('ROLE_USER')]
 class PostController extends AbstractController
 {
+    private const BLOG_CHATBOT_MODEL = 'Qwen/Qwen2.5-7B-Instruct';
+
+    public function __construct(
+        private readonly HttpClientInterface $httpClient,
+        private readonly ChatbotService $chatbotService,
+        private readonly CommentModerationService $commentModerationService,
+        private readonly ?string $huggingFaceApiToken = null,
+    ) {
+    }
+
     // ── Public blog listing ───────────────────────────────────────
     #[Route('', name: 'blog_index', methods: ['GET'])]
     public function index(Request $request, PostRepository $repo, PaginatorInterface $paginator): Response
@@ -256,6 +271,13 @@ class PostController extends AbstractController
 
         $comment->setPost($post);
         $comment->setUser($this->getUser());
+
+        $moderation = $this->commentModerationService->moderate($comment->getContent());
+        if (!$moderation['allowed']) {
+            $this->addFlash('error', $moderation['reason'] ?: 'This comment could not be submitted because it is not appropriate.');
+            return $this->redirectToRoute('blog_show', ['slug' => $post->getSlug()]);
+        }
+
         $comment->setStatus('pending');
         $comment->setCreatedAt(new \DateTime());
         $em->persist($comment);
@@ -263,6 +285,211 @@ class PostController extends AbstractController
 
         $this->addFlash('success', 'Comment submitted and awaiting moderation.');
         return $this->redirectToRoute('blog_show', ['slug' => $post->getSlug()]);
+    }
+
+    // ── Blog chatbot ──────────────────────────────────────────────
+    #[Route('/chatbot', name: 'blog_chatbot', methods: ['POST'])]
+    public function chatbot(Request $request): JsonResponse
+    {
+        $message = trim((string) $request->request->get('message', ''));
+        if ($message === '') {
+            return $this->json(['reply' => 'Please enter a message.']);
+        }
+
+        $token = trim((string) $this->huggingFaceApiToken);
+        if ($token !== '') {
+            $reply = $this->generateChatbotReplyWithHuggingFace($token, $message);
+            if ($reply !== null) {
+                return $this->json(['reply' => $reply]);
+            }
+        }
+
+        return $this->json($this->chatbotService->reply($message));
+    }
+
+    #[Route('/{id}/summary', name: 'blog_summary', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function summary(Post $post): JsonResponse
+    {
+        $content = trim((string) $post->getContent());
+        if ($content === '') {
+            return $this->json(['reply' => 'This article does not have enough content to summarize.']);
+        }
+
+        $token = trim((string) $this->huggingFaceApiToken);
+        if ($token !== '') {
+            $reply = $this->generateArticleSummaryWithHuggingFace($token, $post->getTitle(), $content);
+            if ($reply !== null) {
+                return $this->json(['reply' => $reply]);
+            }
+        }
+
+        return $this->json(['reply' => $this->generateFallbackSummary($content)]);
+    }
+
+    #[Route('/comments/moderate', name: 'blog_comment_moderate', methods: ['POST'])]
+    public function moderateComment(Request $request): JsonResponse
+    {
+        $content = trim((string) $request->request->get('content', ''));
+        $moderation = $this->commentModerationService->moderate($content);
+
+        return $this->json([
+            'allowed' => $moderation['allowed'],
+            'reason' => $moderation['reason'],
+        ]);
+    }
+
+
+    private function generateChatbotReplyWithHuggingFace(string $token, string $message): ?string
+    {
+        try {
+            $response = $this->httpClient->request('POST', 'https://router.huggingface.co/v1/chat/completions', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'model' => self::BLOG_CHATBOT_MODEL,
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => 'You are AgriBot, a helpful assistant for farmers and agricultural topics. Answer clearly, briefly, and avoid unsupported claims.',
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => $message,
+                        ],
+                    ],
+                    'max_tokens' => 220,
+                    'temperature' => 0.6,
+                ],
+                'timeout' => 15,
+                'max_duration' => 20,
+            ]);
+        } catch (TransportExceptionInterface) {
+            return null;
+        }
+
+        $statusCode = $response->getStatusCode();
+        $contentType = strtolower($response->getHeaders(false)['content-type'][0] ?? '');
+        $rawContent = $response->getContent(false);
+
+        if ($statusCode < 200 || $statusCode >= 300 || !str_contains($contentType, 'application/json')) {
+            return null;
+        }
+
+        $data = json_decode($rawContent, true);
+        if (!is_array($data) || isset($data['error'])) {
+            return null;
+        }
+
+        $reply = trim((string) ($data['choices'][0]['message']['content'] ?? ''));
+
+        return $reply !== '' ? $reply : null;
+    }
+
+    private function generateArticleSummaryWithHuggingFace(string $token, string $title, string $content): ?string
+    {
+        $excerpt = mb_substr(preg_replace('/\s+/', ' ', $content) ?? $content, 0, 4000);
+
+        try {
+            $response = $this->httpClient->request('POST', 'https://router.huggingface.co/v1/chat/completions', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'model' => self::BLOG_CHATBOT_MODEL,
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => 'You summarize blog articles. Return only a concise summary in 2 or 3 sentences, grounded in the provided text.',
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => "Title: {$title}\n\nArticle:\n{$excerpt}",
+                        ],
+                    ],
+                    'max_tokens' => 180,
+                    'temperature' => 0.4,
+                ],
+                'timeout' => 15,
+                'max_duration' => 20,
+            ]);
+        } catch (TransportExceptionInterface) {
+            return null;
+        }
+
+        $statusCode = $response->getStatusCode();
+        $contentType = strtolower($response->getHeaders(false)['content-type'][0] ?? '');
+        $rawContent = $response->getContent(false);
+
+        if ($statusCode < 200 || $statusCode >= 300 || !str_contains($contentType, 'application/json')) {
+            return null;
+        }
+
+        $data = json_decode($rawContent, true);
+        if (!is_array($data) || isset($data['error'])) {
+            return null;
+        }
+
+        $reply = trim((string) ($data['choices'][0]['message']['content'] ?? ''));
+
+        return $reply !== '' ? $reply : null;
+    }
+
+    private function generateFallbackSummary(string $content): string
+    {
+        $plainText = trim(preg_replace('/\s+/', ' ', strip_tags($content)) ?? '');
+        if ($plainText === '') {
+            return 'Summary unavailable.';
+        }
+
+        $sentences = preg_split('/(?<=[.!?])\s+/', $plainText) ?: [];
+        $sentences = array_values(array_filter(array_map(static fn(string $sentence) => trim($sentence), $sentences)));
+
+        if (count($sentences) <= 3) {
+            return implode(' ', $sentences);
+        }
+
+        $stopWords = [
+            'the', 'a', 'an', 'and', 'or', 'but', 'if', 'then', 'than', 'to', 'of', 'in', 'on', 'for', 'with',
+            'by', 'at', 'from', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'it', 'this', 'that', 'these',
+            'those', 'as', 'about', 'into', 'over', 'after', 'before', 'between', 'within', 'through', 'your',
+            'their', 'them', 'they', 'you', 'we', 'our', 'can', 'will', 'should', 'would', 'could',
+        ];
+
+        $wordScores = [];
+        foreach ($sentences as $sentence) {
+            preg_match_all('/[A-Za-z]{3,}/', strtolower($sentence), $matches);
+            foreach ($matches[0] as $word) {
+                if (in_array($word, $stopWords, true)) {
+                    continue;
+                }
+                $wordScores[$word] = ($wordScores[$word] ?? 0) + 1;
+            }
+        }
+
+        $ranked = [];
+        foreach ($sentences as $index => $sentence) {
+            preg_match_all('/[A-Za-z]{3,}/', strtolower($sentence), $matches);
+            $score = 0;
+            foreach ($matches[0] as $word) {
+                $score += $wordScores[$word] ?? 0;
+            }
+
+            $length = max(1, count($matches[0]));
+            $ranked[] = [
+                'index' => $index,
+                'sentence' => $sentence,
+                'score' => $score / $length,
+            ];
+        }
+
+        usort($ranked, static fn(array $a, array $b) => $b['score'] <=> $a['score']);
+        $top = array_slice($ranked, 0, min(3, count($ranked)));
+        usort($top, static fn(array $a, array $b) => $a['index'] <=> $b['index']);
+
+        return implode(' ', array_map(static fn(array $item) => $item['sentence'], $top));
     }
 
     // ── Show post (slug — must be LAST) ───────────────────────────

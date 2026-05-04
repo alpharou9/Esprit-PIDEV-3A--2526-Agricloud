@@ -30,8 +30,42 @@
             <span><i class="bi bi-calendar me-1"></i>{{ post.publishedAt ? post.publishedAt|date('d M Y') : post.createdAt|date('d M Y') }}</span>
         </div>
 
+        {# Read mode toolbar #}
+        <div class="d-flex gap-2 mb-2 align-items-center flex-wrap">
+            <button id="btn-tts" class="btn btn-outline-success btn-sm" onclick="toggleTTS()">
+                <i class="bi bi-volume-up me-1"></i>Read Aloud
+            </button>
+            <button id="btn-summary" class="btn btn-outline-primary btn-sm" onclick="generateSummary()">
+                <i class="bi bi-stars me-1"></i>AI Summary
+            </button>
+            <button
+                type="button"
+                class="btn btn-outline-warning btn-sm js-post-save-toggle"
+                data-post-id="{{ post.id }}"
+                data-post-title="{{ post.title|e('html_attr') }}"
+                data-post-slug="{{ post.slug|e('html_attr') }}"
+            >
+                <i class="bi bi-bookmark me-1"></i><span class="js-save-label">Save</span>
+            </button>
+        </div>
+        <div id="summary-box" class="d-none alert alert-success small mb-3">
+            <strong><i class="bi bi-stars me-1"></i>Summary:</strong>
+            <span id="summary-text"></span>
+        </div>
+
         {# Content #}
-        <div class="mb-4" style="line-height:1.8;white-space:pre-wrap">{{ post.content }}</div>
+        <div id="post-content" class="mb-4" style="line-height:1.8;white-space:pre-wrap">{{ post.content }}</div>
+        <div class="d-flex flex-wrap gap-2 mb-4">
+            <button type="button" class="btn btn-outline-success btn-sm js-post-reaction" data-post-id="{{ post.id }}" data-reaction="like">
+                <i class="bi bi-hand-thumbs-up me-1"></i><span class="js-post-like-count">0</span>
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm js-post-reaction" data-post-id="{{ post.id }}" data-reaction="dislike">
+                <i class="bi bi-hand-thumbs-down me-1"></i><span class="js-post-dislike-count">0</span>
+            </button>
+            <span class="btn btn-outline-secondary btn-sm disabled">
+                <i class="bi bi-bookmarks me-1"></i><span class="js-post-save-count">0</span> saves
+            </span>
+        </div>
 
         {# Tags #}
         {% if post.tags %}
@@ -85,6 +119,14 @@
                     </div>
                 </div>
                 <p class="mb-2 small">{{ comment.content }}</p>
+                <div class="d-flex gap-2 align-items-center mb-2">
+                    <button type="button" class="btn btn-sm btn-outline-success py-0 px-2 js-comment-reaction" data-comment-id="{{ comment.id }}" data-reaction="like">
+                        <i class="bi bi-hand-thumbs-up me-1"></i><span class="js-comment-like-count">0</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 js-comment-reaction" data-comment-id="{{ comment.id }}" data-reaction="dislike">
+                        <i class="bi bi-hand-thumbs-down me-1"></i><span class="js-comment-dislike-count">0</span>
+                    </button>
+                </div>
 
                 {# Replies #}
                 {% for reply in comment.replies %}
@@ -108,7 +150,7 @@
                     <i class="bi bi-reply me-1"></i>Reply
                 </button>
                 <div class="collapse mt-2" id="reply-{{ comment.id }}">
-                    <form method="post" action="{{ path('blog_comment_add', {id: post.id}) }}" class="d-flex gap-2">
+                    <form method="post" action="{{ path('blog_comment_add', {id: post.id}) }}" class="d-flex gap-2 js-comment-form">
                         <input type="hidden" name="_token" value="{{ csrf_token('comment_add_' ~ post.id) }}">
                         <input type="hidden" name="parent_id" value="{{ comment.id }}">
                         <textarea name="comment[content]" class="form-control form-control-sm" rows="2" placeholder="Write a reply…" required></textarea>
@@ -126,9 +168,10 @@
         {% if post.status == 'published' %}
         <div class="card border-0 bg-light rounded-4 p-3 mt-4">
             <h6 class="fw-semibold mb-3"><i class="bi bi-pencil me-1"></i>Leave a Comment</h6>
-            {{ form_start(commentForm, {attr: {novalidate: 'novalidate'}}) }}
+            {{ form_start(commentForm, {attr: {novalidate: 'novalidate', class: 'js-comment-form'}}) }}
             {{ form_widget(commentForm.content) }}
             {{ form_errors(commentForm.content) }}
+            <div class="alert alert-danger small mt-2 d-none js-comment-error"></div>
             <button type="submit" class="btn btn-success btn-sm mt-2">
                 <i class="bi bi-send me-1"></i>Submit Comment
             </button>
@@ -147,9 +190,416 @@
                 <li class="mb-1"><i class="bi bi-calendar me-1"></i>{{ post.createdAt ? post.createdAt|date('d M Y') : '—' }}</li>
                 {% if post.publishedAt %}<li class="mb-1"><i class="bi bi-send me-1"></i>Published {{ post.publishedAt|date('d M Y') }}</li>{% endif %}
                 <li class="mb-1"><i class="bi bi-eye me-1"></i>{{ post.views }} views</li>
-                <li><i class="bi bi-chat me-1"></i>{{ post.approvedComments|length }} comments</li>
+                <li class="mb-1"><i class="bi bi-chat me-1"></i>{{ post.approvedComments|length }} comments</li>
+                <li class="mb-1"><i class="bi bi-hand-thumbs-up me-1"></i><span class="js-sidebar-like-count">0</span> likes</li>
+                <li class="mb-1"><i class="bi bi-hand-thumbs-down me-1"></i><span class="js-sidebar-dislike-count">0</span> dislikes</li>
+                <li><i class="bi bi-bookmark-heart me-1"></i><span class="js-sidebar-save-count">0</span> saves</li>
             </ul>
+        </div>
+
+        {# Translator widget #}
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+            <h6 class="fw-semibold mb-2"><i class="bi bi-translate me-1"></i>Translate Article</h6>
+            <select id="trans-lang" class="form-select form-select-sm mb-2">
+                <option value="">— Select language —</option>
+                <option value="fr">French</option>
+                <option value="ar">Arabic</option>
+                <option value="es">Spanish</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+                <option value="pt">Portuguese</option>
+                <option value="zh">Chinese</option>
+                <option value="ru">Russian</option>
+            </select>
+            <button id="btn-translate" class="btn btn-outline-success btn-sm w-100 mb-2">
+                <i class="bi bi-globe me-1"></i>Translate
+            </button>
+            <div id="trans-result" class="d-none">
+                <hr class="my-2">
+                <div id="trans-text" class="small" style="max-height:320px;overflow-y:auto;white-space:pre-wrap;line-height:1.7"></div>
+                <button id="btn-trans-close" class="btn btn-link btn-sm p-0 mt-1 text-muted">Close</button>
+            </div>
+            <div id="trans-loading" class="d-none text-center text-muted small py-2">Translating…</div>
         </div>
     </div>
 </div>
+
+{# Floating chatbot widget #}
+<div id="chatbot-btn" style="position:fixed;bottom:28px;right:28px;z-index:1050">
+    <button class="btn btn-success rounded-circle shadow" style="width:56px;height:56px;font-size:1.4rem" onclick="toggleChat()" title="AgriBot">
+        <i class="bi bi-robot"></i>
+    </button>
+</div>
+<div id="chatbot-box" class="d-none shadow-lg rounded-4 bg-white" style="position:fixed;bottom:96px;right:28px;z-index:1049;width:340px;max-height:480px;display:flex;flex-direction:column;overflow:hidden">
+    <div class="d-flex align-items-center justify-content-between px-3 py-2 bg-success text-white rounded-top-4">
+        <span class="fw-semibold"><i class="bi bi-robot me-1"></i>AgriBot</span>
+        <button class="btn-close btn-close-white btn-sm" onclick="toggleChat()"></button>
+    </div>
+    <div id="chat-messages" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px">
+        <div class="small bg-light rounded-3 p-2 align-self-start" style="max-width:85%">Hi! I'm AgriBot 🌿 Ask me anything about agriculture.</div>
+    </div>
+    <div class="d-flex gap-1 p-2 border-top">
+        <input id="chat-input" type="text" class="form-control form-control-sm" placeholder="Ask a question…">
+        <button class="btn btn-success btn-sm" onclick="sendChat()"><i class="bi bi-send"></i></button>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+var blogStorage = {
+    read: function (key, fallback) {
+        try {
+            var raw = window.localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : fallback;
+        } catch (e) {
+            return fallback;
+        }
+    },
+    write: function (key, value) {
+        window.localStorage.setItem(key, JSON.stringify(value));
+    }
+};
+
+function ensurePostMetrics(postId) {
+    var state = blogStorage.read('blog_post_metrics_v1', {});
+    if (!state[postId]) {
+        state[postId] = { likes: 0, dislikes: 0, saves: 0, reaction: null, saved: false };
+        blogStorage.write('blog_post_metrics_v1', state);
+    }
+    return state;
+}
+
+function ensureCommentMetrics(commentId) {
+    var state = blogStorage.read('blog_comment_metrics_v1', {});
+    if (!state[commentId]) {
+        state[commentId] = { likes: 0, dislikes: 0, reaction: null };
+        blogStorage.write('blog_comment_metrics_v1', state);
+    }
+    return state;
+}
+
+function renderPostMetrics(postId) {
+    var state = ensurePostMetrics(postId);
+    var metrics = state[postId];
+    var likeButton = document.querySelector('.js-post-reaction[data-post-id="' + postId + '"][data-reaction="like"]');
+    var dislikeButton = document.querySelector('.js-post-reaction[data-post-id="' + postId + '"][data-reaction="dislike"]');
+    var saveButton = document.querySelector('.js-post-save-toggle[data-post-id="' + postId + '"]');
+
+    if (likeButton) {
+        likeButton.classList.toggle('btn-success', metrics.reaction === 'like');
+        likeButton.classList.toggle('btn-outline-success', metrics.reaction !== 'like');
+        likeButton.querySelector('.js-post-like-count').textContent = metrics.likes;
+    }
+
+    if (dislikeButton) {
+        dislikeButton.classList.toggle('btn-danger', metrics.reaction === 'dislike');
+        dislikeButton.classList.toggle('btn-outline-danger', metrics.reaction !== 'dislike');
+        dislikeButton.querySelector('.js-post-dislike-count').textContent = metrics.dislikes;
+    }
+
+    if (saveButton) {
+        saveButton.classList.toggle('btn-warning', metrics.saved);
+        saveButton.classList.toggle('btn-outline-warning', !metrics.saved);
+        saveButton.querySelector('i').className = metrics.saved ? 'bi bi-bookmark-fill me-1' : 'bi bi-bookmark me-1';
+        saveButton.querySelector('.js-save-label').textContent = metrics.saved ? 'Saved' : 'Save';
+    }
+
+    document.querySelectorAll('.js-post-save-count').forEach(function (node) { node.textContent = metrics.saves; });
+    document.querySelectorAll('.js-sidebar-like-count').forEach(function (node) { node.textContent = metrics.likes; });
+    document.querySelectorAll('.js-sidebar-dislike-count').forEach(function (node) { node.textContent = metrics.dislikes; });
+    document.querySelectorAll('.js-sidebar-save-count').forEach(function (node) { node.textContent = metrics.saves; });
+}
+
+function togglePostReaction(postId, reaction) {
+    var state = ensurePostMetrics(postId);
+    var metrics = state[postId];
+
+    if (metrics.reaction === reaction) {
+        if (reaction === 'like' && metrics.likes > 0) { metrics.likes--; }
+        if (reaction === 'dislike' && metrics.dislikes > 0) { metrics.dislikes--; }
+        metrics.reaction = null;
+    } else {
+        if (metrics.reaction === 'like' && metrics.likes > 0) { metrics.likes--; }
+        if (metrics.reaction === 'dislike' && metrics.dislikes > 0) { metrics.dislikes--; }
+        metrics.reaction = reaction;
+        if (reaction === 'like') { metrics.likes++; }
+        if (reaction === 'dislike') { metrics.dislikes++; }
+    }
+
+    blogStorage.write('blog_post_metrics_v1', state);
+    renderPostMetrics(postId);
+}
+
+function togglePostSave(button) {
+    var postId = button.dataset.postId;
+    var state = ensurePostMetrics(postId);
+    var metrics = state[postId];
+    var savedPosts = blogStorage.read('blog_saved_posts_v1', {});
+
+    if (metrics.saved) {
+        metrics.saved = false;
+        if (metrics.saves > 0) { metrics.saves--; }
+        delete savedPosts[postId];
+    } else {
+        metrics.saved = true;
+        metrics.saves++;
+        savedPosts[postId] = {
+            id: postId,
+            title: button.dataset.postTitle,
+            slug: button.dataset.postSlug,
+            savedAt: new Date().toISOString()
+        };
+    }
+
+    blogStorage.write('blog_post_metrics_v1', state);
+    blogStorage.write('blog_saved_posts_v1', savedPosts);
+    renderPostMetrics(postId);
+}
+
+function renderCommentMetrics(commentId) {
+    var state = ensureCommentMetrics(commentId);
+    var metrics = state[commentId];
+    var likeButton = document.querySelector('.js-comment-reaction[data-comment-id="' + commentId + '"][data-reaction="like"]');
+    var dislikeButton = document.querySelector('.js-comment-reaction[data-comment-id="' + commentId + '"][data-reaction="dislike"]');
+
+    if (likeButton) {
+        likeButton.classList.toggle('btn-success', metrics.reaction === 'like');
+        likeButton.classList.toggle('btn-outline-success', metrics.reaction !== 'like');
+        likeButton.querySelector('.js-comment-like-count').textContent = metrics.likes;
+    }
+
+    if (dislikeButton) {
+        dislikeButton.classList.toggle('btn-danger', metrics.reaction === 'dislike');
+        dislikeButton.classList.toggle('btn-outline-danger', metrics.reaction !== 'dislike');
+        dislikeButton.querySelector('.js-comment-dislike-count').textContent = metrics.dislikes;
+    }
+}
+
+function toggleCommentReaction(commentId, reaction) {
+    var state = ensureCommentMetrics(commentId);
+    var metrics = state[commentId];
+
+    if (metrics.reaction === reaction) {
+        if (reaction === 'like' && metrics.likes > 0) { metrics.likes--; }
+        if (reaction === 'dislike' && metrics.dislikes > 0) { metrics.dislikes--; }
+        metrics.reaction = null;
+    } else {
+        if (metrics.reaction === 'like' && metrics.likes > 0) { metrics.likes--; }
+        if (metrics.reaction === 'dislike' && metrics.dislikes > 0) { metrics.dislikes--; }
+        metrics.reaction = reaction;
+        if (reaction === 'like') { metrics.likes++; }
+        if (reaction === 'dislike') { metrics.dislikes++; }
+    }
+
+    blogStorage.write('blog_comment_metrics_v1', state);
+    renderCommentMetrics(commentId);
+}
+// ── Text-to-Speech ────────────────────────────────────────────
+var ttsUtterance = null;
+var ttsSpeaking  = false;
+function toggleTTS() {
+    var btn = document.getElementById('btn-tts');
+    if (ttsSpeaking) {
+        window.speechSynthesis.cancel();
+        ttsSpeaking = false;
+        btn.innerHTML = '<i class="bi bi-volume-up me-1"></i>Read Aloud';
+        return;
+    }
+    var text = document.getElementById('post-content').innerText;
+    ttsUtterance = new SpeechSynthesisUtterance(text);
+    ttsUtterance.lang = 'en-US';
+    ttsUtterance.rate = 0.95;
+    ttsUtterance.onend = function() { ttsSpeaking = false; btn.innerHTML = '<i class="bi bi-volume-up me-1"></i>Read Aloud'; };
+    window.speechSynthesis.speak(ttsUtterance);
+    ttsSpeaking = true;
+    btn.innerHTML = '<i class="bi bi-stop-circle me-1"></i>Stop Reading';
+}
+
+// ── AI Summary ────────────────────────────────────────────────
+function generateSummary() {
+    var btn = document.getElementById('btn-summary');
+    var box = document.getElementById('summary-box');
+    var txt = document.getElementById('summary-text');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass me-1"></i>Generating…';
+    box.classList.remove('d-none');
+    txt.textContent = 'Generating summary…';
+
+    fetch('{{ path('blog_summary', {id: post.id}) }}', { method: 'POST' })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            txt.textContent = data.reply || 'Could not generate summary.';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-stars me-1"></i>AI Summary';
+        })
+        .catch(function(){
+            txt.textContent = 'Summary unavailable.';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-stars me-1"></i>AI Summary';
+        });
+}
+
+// ── Translator ────────────────────────────────────────────────
+(function () {
+    var originalText = {{ post.content|json_encode|raw }};
+
+    document.getElementById('btn-translate').addEventListener('click', function () {
+        var lang = document.getElementById('trans-lang').value;
+        if (!lang) { alert('Please select a language.'); return; }
+        document.getElementById('trans-loading').classList.remove('d-none');
+        document.getElementById('trans-result').classList.add('d-none');
+
+        fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(originalText.slice(0, 500)) + '&langpair=en|' + lang)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                document.getElementById('trans-loading').classList.add('d-none');
+                var text = (data.responseData && data.responseData.translatedText) ? data.responseData.translatedText : 'Translation failed.';
+                document.getElementById('trans-text').textContent = text;
+                document.getElementById('trans-result').classList.remove('d-none');
+            })
+            .catch(function () {
+                document.getElementById('trans-loading').classList.add('d-none');
+                document.getElementById('trans-text').textContent = 'Translation service unavailable.';
+                document.getElementById('trans-result').classList.remove('d-none');
+            });
+    });
+
+    document.getElementById('btn-trans-close').addEventListener('click', function () {
+        document.getElementById('trans-result').classList.add('d-none');
+    });
+})();
+
+// ── Chatbot ───────────────────────────────────────────────────
+function toggleChat() {
+    var box = document.getElementById('chatbot-box');
+    box.classList.toggle('d-none');
+    if (!box.classList.contains('d-none')) {
+        document.getElementById('chat-input').focus();
+    }
+}
+
+function sendChat() {
+    var input = document.getElementById('chat-input');
+    var msg = input.value.trim();
+    if (!msg) return;
+    appendMessage(msg, 'user');
+    input.value = '';
+
+    var thinking = appendMessage('…', 'bot');
+    var form = new FormData();
+    form.append('message', msg);
+
+    fetch('{{ path('blog_chatbot') }}', { method: 'POST', body: form })
+        .then(function (r) { return r.json(); })
+        .then(function (data) { thinking.textContent = data.reply || 'No response.'; })
+        .catch(function () { thinking.textContent = 'Error contacting chatbot.'; });
+}
+
+function appendMessage(text, who) {
+    var div = document.createElement('div');
+    div.className = 'small rounded-3 p-2 ' + (who === 'user' ? 'bg-success text-white align-self-end' : 'bg-light align-self-start');
+    div.style.maxWidth = '85%';
+    div.textContent = text;
+    var msgs = document.getElementById('chat-messages');
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return div;
+}
+
+document.getElementById('chat-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); sendChat(); }
+});
+
+document.querySelectorAll('.js-comment-form').forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+        if (form.dataset.moderating === '1') {
+            return;
+        }
+
+        var textarea = form.querySelector('textarea');
+        if (!textarea) {
+            return;
+        }
+
+        var content = textarea.value.trim();
+        if (!content) {
+            return;
+        }
+
+        event.preventDefault();
+
+        var errorBox = form.querySelector('.js-comment-error');
+        if (errorBox) {
+            errorBox.classList.add('d-none');
+            errorBox.textContent = '';
+        }
+
+        var submitButton = form.querySelector('button[type="submit"]');
+        var originalLabel = submitButton ? submitButton.innerHTML : '';
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = 'Checking comment...';
+        }
+
+        var payload = new FormData();
+        payload.append('content', content);
+
+        fetch('{{ path('blog_comment_moderate') }}', { method: 'POST', body: payload })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (data.allowed) {
+                    form.dataset.moderating = '1';
+                    form.submit();
+                    return;
+                }
+
+                if (errorBox) {
+                    errorBox.textContent = data.reason || 'This comment could not be submitted because it is not appropriate.';
+                    errorBox.classList.remove('d-none');
+                } else {
+                    alert(data.reason || 'This comment could not be submitted because it is not appropriate.');
+                }
+
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalLabel;
+                }
+            })
+            .catch(function () {
+                if (errorBox) {
+                    errorBox.textContent = 'Comment moderation is temporarily unavailable. Please try again.';
+                    errorBox.classList.remove('d-none');
+                }
+
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalLabel;
+                }
+            });
+    });
+});
+
+document.querySelectorAll('.js-post-reaction').forEach(function (button) {
+    renderPostMetrics(button.dataset.postId);
+    button.addEventListener('click', function () {
+        togglePostReaction(button.dataset.postId, button.dataset.reaction);
+    });
+});
+
+document.querySelectorAll('.js-post-save-toggle').forEach(function (button) {
+    renderPostMetrics(button.dataset.postId);
+    button.addEventListener('click', function () {
+        togglePostSave(button);
+    });
+});
+
+document.querySelectorAll('.js-comment-reaction').forEach(function (button) {
+    renderCommentMetrics(button.dataset.commentId);
+    button.addEventListener('click', function () {
+        toggleCommentReaction(button.dataset.commentId, button.dataset.reaction);
+    });
+});
+</script>
 {% endblock %}

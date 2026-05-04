@@ -16,6 +16,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="fw-bold mb-0"><i class="bi bi-journal-richtext me-2"></i>Blog</h5>
     <div class="d-flex gap-2">
+        <button type="button" id="btn-saved-filter" class="btn btn-outline-warning btn-sm"><i class="bi bi-bookmark-heart me-1"></i>Saved Only</button>
         <a href="{{ path('blog_my_posts') }}" class="btn btn-outline-success btn-sm"><i class="bi bi-pencil-square me-1"></i>My Posts</a>
         <a href="{{ path('blog_new') }}" class="btn btn-success btn-sm"><i class="bi bi-plus-lg me-1"></i>Write Post</a>
     </div>
@@ -44,7 +45,7 @@
 {% else %}
 <div class="row g-3">
     {% for post in pagination %}
-    <div class="col-md-4">
+    <div class="col-md-4 js-post-card" data-post-id="{{ post.id }}">
         <div class="card post-card h-100">
             {% if post.image %}
                 <img src="{{ asset('uploads/posts/' ~ post.image) }}" class="post-img" alt="{{ post.title }}">
@@ -75,9 +76,19 @@
                 <div class="text-muted small mt-1"><i class="bi bi-calendar me-1"></i>{{ post.publishedAt ? post.publishedAt|date('d M Y') : '—' }}</div>
             </div>
             <div class="card-footer bg-white border-0 pb-3">
-                <a href="{{ path('blog_show', {slug: post.slug}) }}" class="btn btn-success btn-sm w-100">
-                    <i class="bi bi-book me-1"></i>Read Post
-                </a>
+                <div class="d-flex gap-2">
+                    <a href="{{ path('blog_show', {slug: post.slug}) }}" class="btn btn-success btn-sm flex-grow-1">
+                        <i class="bi bi-book me-1"></i>Read Post
+                    </a>
+                    <button
+                        type="button"
+                        class="btn btn-outline-warning btn-sm js-index-save-toggle"
+                        data-post-id="{{ post.id }}"
+                        title="Save post"
+                    >
+                        <i class="bi bi-bookmark"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -90,4 +101,86 @@
 </div>
 {% endif %}
 {% endif %}
+<script>
+(function () {
+    function readStorage(key, fallback) {
+        try {
+            var raw = window.localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : fallback;
+        } catch (e) {
+            return fallback;
+        }
+    }
+
+    function writeStorage(key, value) {
+        window.localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function readSavedState() {
+        return readStorage('blog_saved_posts_v1', {});
+    }
+
+    function readMetricsState() {
+        return readStorage('blog_post_metrics_v1', {});
+    }
+
+    function ensureMetrics(postId) {
+        var state = readMetricsState();
+        if (!state[postId]) {
+            state[postId] = { likes: 0, dislikes: 0, saves: 0, reaction: null, saved: false };
+            writeStorage('blog_post_metrics_v1', state);
+        }
+        return state;
+    }
+
+    function renderSaveButton(button) {
+        var postId = button.dataset.postId;
+        var metricsState = ensureMetrics(postId);
+        var metrics = metricsState[postId];
+        button.classList.toggle('btn-warning', metrics.saved);
+        button.classList.toggle('btn-outline-warning', !metrics.saved);
+        button.querySelector('i').className = metrics.saved ? 'bi bi-bookmark-fill' : 'bi bi-bookmark';
+    }
+
+    document.querySelectorAll('.js-index-save-toggle').forEach(function (button) {
+        renderSaveButton(button);
+        button.addEventListener('click', function () {
+            var postId = button.dataset.postId;
+            var metricsState = ensureMetrics(postId);
+            var metrics = metricsState[postId];
+            var savedState = readSavedState();
+
+            if (metrics.saved) {
+                metrics.saved = false;
+                if (metrics.saves > 0) { metrics.saves--; }
+                delete savedState[postId];
+            } else {
+                metrics.saved = true;
+                metrics.saves++;
+                savedState[postId] = { id: postId, savedAt: new Date().toISOString() };
+            }
+
+            writeStorage('blog_post_metrics_v1', metricsState);
+            writeStorage('blog_saved_posts_v1', savedState);
+            renderSaveButton(button);
+        });
+    });
+
+    var savedOnlyButton = document.getElementById('btn-saved-filter');
+    if (savedOnlyButton) {
+        var savedOnly = false;
+        savedOnlyButton.addEventListener('click', function () {
+            savedOnly = !savedOnly;
+            savedOnlyButton.classList.toggle('btn-warning', savedOnly);
+            savedOnlyButton.classList.toggle('btn-outline-warning', !savedOnly);
+
+            var saved = readSavedState();
+            document.querySelectorAll('.js-post-card').forEach(function (card) {
+                var isSaved = !!saved[card.dataset.postId];
+                card.classList.toggle('d-none', savedOnly && !isSaved);
+            });
+        });
+    }
+})();
+</script>
 {% endblock %}

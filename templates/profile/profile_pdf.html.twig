@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AgriCloud Profile - {{ user.name }}</title>
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; color: #22340f; font-size: 13px; margin: 30px; }
+        .header { border-bottom: 2px solid #77b81e; padding-bottom: 14px; margin-bottom: 24px; }
+        .brand { font-size: 28px; font-weight: 700; color: #5a9014; margin: 0 0 4px; }
+        .subtitle { color: #6e7b5f; margin: 0; }
+        .layout { width: 100%; border-collapse: collapse; }
+        .layout td { vertical-align: top; }
+        .panel { border: 1px solid #dde7cf; border-radius: 14px; padding: 16px; background: #fbfcf8; }
+        .panel-title { font-size: 14px; font-weight: 700; margin: 0 0 12px; color: #314a13; }
+        .detail-row { margin-bottom: 8px; }
+        .detail-label { display: inline-block; min-width: 110px; color: #6e7b5f; font-weight: 700; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #edf6df; color: #43691a; font-weight: 700; font-size: 12px; }
+        .qr-wrap { text-align: center; }
+        .qr-image { width: 180px; height: 180px; border: 1px solid #dde7cf; border-radius: 16px; padding: 10px; background: #fff; }
+        .qr-note { margin-top: 10px; color: #7c8970; font-size: 11px; }
+        .footer { margin-top: 28px; color: #7c8970; font-size: 11px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="brand">AgriCloud</h1>
+        <p class="subtitle">Profile information export</p>
+    </div>
+
+    <table class="layout">
+        <tr>
+            <td style="width: 62%; padding-right: 18px;">
+                <div class="panel">
+                    <h2 class="panel-title">Profile Details</h2>
+                    <div class="detail-row"><span class="detail-label">Name</span> {{ user.name }}</div>
+                    <div class="detail-row"><span class="detail-label">Email</span> {{ user.email }}</div>
+                    <div class="detail-row"><span class="detail-label">Phone</span> {{ user.phone ?: '-' }}</div>
+                    <div class="detail-row"><span class="detail-label">Role</span> {{ user.role ? user.role.name : 'User' }}</div>
+                    <div class="detail-row"><span class="detail-label">Status</span> <span class="badge">{{ user.status ? user.status|capitalize : 'Active' }}</span></div>
+                    <div class="detail-row"><span class="detail-label">Joined</span> {{ user.createdAt ? user.createdAt|date('d M Y') : '-' }}</div>
+                    <div class="detail-row"><span class="detail-label">Verified</span> {{ user.emailVerifiedAt ? 'Yes' : 'No' }}</div>
+                    {% if user.oauthProvider %}
+                        <div class="detail-row"><span class="detail-label">Login Method</span> {{ user.oauthProvider|capitalize }} OAuth</div>
+                    {% endif %}
+                    {% if user.faceEnrolledAt %}
+                        <div class="detail-row"><span class="detail-label">Face Login</span> Enrolled on {{ user.faceEnrolledAt|date('d M Y') }}</div>
+                    {% endif %}
+                </div>
+            </td>
+            <td style="width: 38%;">
+                <div class="panel qr-wrap">
+                    <h2 class="panel-title">Profile QR</h2>
+                    <img src="{{ qrCodeUrl }}" alt="Profile QR code" class="qr-image">
+                    <div class="qr-note">Scan to read the main profile information quickly.</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        Generated on {{ "now"|date('d M Y H:i') }} by AgriCloud
+    </div>
+</body>
+</html>

@@ -50,15 +50,6 @@
                 {{ form_errors(form.paymentMethod) }}
             </div>
 
-            <div class="rounded-4 border border-success-subtle bg-success-subtle p-3 mb-4">
-                <div class="fw-semibold text-success mb-1">
-                    <i class="bi bi-shield-lock me-1"></i>Shipping details stay temporary
-                </div>
-                <div class="small text-muted">
-                    Cash on delivery uses a temporary delivery form kept outside your database, and Stripe collects shipping on the hosted checkout page. AgriCloud does not persist shipping details permanently.
-                </div>
-            </div>
-
             <div id="cash-shipping-panel" class="shipping-panel rounded-4 border bg-light p-3 mb-4">
                 <div class="fw-semibold mb-3">Cash on delivery shipping details</div>
                 <div class="row g-3">
@@ -101,13 +92,6 @@
                     {{ form_errors(form.notes) }}
                 </div>
                 <div class="form-text mt-2">These details are stored temporarily for delivery handling and cleared after processing or expiry.</div>
-            </div>
-
-            <div class="rounded-4 border bg-light p-3 mb-4">
-                <div class="fw-semibold mb-1">What gets stored</div>
-                <div class="small text-muted">
-                    We only keep your order items, total amount in TND, payment status, and Stripe session reference. Cash delivery details live in temporary storage, while Stripe shipping data is read from Stripe only when needed.
-                </div>
             </div>
 
             <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">

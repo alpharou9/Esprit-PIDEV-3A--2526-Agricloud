@@ -1,0 +1,151 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Users — AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0"><i class="bi bi-people me-2"></i>Users</h5>
+    <a href="{{ path('user_new') }}" class="btn btn-success btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> New User
+    </a>
+</div>
+
+{# Search bar #}
+<form method="get" class="mb-3 d-flex gap-2" style="max-width:400px">
+    <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search by name or email…">
+    <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-search"></i></button>
+    {% if q %}
+        <a href="{{ path('user_index') }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-x"></i></a>
+    {% endif %}
+</form>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>{{ knp_pagination_sortable(pagination, '#', 'u.id') }}</th>
+                    <th>{{ knp_pagination_sortable(pagination, 'Name', 'u.name') }}</th>
+                    <th>{{ knp_pagination_sortable(pagination, 'Email', 'u.email') }}</th>
+                    <th>Phone</th>
+                    <th>Role</th>
+                    <th>{{ knp_pagination_sortable(pagination, 'Status', 'u.status') }}</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in pagination %}
+                <tr>
+                    <td class="text-muted small">{{ user.id }}</td>
+                    <td class="fw-semibold">{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.phone ?? '—' }}</td>
+                    <td>
+                        {% if user.role %}
+                            <span class="badge bg-secondary">{{ user.role.name }}</span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.status == 'active' %}
+                            <span class="badge bg-success">Active</span>
+                        {% elseif user.status == 'blocked' %}
+                            <span class="badge bg-danger">Blocked</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ path('user_show', {id: user.id}) }}" class="btn btn-sm btn-outline-secondary me-1" title="View">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{{ path('user_edit', {id: user.id}) }}" class="btn btn-sm btn-outline-primary me-1">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+
+                        {# Block / Unblock #}
+                        <form method="post" action="{{ path('user_toggle_block', {id: user.id}) }}" class="d-inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('toggle_block_' ~ user.id) }}">
+                            <button type="submit" class="btn btn-sm {{ user.status == 'blocked' ? 'btn-outline-success' : 'btn-outline-warning' }}"
+                                    title="{{ user.status == 'blocked' ? 'Unblock' : 'Block' }}">
+                                <i class="bi {{ user.status == 'blocked' ? 'bi-unlock' : 'bi-lock' }}"></i>
+                            </button>
+                        </form>
+
+                        {# Delete #}
+                        <form method="post" action="{{ path('user_delete', {id: user.id}) }}" class="d-inline"
+                              onsubmit="return confirm('Delete {{ user.name }}?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete_user_' ~ user.id) }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        {% if q %}No users match "{{ q }}".{% else %}No users found.{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if pagination.totalItemCount > 0 %}
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
+        <span class="text-muted small">
+            {% set from = pagination.currentPageNumber * pagination.itemNumberPerPage - pagination.itemNumberPerPage + 1 %}
+            {% set to   = pagination.currentPageNumber * pagination.itemNumberPerPage %}
+            Showing {{ from }}–{{ to > pagination.totalItemCount ? pagination.totalItemCount : to }}
+            of {{ pagination.totalItemCount }} users
+        </span>
+        <div>
+            {{ knp_pagination_render(pagination) }}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+<style>
+.pagination {
+    gap: 4px;
+}
+.pagination .page-item .page-link {
+    border: none;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .85rem;
+    font-weight: 500;
+    color: #495057;
+    background: #f1f3f5;
+    transition: all .15s ease;
+    padding: 0;
+}
+.pagination .page-item .page-link:hover {
+    background: #d1e7dd;
+    color: #198754;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(25,135,84,.2);
+}
+.pagination .page-item.active .page-link {
+    background: #198754;
+    color: #fff;
+    box-shadow: 0 3px 8px rgba(25,135,84,.4);
+    transform: translateY(-1px);
+}
+.pagination .page-item.disabled .page-link {
+    background: transparent;
+    color: #ced4da;
+    pointer-events: none;
+}
+</style>
+{% endblock %}

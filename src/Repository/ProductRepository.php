@@ -51,6 +51,14 @@ class ProductRepository extends ServiceEntityRepository
                 $qb->orderBy('p.createdAt', 'DESC')
                     ->addOrderBy('p.quantity', 'DESC');
                 break;
+            case 'top_rated':
+                $qb->addSelect('(SELECT COALESCE(AVG(r_sort.rating), 0) FROM App\Entity\Review r_sort WHERE r_sort.product = p) AS HIDDEN averageRatingSort')
+                    ->addSelect('(SELECT COUNT(r_count.id) FROM App\Entity\Review r_count WHERE r_count.product = p) AS HIDDEN reviewCountSort')
+                    ->orderBy('averageRatingSort', 'DESC')
+                    ->addOrderBy('reviewCountSort', 'DESC')
+                    ->addOrderBy('p.views', 'DESC')
+                    ->addOrderBy('p.name', 'ASC');
+                break;
             default:
                 $qb->orderBy('p.quantity', 'DESC')
                     ->addOrderBy('p.createdAt', 'DESC');
@@ -166,5 +174,51 @@ class ProductRepository extends ServiceEntityRepository
         }
 
         return $score + min($product->getQuantity(), 20);
+    }
+
+    public function findRecommendedForProduct(Product $product, int $limit = 4): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.user', 'u')->addSelect('u')
+            ->where('p.status = :status')
+            ->andWhere('p.id != :productId')
+            ->setParameter('status', 'approved')
+            ->setParameter('productId', $product->getId())
+            ->setMaxResults($limit)
+            ->orderBy('p.views', 'DESC')
+            ->addOrderBy('p.createdAt', 'DESC');
+
+        if ($product->getCategory()) {
+            $qb->andWhere('p.category = :category')
+                ->setParameter('category', $product->getCategory());
+        }
+
+        $recommended = $qb->getQuery()->getResult();
+
+        if (count($recommended) < $limit) {
+            $excludeIds = [$product->getId()];
+
+            foreach ($recommended as $recommendedProduct) {
+                if ($recommendedProduct instanceof Product && $recommendedProduct->getId() !== null) {
+                    $excludeIds[] = $recommendedProduct->getId();
+                }
+            }
+
+            $fallback = $this->createQueryBuilder('p')
+                ->leftJoin('p.user', 'u')->addSelect('u')
+                ->where('p.status = :status')
+                ->andWhere('p.id NOT IN (:excludeIds)')
+                ->setParameter('status', 'approved')
+                ->setParameter('excludeIds', $excludeIds)
+                ->setMaxResults($limit - count($recommended))
+                ->orderBy('p.views', 'DESC')
+                ->addOrderBy('p.createdAt', 'DESC')
+                ->getQuery()
+                ->getResult();
+
+            $recommended = array_merge($recommended, $fallback);
+        }
+
+        return $recommended;
     }
 }

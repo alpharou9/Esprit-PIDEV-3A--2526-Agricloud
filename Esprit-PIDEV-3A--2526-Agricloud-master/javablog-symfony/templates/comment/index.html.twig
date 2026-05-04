@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}All Comments — JavaBlog{% endblock %}
+
+{% block body %}
+<h1 class="mb-4">All Comments</h1>
+
+{% if comments is empty %}
+    <p class="text-muted">No comments yet.</p>
+{% else %}
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Author</th>
+                    <th>Comment</th>
+                    <th>Post</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comment in comments %}
+                <tr>
+                    <td>{{ comment.id }}</td>
+                    <td>{{ comment.author ?? 'Anonymous' }}</td>
+                    <td>{{ comment.content|slice(0, 80) }}{% if comment.content|length > 80 %}...{% endif %}</td>
+                    <td>
+                        <a href="{{ path('app_post_show', {id: comment.post.id}) }}">
+                            {{ comment.post.title|slice(0, 40) }}
+                        </a>
+                    </td>
+                    <td>{{ comment.createdAt|date('M d, Y') }}</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{{ path('app_comment_edit', {id: comment.id}) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            <form method="post" action="{{ path('app_comment_delete', {id: comment.id}) }}"
+                                  onsubmit="return confirm('Delete this comment?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ comment.id) }}">
+                                <button class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+{% endblock %}

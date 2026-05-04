@@ -1,0 +1,83 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ post.title }} — JavaBlog{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Post -->
+        <a href="{{ path('app_post_index') }}" class="text-muted small">← Back to posts</a>
+        <article class="mt-3">
+            <h1>{{ post.title }}</h1>
+            <p class="text-muted">
+                By <strong>{{ post.author ?? 'Anonymous' }}</strong>
+                &bull; {{ post.createdAt|date('F d, Y \a\t H:i') }}
+                {% if post.updatedAt %}
+                    &bull; <em>Updated {{ post.updatedAt|date('M d, Y') }}</em>
+                {% endif %}
+            </p>
+            <hr>
+            <div class="lead" style="white-space: pre-wrap;">{{ post.content }}</div>
+        </article>
+
+        <div class="mt-4 d-flex gap-2">
+            <a href="{{ path('app_post_edit', {id: post.id}) }}" class="btn btn-outline-secondary">✏ Edit Post</a>
+            <form method="post" action="{{ path('app_post_delete', {id: post.id}) }}"
+                  onsubmit="return confirm('Delete this post and all its comments?')">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ post.id) }}">
+                <button class="btn btn-outline-danger">🗑 Delete Post</button>
+            </form>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Comments List -->
+        <h3>💬 Comments ({{ post.comments|length }})</h3>
+
+        {% if post.comments is empty %}
+            <p class="text-muted">No comments yet. Be the first!</p>
+        {% else %}
+            {% for comment in post.comments %}
+            <div class="card p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>{{ comment.author ?? 'Anonymous' }}</strong>
+                        <span class="text-muted small ms-2">{{ comment.createdAt|date('M d, Y H:i') }}</span>
+                    </div>
+                    <div class="d-flex gap-1">
+                        <a href="{{ path('app_comment_edit', {id: comment.id}) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <form method="post" action="{{ path('app_comment_delete', {id: comment.id}) }}"
+                              onsubmit="return confirm('Delete this comment?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ comment.id) }}">
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </div>
+                </div>
+                <p class="mt-2 mb-0">{{ comment.content }}</p>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Add Comment Form -->
+        <div class="card p-4 mt-4" style="border: 2px solid #1a1a2e;">
+            <h5>Leave a Comment</h5>
+            {{ form_start(commentForm) }}
+                {{ form_row(commentForm.author) }}
+                {{ form_row(commentForm.content) }}
+                {{ form_row(commentForm.submit) }}
+            {{ form_end(commentForm) }}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card p-3 mt-4 mt-lg-0 sticky-top" style="top: 20px;">
+            <h6 class="text-uppercase letter-spacing">Post Info</h6>
+            <hr>
+            <small class="text-muted">ID</small><p>#{{ post.id }}</p>
+            <small class="text-muted">Author</small><p>{{ post.author ?? 'Anonymous' }}</p>
+            <small class="text-muted">Published</small><p>{{ post.createdAt|date('M d, Y') }}</p>
+            <small class="text-muted">Comments</small><p>{{ post.comments|length }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

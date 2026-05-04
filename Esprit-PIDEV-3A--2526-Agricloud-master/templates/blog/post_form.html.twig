@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ post ? 'Edit ' ~ post.title : 'Write a Post' }} — AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{{ path('blog_my_posts') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h5 class="fw-bold mb-0">{{ post ? 'Edit Post — ' ~ post.title : 'Write a New Post' }}</h5>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4" style="max-width:760px">
+    <div class="card-body p-4">
+        {{ form_start(form, {attr: {enctype: 'multipart/form-data', novalidate: 'novalidate'}}) }}
+
+        <div class="mb-3">
+            {{ form_label(form.title) }}
+            {{ form_widget(form.title) }}
+            {{ form_errors(form.title) }}
+            <div class="form-text">Required · 5–255 characters</div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                {{ form_label(form.category) }}
+                {{ form_widget(form.category) }}
+                {{ form_errors(form.category) }}
+                <div class="form-text">Optional</div>
+            </div>
+            <div class="col-md-6">
+                {{ form_label(form.status) }}
+                {{ form_widget(form.status) }}
+                {{ form_errors(form.status) }}
+                <div class="form-text">Required · Draft or Published</div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            {{ form_label(form.excerpt) }}
+            {{ form_widget(form.excerpt) }}
+            {{ form_errors(form.excerpt) }}
+            <div class="form-text">Optional · Short summary shown on listing pages · Max 500 characters</div>
+        </div>
+
+        <div class="mb-3">
+            {{ form_label(form.content) }}
+            {{ form_widget(form.content) }}
+            {{ form_errors(form.content) }}
+            <div class="form-text">Required · Full post body · At least 10 characters</div>
+        </div>
+
+        <div class="mb-3">
+            {{ form_label(form.tagsInput) }}
+            {{ form_widget(form.tagsInput) }}
+            {{ form_errors(form.tagsInput) }}
+            <div class="form-text">Optional · Separate tags with commas (e.g. organic, soil, wheat)</div>
+        </div>
+
+        <div class="mb-4">
+            {{ form_label(form.imageFile) }}
+            {% if post and post.image %}
+                <div class="mb-2">
+                    <img src="{{ asset('uploads/posts/' ~ post.image) }}" class="rounded-3" style="height:80px;object-fit:cover" alt="">
+                    <div class="form-text">Upload a new image to replace the current one.</div>
+                </div>
+            {% endif %}
+            {{ form_widget(form.imageFile) }}
+            {{ form_errors(form.imageFile) }}
+            <div class="form-text">Max 3MB — JPG, PNG or WEBP.</div>
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-1"></i>{{ post ? 'Save Changes' : 'Publish Post' }}
+        </button>
+        <a href="{{ path('blog_my_posts') }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

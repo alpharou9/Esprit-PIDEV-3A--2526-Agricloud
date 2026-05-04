@@ -8,8 +8,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Bundle\SecurityBundle\Security;
+use App\Security\LoginFormAuthenticator;
 
 class FaceAuthController extends AbstractController
 {
@@ -78,8 +80,12 @@ class FaceAuthController extends AbstractController
             if ($bestUser->getStatus() === 'blocked') {
                 return new JsonResponse(['error' => 'Your account has been blocked.'], 403);
             }
-            $security->login($bestUser, 'form_login', 'main');
-            return new JsonResponse(['success' => true, 'redirect' => '/dashboard']);
+            $security->login($bestUser, LoginFormAuthenticator::class, 'main');
+
+            return new JsonResponse([
+                'success' => true,
+                'redirect' => $this->generateUrl('dashboard', [], UrlGeneratorInterface::ABSOLUTE_URL),
+            ]);
         }
 
         return new JsonResponse(['error' => 'Face not recognised. Please try again or use your password.'], 401);

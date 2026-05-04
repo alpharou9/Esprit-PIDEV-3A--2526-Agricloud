@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Event Ticket</title>
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; color: #1f2937; margin: 24px; }
+        .ticket { border: 2px solid #198754; border-radius: 16px; padding: 24px; }
+        .brand { color: #198754; font-size: 24px; font-weight: bold; margin-bottom: 8px; }
+        .title { font-size: 28px; font-weight: bold; margin-bottom: 16px; }
+        .grid { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .grid td { padding: 8px 0; vertical-align: top; }
+        .label { width: 180px; font-weight: bold; color: #4b5563; }
+        .note { margin-top: 24px; padding: 14px; background: #f3fbf6; border-radius: 12px; font-size: 13px; }
+        .qr { margin-top: 18px; text-align: right; }
+        .qr img { width: 140px; height: 140px; }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <div class="brand">AgriCloud</div>
+        <div class="title">{{ event.title }}</div>
+        <div>Ticket Number: <strong>{{ ticketNumber }}</strong></div>
+
+        <table class="grid">
+            <tr>
+                <td class="label">Participant</td>
+                <td>{{ participant.name }} ({{ participant.email }})</td>
+            </tr>
+            <tr>
+                <td class="label">Start</td>
+                <td>{{ event.eventDate ? event.eventDate|date('d M Y, H:i') : 'TBD' }}</td>
+            </tr>
+            {% if event.endDate %}
+                <tr>
+                    <td class="label">End</td>
+                    <td>{{ event.endDate|date('d M Y, H:i') }}</td>
+                </tr>
+            {% endif %}
+            <tr>
+                <td class="label">Location</td>
+                <td>{{ event.location }}</td>
+            </tr>
+            <tr>
+                <td class="label">Registration Status</td>
+                <td>{{ participation.status|capitalize }}</td>
+            </tr>
+            <tr>
+                <td class="label">Availability</td>
+                <td>{{ availability.label }}</td>
+            </tr>
+        </table>
+
+        {% if qrCodeUrl %}
+            <div class="qr">
+                <img src="{{ qrCodeUrl }}" alt="Map QR code">
+            </div>
+        {% endif %}
+
+        <div class="note">
+            Keep this ticket with you on the event day. Generated on {{ generatedAt|date('d M Y, H:i') }}.
+            {% if mapSearchUrl %} The QR code is not decorative: when scanned, it opens the map search for the event place using the saved location. Venue map: {{ mapSearchUrl }}{% endif %}
+        </div>
+    </div>
+</body>
+</html>

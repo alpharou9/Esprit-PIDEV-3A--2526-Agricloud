@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Role;
 use App\Entity\User;
+use App\Security\LoginFormAuthenticator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -42,7 +43,7 @@ class GuestController extends AbstractController
         $em->persist($user);
         $em->flush();
 
-        $security->login($user, 'form_login', 'main');
+        $security->login($user, LoginFormAuthenticator::class, 'main');
 
         return $this->redirectToRoute('market_index');
     }

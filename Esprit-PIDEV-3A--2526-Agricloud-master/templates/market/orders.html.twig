@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+{% block title %}Orders - AgriCloud{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="fw-bold mb-0"><i class="bi bi-receipt me-2"></i>Orders</h5>
+    <a href="{{ path('market_index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-shop me-1"></i>Marketplace</a>
+</div>
+
+{% macro order_table(orderGroups, title, icon, groupConversions, orderGroupService) %}
+<h6 class="fw-semibold text-muted mb-2"><i class="bi bi-{{ icon }} me-1"></i>{{ title }}</h6>
+{% if orderGroups is empty %}
+<div class="text-muted small mb-4 p-3 bg-light rounded-3">No orders here.</div>
+{% else %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Payment</th>
+                    <th>Date</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for group in orderGroups %}
+                {% set order = group.representative %}
+                {% set groupStatusLabel = orderGroupService.getCombinedStatusLabel(group.orders) %}
+                {% set groupStatusColor = orderGroupService.getCombinedStatusColor(group.orders) %}
+                <tr>
+                    <td class="text-muted small">#{{ order.id }}</td>
+                    <td>
+                        <div class="fw-semibold">{{ group.productSummary }}</div>
+                        <div class="text-muted small">{{ group.itemCount }} item{{ group.itemCount > 1 ? 's' : '' }} in this checkout</div>
+                    </td>
+                    <td>{{ group.quantityTotal }}</td>
+                    <td class="text-success fw-bold">
+                        <div>{{ group.totalPrice|number_format(2) }} TND</div>
+                        {% set convertedTotal = groupConversions[group.key] ?? {} %}
+                        {% if convertedTotal is not empty %}
+                            <div class="text-muted small fw-normal">
+                                {% if convertedTotal.EUR is defined %}<span class="me-2">EUR {{ convertedTotal.EUR|number_format(2) }}</span>{% endif %}
+                                {% if convertedTotal.USD is defined %}<span>USD {{ convertedTotal.USD|number_format(2) }}</span>{% endif %}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column gap-2" style="min-width: 170px;">
+                            <span class="badge bg-{{ groupStatusColor }} {{ groupStatusColor == 'warning' ? 'text-dark' : '' }} align-self-start">{{ groupStatusLabel }}</span>
+                            <div class="progress" style="height: 7px;">
+                                <div class="progress-bar bg-{{ order.status == 'cancelled' ? 'danger' : 'success' }}" role="progressbar" style="width: {{ order.statusProgressPercent }}%;"></div>
+                            </div>
+                            <small class="text-muted">
+                                {% if order.status == 'cancelled' %}
+                                    Order cancelled
+                                {% else %}
+                                    Step {{ order.statusStepNumber }} of 5
+                                {% endif %}
+                            </small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column gap-2">
+                            <span class="badge bg-{{ order.paymentStatusColor }} {{ order.paymentStatus == 'pending' ? 'text-dark' : '' }} align-self-start">{{ order.paymentStatusLabel }}</span>
+                            <small class="text-muted">{{ order.paymentMethodLabel }}</small>
+                        </div>
+                    </td>
+                    <td class="text-muted small">{{ order.orderDate ? order.orderDate|date('d M Y') : '-' }}</td>
+                    <td class="text-end">
+                        <div class="d-inline-flex gap-2">
+                            <a href="{{ path('order_show', {id: order.id}) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
+                            {% if order.customer == app.user and order.paymentMethod == 'stripe' and order.paymentStatus != 'paid' and order.status != 'cancelled' %}
+                                <form method="post" action="{{ path('order_pay', {id: order.id}) }}" class="d-inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('order_pay_' ~ order.id) }}">
+                                    <button class="btn btn-sm btn-outline-primary" title="Pay with Stripe"><i class="bi bi-credit-card"></i></button>
+                                </form>
+                            {% endif %}
+                            <a href="{{ path('order_export_pdf', {id: order.id}) }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-file-earmark-pdf"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endmacro %}
+
+{{ _self.order_table(myOrderGroups, 'My Purchases', 'bag-check', groupConversions, orderGroupService) }}
+{{ _self.order_table(mySaleGroups, is_granted('ROLE_ADMIN') ? 'All Orders' : 'My Sales', 'shop', groupConversions, orderGroupService) }}
+{% endblock %}

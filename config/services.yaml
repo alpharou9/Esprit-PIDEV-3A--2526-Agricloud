@@ -1,4 +1,6 @@
 parameters:
+    recaptcha_site_key: '%env(RECAPTCHA_SITE_KEY)%'
+    recaptcha_secret_key: '%env(RECAPTCHA_SECRET_KEY)%'
 
 services:
     _defaults:
@@ -17,6 +19,14 @@ services:
             $huggingFaceApiToken: '%env(default::HUGGINGFACE_API_TOKEN)%'
 
     App\Service\SalesInsightsService:
+        arguments:
+            $huggingFaceApiToken: '%env(default::HUGGINGFACE_API_TOKEN)%'
+
+    App\Service\CommentModerationService:
+        arguments:
+            $huggingFaceApiToken: '%env(default::HUGGINGFACE_API_TOKEN)%'
+
+    App\Controller\PostController:
         arguments:
             $huggingFaceApiToken: '%env(default::HUGGINGFACE_API_TOKEN)%'
 

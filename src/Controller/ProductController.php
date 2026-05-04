@@ -107,6 +107,7 @@ class ProductController extends AbstractController
     public function show(
         Product $product,
         EntityManagerInterface $em,
+        ProductRepository $productRepository,
         CurrencyConverterService $currencyConverter,
         ReviewRepository $reviewRepository,
         OrderRepository $orderRepository,
@@ -121,11 +122,14 @@ class ProductController extends AbstractController
             $currencyConverter->convertAmount($product->getPrice())
         );
 
+        $recommendedProducts = $productRepository->findRecommendedForProduct($product, 4);
+
         $reviews = $reviewRepository->findForProduct($product);
         $reviewStats = $reviewRepository->findStatsForProduct($product);
+        $recommendedProductReviewStats = $reviewRepository->findStatsForProducts($recommendedProducts);
         $currentUser = $this->getUser();
         $currentCustomer = $currentUser instanceof \App\Entity\User ? $currentUser : null;
-        $isFavorited = $currentCustomer instanceof \App\Entity\User
+        $isFavorited = $currentCustomer !== null
             ? $favoriteRepository->isFavoritedByUser($currentCustomer, $product)
             : false;
 
@@ -141,6 +145,8 @@ class ProductController extends AbstractController
             'reviewStats' => $reviewStats,
             'canReview' => $canReview,
             'isFavorited' => $isFavorited,
+            'recommendedProducts' => $recommendedProducts,
+            'recommendedProductReviewStats' => $recommendedProductReviewStats,
         ]);
     }
 

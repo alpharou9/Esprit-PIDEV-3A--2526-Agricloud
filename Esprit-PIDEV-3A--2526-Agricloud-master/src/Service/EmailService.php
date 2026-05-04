@@ -1,0 +1,81 @@
+<?php
+
+namespace App\Service;
+
+use App\Entity\Order;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Address;
+
+class EmailService
+{
+    public function __construct(
+        private readonly MailerInterface $mailer,
+        private readonly PdfService $pdfService,
+        private readonly string $fromEmail,
+        private readonly ParameterBagInterface $parameterBag,
+    ) {
+    }
+
+    public function sendOrderConfirmedEmail(Order $order): array
+    {
+        $customer = $order->getCustomer();
+        $customerEmail = trim($customer->getEmail());
+
+        if ($customerEmail === '') {
+            return [
+                'sent' => false,
+                'message' => 'Order confirmed, but the customer has no email address.',
+            ];
+        }
+
+        $pdfContent = $this->pdfService->generateOrderPdf($order);
+
+        $email = (new TemplatedEmail())
+            ->from(new Address($this->fromEmail, 'AgriCloud'))
+            ->to(new Address($customerEmail, $customer->getName()))
+            ->subject(sprintf('Your AgriCloud order #%d is confirmed', $order->getId()))
+            ->htmlTemplate('emails/order_confirmed.html.twig')
+            ->context([
+                'order' => $order,
+                'logo_cid' => null,
+            ])
+            ->attach($pdfContent, sprintf('order-%d.pdf', $order->getId()), 'application/pdf');
+
+        $logoPath = $this->getLogoPath();
+        if ($logoPath !== null) {
+            $email->embedFromPath($logoPath, 'agricloud-logo');
+            $email->context([
+                'order' => $order,
+                'logo_cid' => 'cid:agricloud-logo',
+            ]);
+        }
+
+        try {
+            $this->mailer->send($email);
+        } catch (TransportExceptionInterface $exception) {
+            return [
+                'sent' => false,
+                'message' => 'Order confirmed, but the confirmation email could not be sent.',
+            ];
+        }
+
+        return [
+            'sent' => true,
+            'message' => 'Order confirmed and confirmation email sent.',
+        ];
+    }
+
+    private function getLogoPath(): ?string
+    {
+        $logoPath = $this->parameterBag->get('kernel.project_dir') . '/public/theme/img/agricloud-email-logo.svg';
+
+        if (!is_file($logoPath)) {
+            return null;
+        }
+
+        return $logoPath;
+    }
+}
