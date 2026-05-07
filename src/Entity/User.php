@@ -14,10 +14,11 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[UniqueEntity(fields: ['email'], message: 'This email is already registered.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    /** @phpstan-var positive-int|null */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'bigint', options: ['unsigned' => true])]
-    private ?int $id = null;
+    private int|null $id = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'Name is required.')]
