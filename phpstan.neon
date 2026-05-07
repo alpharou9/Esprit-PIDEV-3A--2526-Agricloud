@@ -1,0 +1,29 @@
+includes:
+    - vendor/phpstan/phpstan-symfony/extension.neon
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+
+parameters:
+    level: 0
+    paths:
+        - src/Entity/Product.php
+        - src/Entity/CartItem.php
+        - src/Entity/Order.php
+        - src/Repository/ProductRepository.php
+        - src/Repository/CartItemRepository.php
+        - src/Repository/OrderRepository.php
+        - src/Controller/ProductController.php
+        - src/Controller/CartController.php
+        - src/Controller/OrderController.php
+        - src/Command/SeedMarketProductsCommand.php
+        - src/Form/CheckoutType.php
+        - src/Form/ProductType.php
+        - src/Service/OrderGroupService.php
+        - src/Service/OrderStatusService.php
+        - src/Service/StripeCheckoutService.php
+        - src/Service/TemporaryShippingStorage.php
+        - tests/Market
+    tmpDir: .phpstan-cache
+    bootstrapFiles:
+        - tests/phpstan/bootstrap.php
+    symfony:
+        consoleApplicationLoader: tests/phpstan/console-application.php

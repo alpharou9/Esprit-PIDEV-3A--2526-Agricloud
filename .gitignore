@@ -6,6 +6,8 @@
 /public/bundles/
 /var/
 /vendor/
+/.phpstan-cache/
+/.php-server.*.log
 ###< symfony/framework-bundle ###
 
 ###> symfony/asset-mapper ###

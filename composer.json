@@ -82,6 +82,14 @@
     "scripts": {
         "auto-scripts": [
         ],
+        "doctrine:doctor": "@php bin/console doctrine:schema:validate --skip-sync --no-interaction",
+        "phpstan:market": "@php vendor/bin/phpstan analyse --configuration=phpstan.neon",
+        "test:market": "@php vendor/bin/phpunit --configuration=phpunit.xml.dist --testsuite=market",
+        "qa:market": [
+            "@doctrine:doctor",
+            "@phpstan:market",
+            "@test:market"
+        ],
         "post-install-cmd": [
             "@auto-scripts"
         ],
@@ -101,6 +109,9 @@
     "require-dev": {
         "doctrine/doctrine-fixtures-bundle": "^4.3",
         "fakerphp/faker": "^1.24",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-doctrine": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
         "phpunit/phpunit": "^9.5",
         "symfony/browser-kit": "6.4.*",
         "symfony/css-selector": "6.4.*",

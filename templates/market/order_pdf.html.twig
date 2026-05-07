@@ -46,12 +46,12 @@
                 <div class="panel">
                     <h2 class="panel-title">Shipping Details</h2>
                     {% if shippingDetails %}
-                        <div class="detail-row"><span class="detail-label">Name</span> {{ shippingDetails.name ?: '-' }}</div>
-                        <div class="detail-row"><span class="detail-label">Address</span> {{ shippingDetails.formatted ?: '-' }}</div>
-                        <div class="detail-row"><span class="detail-label">Email</span> {{ shippingDetails.email ?: '-' }}</div>
-                        <div class="detail-row"><span class="detail-label">Phone</span> {{ shippingDetails.phone ?: '-' }}</div>
-                        {% if shippingDetails.notes %}
-                            <div class="detail-row"><span class="detail-label">Notes</span> {{ shippingDetails.notes }}</div>
+                        <div class="detail-row"><span class="detail-label">Name</span> {{ shippingDetails.name|default('-') ?: '-' }}</div>
+                        <div class="detail-row"><span class="detail-label">Address</span> {{ shippingDetails.formatted|default('-') ?: '-' }}</div>
+                        <div class="detail-row"><span class="detail-label">Email</span> {{ shippingDetails.email|default('-') ?: '-' }}</div>
+                        <div class="detail-row"><span class="detail-label">Phone</span> {{ shippingDetails.phone|default('-') ?: '-' }}</div>
+                        {% if shippingDetails.notes|default(null) %}
+                            <div class="detail-row"><span class="detail-label">Notes</span> {{ shippingDetails.notes|default('') }}</div>
                         {% endif %}
                     {% else %}
                         <div class="detail-row">Shipping details are collected outside AgriCloud and are not persisted in the local database.</div>
