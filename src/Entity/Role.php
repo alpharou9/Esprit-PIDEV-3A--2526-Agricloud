@@ -12,10 +12,11 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[UniqueEntity(fields: ['name'], message: 'This role name is already taken.')]
 class Role
 {
+    /** @phpstan-var positive-int|null */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'bigint', options: ['unsigned' => true])]
-    private ?int $id = null;
+    private int|null $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
     #[Assert\NotBlank(message: 'Role name is required.')]

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Form\ProfileType;
 use App\Service\PdfService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -33,6 +34,7 @@ class ProfileController extends AbstractController
         EntityManagerInterface $em,
         UserPasswordHasherInterface $hasher
     ): Response {
+        /** @var User $user */
         $user = $this->getUser();
         $form = $this->createForm(ProfileType::class, $user);
         $form->handleRequest($request);

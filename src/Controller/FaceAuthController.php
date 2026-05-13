@@ -8,18 +8,16 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Bundle\SecurityBundle\Security;
-use App\Security\LoginFormAuthenticator;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class FaceAuthController extends AbstractController
 {
-    /**
-     * Enroll the current user's face (requires login).
-     * Receives a JSON array of 128 floats from face-api.js.
-     * Stores in the same big-endian float32 base64 format as the JavaFX app.
-     */
+    public function __construct(
+        private readonly TokenStorageInterface $tokenStorage,
+    ) {}
+
     #[Route('/face/enroll', name: 'face_enroll', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function enroll(Request $request, EntityManagerInterface $em): JsonResponse
@@ -33,7 +31,7 @@ class FaceAuthController extends AbstractController
 
         /** @var \App\Entity\User $user */
         $user  = $this->getUser();
-        $bytes = pack('G128', ...$descriptor);   // big-endian float32 — same as JavaFX
+        $bytes = pack('G128', ...$descriptor);
         $user->setFaceEmbeddings(json_encode([['embedding' => base64_encode($bytes)]]));
         $user->setFaceEnrolledAt(new \DateTime());
         $em->flush();
@@ -41,17 +39,9 @@ class FaceAuthController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
-    /**
-     * Face login — public route.
-     * Compares the submitted descriptor against all stored embeddings.
-     * Logs the matching user in programmatically if Euclidean distance < 0.55.
-     */
     #[Route('/face/login', name: 'face_login', methods: ['POST'])]
-    public function faceLogin(
-        Request        $request,
-        UserRepository $userRepo,
-        Security       $security
-    ): JsonResponse {
+    public function faceLogin(Request $request, UserRepository $userRepo): JsonResponse
+    {
         $data       = json_decode($request->getContent(), true);
         $descriptor = $data['descriptor'] ?? null;
 
@@ -59,9 +49,9 @@ class FaceAuthController extends AbstractController
             return new JsonResponse(['error' => 'Invalid face descriptor.'], 400);
         }
 
-        $users      = $userRepo->findWithFaceEmbeddings();
-        $bestUser   = null;
-        $bestDist   = PHP_FLOAT_MAX;
+        $users    = $userRepo->findWithFaceEmbeddings();
+        $bestUser = null;
+        $bestDist = PHP_FLOAT_MAX;
 
         foreach ($users as $user) {
             $stored = $this->decodeEmbedding($user->getFaceEmbeddings());
@@ -74,29 +64,21 @@ class FaceAuthController extends AbstractController
             }
         }
 
-        $threshold = 0.55;   // face-api.js default is 0.6; 0.55 is slightly stricter
-
-        if ($bestUser && $bestDist < $threshold) {
+        if ($bestUser && $bestDist < 0.6) {
             if ($bestUser->getStatus() === 'blocked') {
                 return new JsonResponse(['error' => 'Your account has been blocked.'], 403);
             }
-            $security->login($bestUser, LoginFormAuthenticator::class, 'main');
 
-            return new JsonResponse([
-                'success' => true,
-                'redirect' => $this->generateUrl('dashboard', [], UrlGeneratorInterface::ABSOLUTE_URL),
-            ]);
+            $token = new UsernamePasswordToken($bestUser, 'main', $bestUser->getRoles());
+            $this->tokenStorage->setToken($token);
+            $request->getSession()->set('_security_main', serialize($token));
+
+            return new JsonResponse(['success' => true, 'redirect' => '/dashboard']);
         }
 
-        return new JsonResponse(['error' => 'Face not recognised. Please try again or use your password.'], 401);
+        return new JsonResponse(['error' => 'Face not recognised. Try again or use your password.'], 401);
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
-    /**
-     * Decode a stored face embedding (JSON → base64 → big-endian float32 array).
-     * Compatible with both the JavaFX format and web-enrolled embeddings.
-     */
     private function decodeEmbedding(?string $json): ?array
     {
         if (!$json) return null;
@@ -104,7 +86,7 @@ class FaceAuthController extends AbstractController
         if (!isset($data[0]['embedding'])) return null;
 
         $bytes = base64_decode($data[0]['embedding']);
-        if (strlen($bytes) !== 512) return null;   // 128 × 4 bytes
+        if (strlen($bytes) !== 512) return null;
 
         return array_values(unpack('G128', $bytes));
     }
