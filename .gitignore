@@ -11,4 +11,10 @@
 ###> symfony/asset-mapper ###
 /public/assets/
 ###< symfony/asset-mapper ###
+
 /.env
+/composer.phar
+/phpstan.phar
+/Esprit-PIDEV-3A--2526-Agricloud-master/
+/database_schema_fix.sql
+/database_patch_reviews_favorites.sql
